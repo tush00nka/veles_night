@@ -12,8 +12,7 @@ pub const TILE_SIZE: i32 = TILE_SIZE_PX * TILE_SCALE;
 #[derive(Clone, Copy, PartialEq)]
 pub enum TileType {
     Air,
-    LeftFire,
-    RightFire,
+    Fire,
 }
 
 pub struct LevelMap {
@@ -31,6 +30,13 @@ impl LevelMap {
         for x in 0..LEVEL_WIDTH_TILES {
             for y in 0..LEVEL_HEIGHT_TILES {
                 if self.tiles[x][y] != TileType::Air {
+                    rl.draw_circle(
+                        x as i32 * TILE_SIZE + TILE_SIZE / 2,
+                        y as i32 * TILE_SIZE + TILE_SIZE / 2,
+                        (TILE_SIZE * 3) as f32
+                            + TILE_SIZE as f32 / 8. * (rl.get_time() * 2.).sin() as f32,
+                        Color::ORANGE.alpha(0.25),
+                    );
                     rl.draw_rectangle(
                         x as i32 * TILE_SIZE,
                         y as i32 * TILE_SIZE,

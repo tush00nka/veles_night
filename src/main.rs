@@ -24,10 +24,6 @@ fn main() {
     let mut player = Player::new();
 
     let mut level1 = LevelMap::new();
-    level1.tiles[0][0] = TileType::LeftFire;
-    level1.tiles[0][8] = TileType::LeftFire;
-    level1.tiles[15][0] = TileType::LeftFire;
-    level1.tiles[15][8] = TileType::LeftFire;
 
     while !rl.window_should_close() {
         // update stuff

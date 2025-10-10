@@ -56,7 +56,7 @@ impl Player {
                 (self.position.y / TILE_SIZE as f32).floor(),
             );
 
-            level.tiles[pos.x as usize][pos.y as usize] = TileType::LeftFire;
+            level.tiles[pos.x as usize][pos.y as usize] = TileType::Fire;
         }
     }
 
