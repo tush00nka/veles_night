@@ -3,11 +3,11 @@ use raylib::{
     prelude::{RaylibDraw, RaylibDrawHandle},
 };
 
-const LEVEL_WIDTH_TILES: usize = 16;
-const LEVEL_HEIGHT_TILES: usize = 9;
+pub const LEVEL_WIDTH_TILES: usize = 16;
+pub const LEVEL_HEIGHT_TILES: usize = 9;
 const TILE_SIZE_PX: i32 = 16;
 const TILE_SCALE: i32 = 4;
-const TILE_SIZE: i32 = TILE_SIZE_PX * TILE_SCALE;
+pub const TILE_SIZE: i32 = TILE_SIZE_PX * TILE_SCALE;
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum TileType {

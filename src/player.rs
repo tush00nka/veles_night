@@ -1,6 +1,9 @@
 use raylib::prelude::*;
 
-use crate::{SCREEN_HEIGHT, SCREEN_WIDTH};
+use crate::{
+    SCREEN_HEIGHT, SCREEN_WIDTH,
+    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, LevelMap, TILE_SIZE, TileType},
+};
 
 pub struct Player {
     position: Vector2,
@@ -31,7 +34,30 @@ impl Player {
             dir.y -= 1.;
         }
 
+        // constraints, so we can't go off map
+        self.position.x = ((TILE_SIZE / 2) as f32).max(
+            self.position
+                .x
+                .min((TILE_SIZE as usize * LEVEL_WIDTH_TILES - TILE_SIZE as usize / 2) as f32),
+        );
+        self.position.y = ((TILE_SIZE / 2) as f32).max(
+            self.position
+                .y
+                .min((TILE_SIZE as usize * LEVEL_HEIGHT_TILES - TILE_SIZE as usize / 2) as f32),
+        );
+
         self.position += dir.normalized() * self.speed;
+    }
+
+    pub fn put_campfire(&self, level: &mut LevelMap, rl: &mut RaylibHandle) {
+        if rl.is_key_pressed(KeyboardKey::KEY_SPACE) {
+            let pos = Vector2::new(
+                (self.position.x / TILE_SIZE as f32).floor(),
+                (self.position.y / TILE_SIZE as f32).floor(),
+            );
+
+            level.tiles[pos.x as usize][pos.y as usize] = TileType::LeftFire;
+        }
     }
 
     pub fn draw(&self, rl: &mut RaylibDrawHandle) {

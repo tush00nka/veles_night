@@ -32,6 +32,7 @@ fn main() {
     while !rl.window_should_close() {
         // update stuff
         player.update_position(&mut rl);
+        player.put_campfire(&mut level1, &mut rl);
 
         // draw stuff
         let mut d = rl.begin_drawing(&thread);
