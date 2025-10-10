@@ -24,10 +24,20 @@ fn main() {
     let mut player = Player::new();
 
     let mut level1 = LevelMap::new();
+    level1.tiles[2][2] = TileType::Tree;
+    level1.tiles[3][2] = TileType::Tree;
+    level1.tiles[4][2] = TileType::Tree;
+    level1.tiles[5][2] = TileType::Tree;
+    level1.tiles[6][2] = TileType::Tree;
+
+    level1.tiles[10][3] = TileType::Tree;
+    level1.tiles[10][4] = TileType::Tree;
+    level1.tiles[10][5] = TileType::Tree;
+    level1.tiles[10][6] = TileType::Tree;
 
     while !rl.window_should_close() {
         // update stuff
-        player.update_position(&mut rl);
+        player.update_position(&level1, &mut rl);
         player.put_campfire(&mut level1, &mut rl);
 
         // draw stuff

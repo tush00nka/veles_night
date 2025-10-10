@@ -3,6 +3,7 @@ use raylib::prelude::*;
 use crate::{
     SCREEN_HEIGHT, SCREEN_WIDTH,
     map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, LevelMap, TILE_SIZE, TileType},
+    player,
 };
 
 pub struct Player {
@@ -18,7 +19,7 @@ impl Player {
         };
     }
 
-    pub fn update_position(&mut self, rl: &mut RaylibHandle) {
+    pub fn update_position(&mut self, level: &LevelMap, rl: &mut RaylibHandle) {
         let mut dir = Vector2::zero();
 
         if rl.is_key_down(KeyboardKey::KEY_D) {
@@ -45,6 +46,22 @@ impl Player {
                 .y
                 .min((TILE_SIZE as usize * LEVEL_HEIGHT_TILES - TILE_SIZE as usize / 2) as f32),
         );
+
+        let next_x = ((self.position.x + dir.x * self.speed) / TILE_SIZE as f32).floor() as usize;
+        let next_y = ((self.position.y + dir.y * self.speed) / TILE_SIZE as f32).floor() as usize;
+
+        let pos = Vector2::new(
+            (self.position.x / TILE_SIZE as f32).floor(),
+            (self.position.y / TILE_SIZE as f32).floor(),
+        );
+
+        if level.tiles[next_x][pos.y as usize] == TileType::Tree {
+            self.position.y += dir.y * self.speed;
+            return;
+        } else if level.tiles[pos.x as usize][next_y] == TileType::Tree {
+            self.position.x += dir.x * self.speed;
+            return;
+        }
 
         self.position += dir.normalized() * self.speed;
     }
