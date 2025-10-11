@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use raylib::prelude::*;
 
 use crate::{
-    map::{LevelMap, TileType, TILE_SIZE}, order::OrderHandler, player::Player, spirit::Spirit
+    map::{LevelMap, TILE_SIZE, TileType},
+    order::OrderHandler,
+    player::Player,
+    spirit::Spirit,
 };
 
 mod light;
@@ -23,6 +26,13 @@ fn main() {
         .build();
 
     rl.set_target_fps(60);
+
+    let texture = rl.load_texture(&thread, "./static/textures/tree.png");
+    let tree_texture;
+    match texture {
+        Ok(tex) => tree_texture = tex,
+        Err(e) => panic!("{e}"),
+    }
 
     let mut player = Player::new();
 
@@ -76,7 +86,7 @@ fn main() {
 
         player.draw(&mut d);
         // player.draw_line(&mut d);
-        level1.draw(&mut d);
+        level1.draw(&mut d, &tree_texture);
         for spirit in spirits.values() {
             spirit.draw(&mut d);
         }
