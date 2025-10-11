@@ -1,13 +1,14 @@
 use raylib::prelude::*;
 
 use crate::{
-    map::{LevelMap, TileType},
-    player::Player,
+    map::{LevelMap, TileType, TILE_SIZE},
+    player::Player, spirit::Spirit,
 };
 
 mod light;
 mod map;
 mod player;
+mod spirit;
 
 const SCREEN_WIDTH: i32 = 1280;
 const SCREEN_HEIGHT: i32 = 720;
@@ -30,15 +31,21 @@ fn main() {
     level1.tiles[5][2] = TileType::Tree;
     level1.tiles[6][2] = TileType::Tree;
 
+    level1.tiles[10][2] = TileType::Tree;
     level1.tiles[10][3] = TileType::Tree;
     level1.tiles[10][4] = TileType::Tree;
     level1.tiles[10][5] = TileType::Tree;
     level1.tiles[10][6] = TileType::Tree;
 
+    let mut spirit = Spirit::new(Vector2::new(8. * TILE_SIZE as f32, 2. * TILE_SIZE as f32));
+
+
     while !rl.window_should_close() {
         // update stuff
         player.update_position(&level1, &mut rl);
         player.put_campfire(&mut level1, &mut rl);
+
+        spirit.patrol(&level1);
 
         // draw stuff
         let mut d = rl.begin_drawing(&thread);
@@ -47,5 +54,6 @@ fn main() {
 
         player.draw(&mut d);
         level1.draw(&mut d);
+        spirit.draw(&mut d);
     }
 }

@@ -3,7 +3,6 @@ use raylib::prelude::*;
 use crate::{
     SCREEN_HEIGHT, SCREEN_WIDTH,
     map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, LevelMap, TILE_SIZE, TileType},
-    player,
 };
 
 pub struct Player {
