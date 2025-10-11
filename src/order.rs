@@ -102,7 +102,11 @@ impl OrderHandler {
             return;
         };
 
-        rl.draw_line_v(spirit.get_position(), line_end, Color::BLUE);
+        rl.draw_line_ex(spirit.get_position(), line_end, 16.,Color::LIGHTBLUE);
+        rl.draw_circle_v(spirit.get_position(), 8., Color::LIGHTBLUE);
+        rl.draw_circle_v(line_end, 8., Color::LIGHTBLUE);
+
+        // rl.draw_line_v(spirit.get_position(), line_end, Color::BLUE);
     }
 
     pub fn draw_ui(&self, rl: &mut RaylibDrawHandle) {

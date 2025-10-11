@@ -27,6 +27,7 @@ fn main() {
 
     rl.set_target_fps(60);
 
+    // todo: better texture loading (automatic, like in uyta)
     let texture = rl.load_texture(&thread, "./static/textures/tree.png");
     let tree_texture;
     match texture {
