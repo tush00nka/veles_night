@@ -1,12 +1,14 @@
+use std::collections::HashMap;
+
 use raylib::prelude::*;
 
 use crate::{
-    map::{LevelMap, TileType, TILE_SIZE},
-    player::Player, spirit::Spirit,
+    map::{LevelMap, TileType, TILE_SIZE}, order::OrderHandler, player::Player, spirit::Spirit
 };
 
 mod light;
 mod map;
+mod order;
 mod player;
 mod spirit;
 
@@ -25,11 +27,12 @@ fn main() {
     let mut player = Player::new();
 
     let mut level1 = LevelMap::new();
+    // todo: remove this hardcoded mess
     level1.tiles[2][2] = TileType::Tree;
     level1.tiles[3][2] = TileType::Tree;
     level1.tiles[4][2] = TileType::Tree;
     level1.tiles[5][2] = TileType::Tree;
-    level1.tiles[6][2] = TileType::Tree;
+    // level1.tiles[6][2] = TileType::Tree;
 
     level1.tiles[10][2] = TileType::Tree;
     level1.tiles[10][3] = TileType::Tree;
@@ -37,15 +40,34 @@ fn main() {
     level1.tiles[10][5] = TileType::Tree;
     level1.tiles[10][6] = TileType::Tree;
 
-    let mut spirit = Spirit::new(Vector2::new(8. * TILE_SIZE as f32, 2. * TILE_SIZE as f32));
+    let mut spirits: HashMap<usize, Spirit> = HashMap::new();
 
+    let mut order_handler = OrderHandler::new();
+
+    for i in 0..9 {
+        spirits.insert(
+            i,
+            Spirit::new(Vector2::new(
+                (7. + (i % 3) as f32) * TILE_SIZE as f32 - i as f32 * 10.,
+                2. * TILE_SIZE as f32,
+            )),
+        );
+    }
 
     while !rl.window_should_close() {
         // update stuff
         player.update_position(&level1, &mut rl);
         player.put_campfire(&mut level1, &mut rl);
 
-        spirit.patrol(&level1);
+        // this is such a cool function fr fr tbh lowkey
+        spirits.retain(|_, spirit| !spirit.get_dead());
+
+        for spirit in spirits.values_mut() {
+            spirit.update_behaviour(&mut level1, &mut order_handler, &mut rl);
+        }
+
+        order_handler.select_spirit(&mut spirits, &mut level1, &rl);
+        order_handler.update_line(&level1, &rl);
 
         // draw stuff
         let mut d = rl.begin_drawing(&thread);
@@ -53,7 +75,12 @@ fn main() {
         d.clear_background(Color::RAYWHITE);
 
         player.draw(&mut d);
+        // player.draw_line(&mut d);
         level1.draw(&mut d);
-        spirit.draw(&mut d);
+        for spirit in spirits.values() {
+            spirit.draw(&mut d);
+        }
+        order_handler.draw(&spirits, &mut d);
+        order_handler.draw_ui(&mut d);
     }
 }
