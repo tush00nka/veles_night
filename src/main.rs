@@ -7,6 +7,7 @@ use crate::{
     order::OrderHandler,
     player::Player,
     spirit::Spirit,
+    texture_handler::TextureHandler,
 };
 
 mod light;
@@ -14,6 +15,7 @@ mod map;
 mod order;
 mod player;
 mod spirit;
+mod texture_handler;
 
 const SCREEN_WIDTH: i32 = 1280;
 const SCREEN_HEIGHT: i32 = 720;
@@ -27,14 +29,10 @@ fn main() {
 
     rl.set_target_fps(60);
 
-    // todo: better texture loading (automatic, like in uyta)
-    let texture = rl.load_texture(&thread, "./static/textures/tree.png");
-    let tree_texture;
-    match texture {
-        Ok(tex) => tree_texture = tex,
-        Err(e) => panic!("{e}"),
-    }
-
+    let texture_handler = TextureHandler::new(&mut rl, &thread);
+    //there're safe variants - get_safe/get_mut_safe
+    //also common ones - get and get_mut
+    
     let mut player = Player::new();
 
     let mut level1 = LevelMap::new();
@@ -87,7 +85,7 @@ fn main() {
 
         player.draw(&mut d);
         // player.draw_line(&mut d);
-        level1.draw(&mut d, &tree_texture);
+        level1.draw(&mut d, &texture_handler.get("tree"));
         for spirit in spirits.values() {
             spirit.draw(&mut d);
         }
