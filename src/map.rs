@@ -31,6 +31,27 @@ impl LevelMap {
     pub fn draw(&self, rl: &mut RaylibDrawHandle, texture_handler: &TextureHandler) {
         for x in 0..LEVEL_WIDTH_TILES {
             for y in 0..LEVEL_HEIGHT_TILES {
+                let source = Rectangle::new(
+                    ((x+y) % 3) as f32 * 16.,
+                    0.,
+                    16.,
+                    16.,
+                );
+
+                rl.draw_texture_pro(
+                    texture_handler.get_safe("grass"),
+                    source,
+                    Rectangle::new(
+                        (x as i32 * TILE_SIZE) as f32,
+                        (y as i32 * TILE_SIZE) as f32,
+                        TILE_SIZE as f32,
+                        TILE_SIZE as f32,
+                    ),
+                    Vector2::zero(),
+                    0.0,
+                    Color::WHITE,
+                );
+
                 match self.tiles[x][y] {
                     TileType::FireStop { active } => {
                         let source = if active {

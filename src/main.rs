@@ -69,7 +69,6 @@ fn main() {
 
     while !rl.window_should_close() {
         // update stuff
-        // player.update_position(&level1, &mut rl);
 
         // this is such a cool function fr fr tbh lowkey
         spirits.retain(|_, spirit| !spirit.get_dead());
@@ -88,8 +87,6 @@ fn main() {
 
         d.clear_background(Color::from_hex("0b8a8f").unwrap());
 
-        // player.draw(&mut d);
-        // player.draw_line(&mut d);
         level1.draw(&mut d, &texture_handler);
         for spirit in spirits.values() {
             spirit.draw(&mut d, &texture_handler);
