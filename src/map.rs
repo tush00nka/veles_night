@@ -12,6 +12,9 @@ pub const TILE_SIZE: i32 = TILE_SIZE_PX * TILE_SCALE;
 pub enum TileType {
     Air,
     Fire,
+    FireTD(bool),
+    FireLR(bool),
+    FireStop(bool),
     Tree,
 }
 
@@ -30,21 +33,30 @@ impl LevelMap {
         for x in 0..LEVEL_WIDTH_TILES {
             for y in 0..LEVEL_HEIGHT_TILES {
                 match self.tiles[x][y] {
-                    TileType::Air => {}
-                    TileType::Fire => {
-                        rl.draw_circle(
-                            x as i32 * TILE_SIZE + TILE_SIZE / 2,
-                            y as i32 * TILE_SIZE + TILE_SIZE / 2,
-                            (TILE_SIZE * 3) as f32
-                                + TILE_SIZE as f32 / 8. * (rl.get_time() * 2.).sin() as f32,
-                            Color::ORANGE.alpha(0.25),
-                        );
-                        rl.draw_rectangle(
-                            x as i32 * TILE_SIZE,
-                            y as i32 * TILE_SIZE,
-                            TILE_SIZE,
-                            TILE_SIZE,
-                            Color::ORANGERED,
+                    TileType::FireStop(active) => {
+                        let source = if active {
+                            Rectangle::new(
+                                ((rl.get_time() * 4.) % 4.).floor() as f32 * 16.,
+                                16.,
+                                16.,
+                                16.,
+                            )
+                        } else {
+                            Rectangle::new(0., 0., 16., 16.)
+                        };
+
+                        rl.draw_texture_pro(
+                            texture_handler.get_safe("fire_stop"),
+                            source,
+                            Rectangle::new(
+                                (x as i32 * TILE_SIZE) as f32,
+                                (y as i32 * TILE_SIZE) as f32,
+                                TILE_SIZE as f32,
+                                TILE_SIZE as f32,
+                            ),
+                            Vector2::zero(),
+                            0.0,
+                            Color::WHITE,
                         );
                     }
                     TileType::Tree => {
@@ -61,14 +73,60 @@ impl LevelMap {
                             0.0,
                             Color::WHITE,
                         );
-                        // rl.draw_rectangle(
-                        //     x as i32 * TILE_SIZE,
-                        //     y as i32 * TILE_SIZE,
-                        //     TILE_SIZE,
-                        //     TILE_SIZE,
-                        //     Color::DARKGREEN,
-                        // );
                     }
+                    TileType::FireTD(active) => {
+                        let source = if active {
+                            Rectangle::new(
+                                ((rl.get_time() * 4.) % 4.).floor() as f32 * 16.,
+                                16.,
+                                16.,
+                                16.,
+                            )
+                        } else {
+                            Rectangle::new(0., 0., 16., 16.)
+                        };
+
+                        rl.draw_texture_pro(
+                            texture_handler.get_safe("fire_td"),
+                            source,
+                            Rectangle::new(
+                                (x as i32 * TILE_SIZE) as f32,
+                                (y as i32 * TILE_SIZE) as f32,
+                                TILE_SIZE as f32,
+                                TILE_SIZE as f32,
+                            ),
+                            Vector2::zero(),
+                            0.0,
+                            Color::WHITE,
+                        );
+                    }
+                    TileType::FireLR(active) => {
+                        let source = if active {
+                            Rectangle::new(
+                                ((rl.get_time() * 4.) % 4.).floor() as f32 * 16.,
+                                16.,
+                                16.,
+                                16.,
+                            )
+                        } else {
+                            Rectangle::new(0., 0., 16., 16.)
+                        };
+
+                        rl.draw_texture_pro(
+                            texture_handler.get_safe("fire_lr"),
+                            source,
+                            Rectangle::new(
+                                (x as i32 * TILE_SIZE) as f32,
+                                (y as i32 * TILE_SIZE) as f32,
+                                TILE_SIZE as f32,
+                                TILE_SIZE as f32,
+                            ),
+                            Vector2::zero(),
+                            0.0,
+                            Color::WHITE,
+                        );
+                    }
+                    _ => {}
                 }
             }
         }

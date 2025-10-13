@@ -1,6 +1,10 @@
 use raylib::prelude::*;
 
-use crate::{map::{LevelMap, TileType, LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, TILE_SIZE}, order::OrderHandler};
+use crate::{
+    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, LevelMap, TILE_SIZE, TileType},
+    order::OrderHandler,
+    texture_handler::TextureHandler,
+};
 
 const SPIRIT_SPEED: f32 = 2.;
 
@@ -11,6 +15,7 @@ pub enum SpiritState {
 
 pub struct Spirit {
     position: Vector2,
+    draw_position: Vector2,
     direction: Vector2,
     state: SpiritState,
     dead: bool,
@@ -20,6 +25,7 @@ impl Spirit {
     pub fn new(pos: Vector2) -> Self {
         Self {
             position: pos,
+            draw_position: pos,
             direction: Vector2::new(1., 0.),
             state: SpiritState::Patrol,
             dead: false,
@@ -27,7 +33,7 @@ impl Spirit {
     }
 
     pub fn get_position(&self) -> Vector2 {
-        self.position + Vector2::one() * (TILE_SIZE / 2) as f32
+        self.position //+ Vector2::one() * (TILE_SIZE / 2) as f32
     }
 
     pub fn get_dead(&self) -> bool {
@@ -38,39 +44,92 @@ impl Spirit {
         self.state = state;
     }
 
-    pub fn update_behaviour(&mut self, level: &mut LevelMap, order_handler: &mut OrderHandler, rl: &RaylibHandle) {
+    pub fn update_behaviour(
+        &mut self,
+        level: &mut LevelMap,
+        order_handler: &mut OrderHandler,
+        rl: &RaylibHandle,
+    ) {
         match self.state {
             SpiritState::Patrol => self.patrol(level),
             SpiritState::ChopTree(x, y) => self.chop_tree(x, y, level, order_handler, rl),
         }
     }
 
-    fn patrol(&mut self, level: &LevelMap) {
-        let (tile_x, tile_y) = (
-            (self.position.x / TILE_SIZE as f32).floor() as usize,
-            (self.position.y / TILE_SIZE as f32).floor() as usize,
-        );
-
-        let (dir_x, dir_y) = (self.direction.x as usize, self.direction.y as usize);
-
-        let (next_x, next_y) = (tile_x + dir_x, tile_y + dir_y);
-
-        if next_x >= LEVEL_WIDTH_TILES - 1
-            || next_y >= LEVEL_HEIGHT_TILES - 1
-            || next_x <= 0
-            || next_y <= 0
-        {
-            self.direction *= -1.;
-        }
-
-        if level.tiles[next_x][next_y] == TileType::Tree {
-            self.direction *= -1.;
-        }
-
-        self.position += self.direction * SPIRIT_SPEED;
+    pub fn update_position_smoothly(&mut self, rl: &mut RaylibHandle) {
+        self.draw_position = self.draw_position.lerp(self.position, SPIRIT_SPEED * rl.get_frame_time());
     }
 
-    fn chop_tree(&mut self, x: usize, y: usize, level: &mut LevelMap, order_handler: &mut OrderHandler, rl: &RaylibHandle) {
+    fn patrol(&mut self, level: &LevelMap) {
+        let (tile_x, tile_y) = (
+            (self.get_position().x / TILE_SIZE as f32).floor() as usize,
+            (self.get_position().y / TILE_SIZE as f32).floor() as usize,
+        );
+
+        let next = self.get_position() + self.direction * TILE_SIZE as f32;
+
+        let (next_x, next_y) = (
+            (next.x / TILE_SIZE as f32).round() as usize,
+            (next.y / TILE_SIZE as f32).round() as usize,
+        );
+
+        // let (next_x, next_y) = (tile_x + dir_x, tile_y + dir_y);
+
+        if tile_x>= LEVEL_WIDTH_TILES - 1
+            || tile_y >= LEVEL_HEIGHT_TILES - 1
+            || tile_x <= 1
+            || tile_y <= 1
+        {
+            self.dead = true;
+        }
+
+        // step on tile to activate
+        match level.tiles[tile_x][tile_y] {
+            TileType::FireTD(active) => {
+                if active && self.direction.y == 0. {
+                    self.direction = Vector2::new(0., 1.);
+                    return
+                }
+            }
+            TileType::FireLR(active) => {
+                if active && self.direction.x == 0. {
+                    self.direction = Vector2::new(1., 0.);
+                    return
+                }
+            }
+            _ => {}
+        }
+
+        // activate before tile
+        match level.tiles[next_x][next_y] {
+            TileType::Tree => {
+                self.direction *= -1.;
+                return
+            }
+            TileType::FireStop(active) => {
+                if active {
+                    self.direction *= -1.;
+                    return
+                }
+            }
+            _ => {}
+        }
+
+        // if level.tiles[next_x][next_y] == TileType::Tree {
+        //     self.direction *= -1.;
+        // }
+
+        self.position = next;
+    }
+
+    fn chop_tree(
+        &mut self,
+        x: usize,
+        y: usize,
+        level: &mut LevelMap,
+        order_handler: &mut OrderHandler,
+        rl: &RaylibHandle,
+    ) {
         if level.tiles[x][y] != TileType::Tree {
             self.state = SpiritState::Patrol;
             return;
@@ -89,11 +148,54 @@ impl Spirit {
             .lerp(target, SPIRIT_SPEED * rl.get_frame_time())
     }
 
-    pub fn draw(&self, rl: &mut RaylibDrawHandle) {
-        rl.draw_circle_v(
-            self.position + Vector2::new(TILE_SIZE as f32 / 2., TILE_SIZE as f32 / 2.),
-            (TILE_SIZE / 2) as f32,
-            Color::LIGHTBLUE.alpha(0.75),
+    pub fn draw(&self, rl: &mut RaylibDrawHandle, texture_handler: &TextureHandler) {
+        // rl.draw_circle_v(
+        //     self.position + Vector2::new(TILE_SIZE as f32 / 2., TILE_SIZE as f32 / 2.),
+        //     (TILE_SIZE / 2) as f32,
+        //     Color::LIGHTBLUE.alpha(0.75),
+        // );
+
+        let source = Rectangle::new(
+            ((rl.get_time() * 4.) % 2.).floor() as f32 * 16.,
+            16.,
+            16.,
+            16.,
         );
+
+        rl.draw_texture_pro(
+            texture_handler.get_safe("spirit"),
+            source,
+            Rectangle::new(
+                self.draw_position.x,
+                self.draw_position.y,
+                TILE_SIZE as f32,
+                TILE_SIZE as f32,
+            ),
+            Vector2::zero(),
+            0.0,
+            Color::WHITE,
+        );
+
+        // let (x, y) = (
+        //     (self.get_position().x / TILE_SIZE as f32).floor(),
+        //     (self.get_position().y / TILE_SIZE as f32).floor(),
+        // );
+
+        // rl.draw_rectangle_lines(
+        //     x as i32 * TILE_SIZE,
+        //     y as i32 * TILE_SIZE,
+        //     TILE_SIZE,
+        //     TILE_SIZE,
+        //     Color::WHITE,
+        // );
+
+        // let (next_x, next_y) = (x + self.direction.x, y + self.direction.y);
+        // rl.draw_rectangle_lines(
+        //     next_x as i32 * TILE_SIZE,
+        //     next_y as i32 * TILE_SIZE,
+        //     TILE_SIZE,
+        //     TILE_SIZE,
+        //     Color::GRAY,
+        // );
     }
 }
