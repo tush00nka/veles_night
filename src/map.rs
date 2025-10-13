@@ -11,9 +11,9 @@ pub const TILE_SIZE: i32 = TILE_SIZE_PX * TILE_SCALE;
 #[derive(Clone, Copy, PartialEq)]
 pub enum TileType {
     Air,
-    FireTD(bool),
-    FireLR(bool),
-    FireStop(bool),
+    FireTD { active: bool },
+    FireLR { active: bool },
+    FireStop { active: bool },
     Tree,
 }
 
@@ -32,7 +32,7 @@ impl LevelMap {
         for x in 0..LEVEL_WIDTH_TILES {
             for y in 0..LEVEL_HEIGHT_TILES {
                 match self.tiles[x][y] {
-                    TileType::FireStop(active) => {
+                    TileType::FireStop { active } => {
                         let source = if active {
                             Rectangle::new(
                                 ((rl.get_time() * 4.) % 4.).floor() as f32 * 16.,
@@ -73,7 +73,7 @@ impl LevelMap {
                             Color::WHITE,
                         );
                     }
-                    TileType::FireTD(active) => {
+                    TileType::FireTD { active } => {
                         let source = if active {
                             Rectangle::new(
                                 ((rl.get_time() * 4.) % 4.).floor() as f32 * 16.,
@@ -99,7 +99,7 @@ impl LevelMap {
                             Color::WHITE,
                         );
                     }
-                    TileType::FireLR(active) => {
+                    TileType::FireLR { active } => {
                         let source = if active {
                             Rectangle::new(
                                 ((rl.get_time() * 4.) % 4.).floor() as f32 * 16.,

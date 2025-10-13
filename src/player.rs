@@ -76,15 +76,15 @@ impl Player {
         }
 
         if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT) {
-            level.tiles[pos.x as usize][pos.y as usize] = TileType::FireLR(true);
+            level.tiles[pos.x as usize][pos.y as usize] = TileType::FireLR { active: false };
         }
 
         if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_RIGHT) {
-            level.tiles[pos.x as usize][pos.y as usize] = TileType::FireTD(true);
+            level.tiles[pos.x as usize][pos.y as usize] = TileType::FireTD { active: false };
         }
 
         if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_MIDDLE) {
-            level.tiles[pos.x as usize][pos.y as usize] = TileType::FireStop(true);
+            level.tiles[pos.x as usize][pos.y as usize] = TileType::FireStop { active: false };
         }
     }
 

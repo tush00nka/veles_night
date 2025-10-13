@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use raylib::prelude::*;
 
 use crate::{
-    map::{LevelMap, TileType, LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, TILE_SIZE},
+    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, LevelMap, TILE_SIZE, TileType},
     spirit::{Spirit, SpiritState},
 };
 
@@ -18,7 +18,7 @@ impl OrderHandler {
         Self {
             spirit: None,
             line_end: None,
-            wood: 0
+            wood: 0,
         }
     }
 
@@ -50,6 +50,28 @@ impl OrderHandler {
             let tile_pos = mouse_pos / TILE_SIZE as f32;
             let (tile_x, tile_y) = (tile_pos.x.floor() as usize, tile_pos.y.floor() as usize);
 
+            match level.tiles[tile_x][tile_y] {
+                TileType::FireTD { active }
+                | TileType::FireLR { active }
+                | TileType::FireStop { active } => {
+                    if !active {
+                        if let Some(key) = self.spirit {
+                            if let Some(spirit) = spirits.get_mut(&key) {
+                                spirit.set_state(SpiritState::LightFire(tile_x, tile_y));
+                            }
+                        }
+                    }
+                }
+                TileType::Tree => {
+                    if let Some(key) = self.spirit {
+                        if let Some(spirit) = spirits.get_mut(&key) {
+                            spirit.set_state(SpiritState::ChopTree(tile_x, tile_y));
+                        }
+                    }
+                }
+                _ => {}
+            }
+
             if level.tiles[tile_x][tile_y] == TileType::Tree {
                 if let Some(key) = self.spirit {
                     if let Some(spirit) = spirits.get_mut(&key) {
@@ -76,13 +98,23 @@ impl OrderHandler {
         }
 
         if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT) {
-            if level.tiles[tile_x][tile_y] == TileType::Tree {
-                self.line_end = Some(
-                    Vector2::new(tile_x as f32, tile_y as f32) * TILE_SIZE as f32
-                        + Vector2::one() * (TILE_SIZE / 2) as f32,
-                );
-                return;
+            match level.tiles[tile_x][tile_y] {
+                TileType::Air => {}
+                _ => {
+                    self.line_end = Some(
+                        Vector2::new(tile_x as f32, tile_y as f32) * TILE_SIZE as f32
+                            + Vector2::one() * (TILE_SIZE / 2) as f32,
+                    );
+                    return;
+                }
             }
+            // if level.tiles[tile_x][tile_y] == TileType::Tree {
+            //     self.line_end = Some(
+            //         Vector2::new(tile_x as f32, tile_y as f32) * TILE_SIZE as f32
+            //             + Vector2::one() * (TILE_SIZE / 2) as f32,
+            //     );
+            //     return;
+            // }
             self.line_end = Some(mouse_pos);
         } else {
             self.line_end = None;
@@ -102,14 +134,27 @@ impl OrderHandler {
             return;
         };
 
-        rl.draw_line_ex(spirit.get_position() + Vector2::one() * (TILE_SIZE / 2) as f32, line_end, 16.,Color::LIGHTBLUE);
-        rl.draw_circle_v(spirit.get_position() + Vector2::one() * (TILE_SIZE / 2) as f32, 8., Color::LIGHTBLUE);
+        rl.draw_line_ex(
+            spirit.get_position() + Vector2::one() * (TILE_SIZE / 2) as f32,
+            line_end,
+            16.,
+            Color::LIGHTBLUE,
+        );
+        rl.draw_circle_v(
+            spirit.get_position() + Vector2::one() * (TILE_SIZE / 2) as f32,
+            8.,
+            Color::LIGHTBLUE,
+        );
         rl.draw_circle_v(line_end, 8., Color::LIGHTBLUE);
-
-        // rl.draw_line_v(spirit.get_position(), line_end, Color::BLUE);
     }
 
     pub fn draw_ui(&self, rl: &mut RaylibDrawHandle) {
-        rl.draw_text(format!("wood: {}", self.wood).as_str(), 10, 10, 28, Color::BROWN);
+        rl.draw_text(
+            format!("wood: {}", self.wood).as_str(),
+            10,
+            10,
+            28,
+            Color::BROWN,
+        );
     }
 }

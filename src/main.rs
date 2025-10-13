@@ -3,11 +3,11 @@ use std::collections::HashMap;
 use raylib::prelude::*;
 
 use crate::{
-    map::{LevelMap, TILE_SIZE, TileType},
+    map::{LevelMap, TileType, TILE_SIZE},
     order::OrderHandler,
     player::Player,
     spirit::Spirit,
-    texture_handler::TextureHandler,
+    texture_handler::TextureHandler, ui::UIHandler,
 };
 
 // mod light;
@@ -16,6 +16,7 @@ mod order;
 mod player;
 mod spirit;
 mod texture_handler;
+mod ui;
 
 const SCREEN_WIDTH: i32 = 16 * 16 * 4;
 const SCREEN_HEIGHT: i32 = 16 * 9 * 4;
@@ -52,10 +53,9 @@ fn main() {
     let mut spirits: HashMap<usize, Spirit> = HashMap::new();
 
     let mut order_handler = OrderHandler::new();
+    let mut ui_handler = UIHandler::new();
 
-    let mut timer = 0.0;
-
-    for i in 0..1 {
+    for i in 0..9 {
         spirits.insert(
             i,
             Spirit::new(Vector2::new(
@@ -74,7 +74,7 @@ fn main() {
         spirits.retain(|_, spirit| !spirit.get_dead());
 
         for spirit in spirits.values_mut() {
-            spirit.update_behaviour(&mut level1, &mut timer, &mut order_handler, &mut rl);
+            spirit.update_behaviour(&mut level1, &mut order_handler, &mut rl);
         }
 
         order_handler.select_spirit(&mut spirits, &mut level1, &rl);
@@ -93,5 +93,6 @@ fn main() {
         }
         order_handler.draw(&spirits, &mut d);
         order_handler.draw_ui(&mut d);
+        ui_handler.draw(&texture_handler, &mut d);
     }
 }
