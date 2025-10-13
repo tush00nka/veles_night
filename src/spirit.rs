@@ -39,6 +39,10 @@ impl Spirit {
         self.position //+ Vector2::one() * (TILE_SIZE / 2) as f32
     }
 
+    pub fn get_draw_position(&self) -> Vector2 {
+        self.draw_position
+    }
+
     pub fn get_dead(&self) -> bool {
         self.dead
     }
@@ -165,7 +169,6 @@ impl Spirit {
                 | TileType::FireStop { active } => *active = true,
                 _ => { panic!("no such tile bruh") }
             }
-            order_handler.remove_wood();
             self.dead = true;
         }
 

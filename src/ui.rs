@@ -2,10 +2,19 @@ use std::collections::HashMap;
 
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
-use crate::{SCREEN_WIDTH, texture_handler::TextureHandler};
+use crate::{
+    SCREEN_WIDTH,
+    map::{LevelMap, TILE_SIZE, TileType},
+    texture_handler::TextureHandler,
+};
+
+struct Button {
+    rect: Rectangle,
+    selected: bool,
+}
 
 pub struct UIHandler {
-    build_buttons: HashMap<String, Rectangle>,
+    build_buttons: HashMap<String, Button>,
 }
 
 impl UIHandler {
@@ -17,12 +26,15 @@ impl UIHandler {
         for i in 0..3 {
             buttons.insert(
                 labels[i].to_string(),
-                Rectangle::new(
-                    i as f32 * 80. + (SCREEN_WIDTH / 2) as f32 - 40. * 3., // todo: pohui
-                    16.,
-                    64.,
-                    64.,
-                ),
+                Button {
+                    rect: Rectangle::new(
+                        i as f32 * 80. + (SCREEN_WIDTH / 2) as f32 - 40. * 3., // todo: pohui
+                        16.,
+                        64.,
+                        64.,
+                    ),
+                    selected: false,
+                },
             );
         }
 
@@ -31,30 +43,84 @@ impl UIHandler {
         }
     }
 
+    pub fn build(&mut self, level: &mut LevelMap, rl: &mut RaylibHandle) {
+        for (title, button) in self.build_buttons.iter_mut() {
+            if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
+                if unsafe {
+                    CheckCollisionPointRec(rl.get_mouse_position().into(), button.rect.into())
+                } {
+                    button.selected = true;
+                }
+            }
+
+            if rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT) {
+                if button.selected {
+                    let tile = match title.as_str() {
+                        "fire_td" => TileType::FireTD { active: false },
+                        "fire_lr" => TileType::FireLR { active: false },
+                        "fire_stop" => TileType::FireStop { active: false },
+                        _ => {
+                            panic!("wait how")
+                        }
+                    };
+
+                    let pos = rl.get_mouse_position() / (Vector2::one() * TILE_SIZE as f32);
+                    let (x, y) = (pos.x as usize, pos.y as usize);
+
+                    level.tiles[x][y] = tile;
+                }
+
+                button.selected = false;
+            }
+        }
+    }
+
     pub fn draw(&self, texture_handler: &TextureHandler, rl: &mut RaylibDrawHandle) {
         for (tex_name, button) in self.build_buttons.iter() {
-            let color =
-                if unsafe { CheckCollisionPointRec(rl.get_mouse_position().into(), button.into()) }
-                {
-                    Color::WHITE
-                } else {
-                    Color::BLACK.alpha(0.5)
-                };
+            let color = if unsafe {
+                CheckCollisionPointRec(rl.get_mouse_position().into(), button.rect.into())
+            } {
+                Color::WHITE
+            } else {
+                Color::BLACK.alpha(0.5)
+            };
 
-            rl.draw_rectangle_rec(button, color);
-            rl.draw_texture_pro(
-                texture_handler.get_safe(tex_name),
-                Rectangle::new(
-                    ((rl.get_time() * 4.) % 4.).floor() as f32 * 16.,
-                    16.,
-                    16.,
-                    16.,
-                ),
-                button,
-                Vector2::zero(),
-                0.0,
-                Color::WHITE,
-            );
+            rl.draw_rectangle_rec(button.rect, color);
+
+            if !button.selected {
+                rl.draw_texture_pro(
+                    texture_handler.get_safe(tex_name),
+                    Rectangle::new(
+                        ((rl.get_time() * 4.) % 4.).floor() as f32 * 16.,
+                        16.,
+                        16.,
+                        16.,
+                    ),
+                    button.rect,
+                    Vector2::zero(),
+                    0.0,
+                    Color::WHITE,
+                );
+            } else {
+                rl.draw_texture_pro(
+                    texture_handler.get_safe(tex_name),
+                    Rectangle::new(
+                        ((rl.get_time() * 4.) % 4.).floor() as f32 * 16.,
+                        16.,
+                        16.,
+                        16.,
+                    ),
+                    Rectangle::new(
+                        rl.get_mouse_position().x - (TILE_SIZE / 2) as f32,
+                        rl.get_mouse_position().y - (TILE_SIZE / 2) as f32,
+                        TILE_SIZE as f32,
+                        TILE_SIZE as f32,
+                    ),
+                    Vector2::zero(),
+                    0.0,
+                    Color::WHITE,
+                );
+            }
         }
     }
 }

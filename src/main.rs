@@ -50,6 +50,12 @@ fn main() {
     level1.tiles[10][5] = TileType::Tree;
     level1.tiles[10][6] = TileType::Tree;
 
+    level1.tiles[1][2] = TileType::Tree;
+    level1.tiles[1][3] = TileType::Tree;
+    level1.tiles[1][4] = TileType::Tree;
+    level1.tiles[1][5] = TileType::Tree;
+    level1.tiles[1][6] = TileType::Tree;
+
     let mut spirits: HashMap<usize, Spirit> = HashMap::new();
 
     let mut order_handler = OrderHandler::new();
@@ -79,6 +85,8 @@ fn main() {
 
         order_handler.select_spirit(&mut spirits, &mut level1, &rl);
         order_handler.update_line(&level1, &rl);
+
+        ui_handler.build(&mut level1, &mut rl);
 
         // draw stuff
         let mut d = rl.begin_drawing(&thread);

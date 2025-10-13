@@ -135,13 +135,13 @@ impl OrderHandler {
         };
 
         rl.draw_line_ex(
-            spirit.get_position() + Vector2::one() * (TILE_SIZE / 2) as f32,
+            spirit.get_draw_position() + Vector2::one() * (TILE_SIZE / 2) as f32,
             line_end,
             16.,
             Color::LIGHTBLUE,
         );
         rl.draw_circle_v(
-            spirit.get_position() + Vector2::one() * (TILE_SIZE / 2) as f32,
+            spirit.get_draw_position() + Vector2::one() * (TILE_SIZE / 2) as f32,
             8.,
             Color::LIGHTBLUE,
         );
