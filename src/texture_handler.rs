@@ -4,7 +4,9 @@ use raylib::prelude::*;
 
 pub struct TextureHandler{
     textures: HashMap<String, Texture2D>,
+    default_texture: Texture2D
 }
+const DEFAULT_TEXTURE: &str = "static/textures/tree.png";
 
 impl TextureHandler{
     pub fn new(rl: &mut RaylibHandle, thread: &RaylibThread) -> Self{
@@ -33,7 +35,8 @@ impl TextureHandler{
             textures.insert(name, texture);
         }
 
-        Self {textures}
+        let default_texture = rl.load_texture(&thread, DEFAULT_TEXTURE).unwrap();
+        Self {textures, default_texture}
     }
     pub fn get_mut(&mut self, str: &str) -> &mut Texture2D {
         return self.textures.get_mut(str).unwrap();   
@@ -46,7 +49,10 @@ impl TextureHandler{
     pub fn get_mut_safe(&mut self, str: &str) -> &mut Texture2D{
         let texture = match self.textures.get_mut(str){
             Some(f) => f,
-            _ => panic!("Couldn't get this texture - {str}")
+            _ => {
+                println!("COULDN'T LOAD PROPER TEXTURE! USING DEFAULT - {DEFAULT_TEXTURE}");
+                &mut self.default_texture
+            }
         };
         return texture;
     }
@@ -54,7 +60,10 @@ impl TextureHandler{
     pub fn get_safe(&self, str: &str) -> &Texture2D{
         let texture = match self.textures.get(str){
             Some(f) => f,
-            _ => panic!("Couldn't get this texture - {str}")
+            _ => {
+                println!("COULDN'T LOAD PROPER TEXTURE! USING DEFAULT - {DEFAULT_TEXTURE}");
+                &self.default_texture
+            }
         };
         return texture;
     }
