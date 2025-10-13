@@ -1,5 +1,7 @@
 use raylib::{color::Color, prelude::*};
 
+use crate::texture_handler::TextureHandler;
+
 pub const LEVEL_WIDTH_TILES: usize = 16;
 pub const LEVEL_HEIGHT_TILES: usize = 9;
 const TILE_SIZE_PX: i32 = 16;
@@ -24,7 +26,7 @@ impl LevelMap {
         }
     }
 
-    pub fn draw(&self, rl: &mut RaylibDrawHandle, tree_texture: &Texture2D) {
+    pub fn draw(&self, rl: &mut RaylibDrawHandle, texture_handler: &TextureHandler) {
         for x in 0..LEVEL_WIDTH_TILES {
             for y in 0..LEVEL_HEIGHT_TILES {
                 match self.tiles[x][y] {
@@ -47,7 +49,7 @@ impl LevelMap {
                     }
                     TileType::Tree => {
                         rl.draw_texture_pro(
-                            &tree_texture,
+                            texture_handler.get_safe("tree"),
                             Rectangle::new(0., 0., 16., 16.),
                             Rectangle::new(
                                 (x as i32 * TILE_SIZE) as f32,

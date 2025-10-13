@@ -85,7 +85,7 @@ fn main() {
 
         player.draw(&mut d);
         // player.draw_line(&mut d);
-        level1.draw(&mut d, &texture_handler.get("tree"));
+        level1.draw(&mut d, &texture_handler);
         for spirit in spirits.values() {
             spirit.draw(&mut d);
         }
