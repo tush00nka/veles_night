@@ -1,0 +1,16 @@
+{
+    "percent": 0.5,
+    "map_size": [6,4],
+    "spirits": [
+        {
+            "position": [1,1],
+            "amount": 4,
+            "direction": [0,1]
+        },
+        {
+            "position": [1,2],
+            "amount": 4,
+            "direction": [1, 0]
+        }
+    ]
+}

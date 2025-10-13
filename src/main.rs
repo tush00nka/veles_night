@@ -3,19 +3,17 @@ use std::collections::HashMap;
 use raylib::prelude::*;
 
 use crate::{
-    map::{LevelMap, TILE_SIZE, TileType},
-    order::OrderHandler,
-    player::Player,
-    spirit::Spirit,
-    texture_handler::TextureHandler,
+    map::{LevelMap, TileType, TILE_SIZE}, map_loader::MapLoader, order::OrderHandler, player::Player, spirit::Spirit, texture_handler::TextureHandler
 };
 
+mod map_loader;
 mod light;
 mod map;
 mod order;
 mod player;
 mod spirit;
 mod texture_handler;
+mod metadata_handler;
 
 const SCREEN_WIDTH: i32 = 1280;
 const SCREEN_HEIGHT: i32 = 720;
@@ -28,14 +26,19 @@ fn main() {
         .build();
 
     rl.set_target_fps(60);
-
+    
     let texture_handler = TextureHandler::new(&mut rl, &thread);
     //there're safe variants - get_safe/get_mut_safe
     //also common ones - get and get_mut
     
+    let metadata_handler = metadata_handler::MetadataHandler::new(1);
+
     let mut player = Player::new();
 
     let mut level1 = LevelMap::new();
+       
+    MapLoader::get_map(1, &mut level1, metadata_handler);
+/*
     // todo: remove this hardcoded mess
     level1.tiles[2][2] = TileType::Tree;
     level1.tiles[3][2] = TileType::Tree;
@@ -48,7 +51,7 @@ fn main() {
     level1.tiles[10][4] = TileType::Tree;
     level1.tiles[10][5] = TileType::Tree;
     level1.tiles[10][6] = TileType::Tree;
-
+*/
     let mut spirits: HashMap<usize, Spirit> = HashMap::new();
 
     let mut order_handler = OrderHandler::new();
