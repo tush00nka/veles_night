@@ -6,13 +6,14 @@ pub struct TextureHandler{
     textures: HashMap<String, Texture2D>,
     default_texture: Texture2D
 }
+const TEXTURE_FOLDER: &str = "static/textures/";
 const DEFAULT_TEXTURE: &str = "static/textures/tree.png";
 
 impl TextureHandler{
     pub fn new(rl: &mut RaylibHandle, thread: &RaylibThread) -> Self{
         let mut textures = HashMap::new();
 
-        let filenames = fs::read_dir("static/textures/").unwrap();
+        let filenames = fs::read_dir(TEXTURE_FOLDER).unwrap();
 
         for filename in filenames{
             let file = match filename{

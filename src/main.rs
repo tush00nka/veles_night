@@ -10,11 +10,15 @@ use crate::{
 };
 
 // mod light;
+
+mod map_loader;
+mod light;
 mod map;
 mod order;
 mod spirit;
 mod texture_handler;
 mod ui;
+mod metadata_handler;
 
 const SCREEN_WIDTH: i32 = 16 * 16 * 4;
 const SCREEN_HEIGHT: i32 = 16 * 9 * 4;
@@ -27,30 +31,16 @@ fn main() {
         .build();
 
     rl.set_target_fps(60);
-
+    
     let texture_handler = TextureHandler::new(&mut rl, &thread);
     //there're safe variants - get_safe/get_mut_safe
     //also common ones - get and get_mut
+    
+    let metadata_handler = metadata_handler::MetadataHandler::new(1);
 
     let mut level1 = LevelMap::new();
-    // todo: remove this hardcoded mess
-    level1.tiles[2][2] = TileType::Tree;
-    level1.tiles[3][2] = TileType::Tree;
-    level1.tiles[4][2] = TileType::Tree;
-    level1.tiles[5][2] = TileType::Tree;
-    // level1.tiles[6][2] = TileType::Tree;
-
-    level1.tiles[10][2] = TileType::Tree;
-    level1.tiles[10][3] = TileType::Tree;
-    level1.tiles[10][4] = TileType::Tree;
-    level1.tiles[10][5] = TileType::Tree;
-    level1.tiles[10][6] = TileType::Tree;
-
-    level1.tiles[1][2] = TileType::Tree;
-    level1.tiles[1][3] = TileType::Tree;
-    level1.tiles[1][4] = TileType::Tree;
-    level1.tiles[1][5] = TileType::Tree;
-    level1.tiles[1][6] = TileType::Tree;
+       
+    map_loader::MapLoader::get_map(1, &mut level1, metadata_handler);
 
     let mut spirits: HashMap<usize, Spirit> = HashMap::new();
 
