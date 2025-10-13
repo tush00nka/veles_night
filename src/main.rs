@@ -10,7 +10,7 @@ use crate::{
     texture_handler::TextureHandler,
 };
 
-mod light;
+// mod light;
 mod map;
 mod order;
 mod player;
@@ -32,7 +32,7 @@ fn main() {
     let texture_handler = TextureHandler::new(&mut rl, &thread);
     //there're safe variants - get_safe/get_mut_safe
     //also common ones - get and get_mut
-    
+
     let mut player = Player::new();
 
     let mut level1 = LevelMap::new();
@@ -53,7 +53,9 @@ fn main() {
 
     let mut order_handler = OrderHandler::new();
 
-    for i in 0..9 {
+    let mut timer = 0.0;
+
+    for i in 0..1 {
         spirits.insert(
             i,
             Spirit::new(Vector2::new(
@@ -65,14 +67,22 @@ fn main() {
 
     while !rl.window_should_close() {
         // update stuff
-        player.update_position(&level1, &mut rl);
+        // player.update_position(&level1, &mut rl);
         player.put_campfire(&mut level1, &mut rl);
 
         // this is such a cool function fr fr tbh lowkey
         spirits.retain(|_, spirit| !spirit.get_dead());
 
-        for spirit in spirits.values_mut() {
-            spirit.update_behaviour(&mut level1, &mut order_handler, &mut rl);
+        if timer >= 0.5 {
+            timer = 0.;
+            for spirit in spirits.values_mut() {
+                spirit.update_behaviour(&mut level1, &mut order_handler, &mut rl);
+            }
+        } else {
+            for spirit in spirits.values_mut() {
+                spirit.update_position_smoothly(&mut rl);
+            }
+            timer += rl.get_frame_time()
         }
 
         order_handler.select_spirit(&mut spirits, &mut level1, &rl);
@@ -81,13 +91,13 @@ fn main() {
         // draw stuff
         let mut d = rl.begin_drawing(&thread);
 
-        d.clear_background(Color::RAYWHITE);
+        d.clear_background(Color::from_hex("0b8a8f").unwrap());
 
-        player.draw(&mut d);
+        // player.draw(&mut d);
         // player.draw_line(&mut d);
         level1.draw(&mut d, &texture_handler);
         for spirit in spirits.values() {
-            spirit.draw(&mut d);
+            spirit.draw(&mut d, &texture_handler);
         }
         order_handler.draw(&spirits, &mut d);
         order_handler.draw_ui(&mut d);

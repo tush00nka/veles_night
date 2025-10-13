@@ -66,13 +66,25 @@ impl Player {
     }
 
     pub fn put_campfire(&self, level: &mut LevelMap, rl: &mut RaylibHandle) {
-        if rl.is_key_pressed(KeyboardKey::KEY_SPACE) {
-            let pos = Vector2::new(
-                (self.position.x / TILE_SIZE as f32).floor(),
-                (self.position.y / TILE_SIZE as f32).floor(),
-            );
+        let pos = Vector2::new(
+            (rl.get_mouse_position().x / TILE_SIZE as f32).floor(),
+            (rl.get_mouse_position().y / TILE_SIZE as f32).floor(),
+        );
 
-            level.tiles[pos.x as usize][pos.y as usize] = TileType::Fire;
+        if rl.is_key_up(KeyboardKey::KEY_LEFT_SHIFT) {
+            return;
+        }
+
+        if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT) {
+            level.tiles[pos.x as usize][pos.y as usize] = TileType::FireLR(true);
+        }
+
+        if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_RIGHT) {
+            level.tiles[pos.x as usize][pos.y as usize] = TileType::FireTD(true);
+        }
+
+        if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_MIDDLE) {
+            level.tiles[pos.x as usize][pos.y as usize] = TileType::FireStop(true);
         }
     }
 
