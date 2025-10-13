@@ -23,12 +23,12 @@ impl MapLoader{
             // debug
             // print!("{tile}");
             match tile{
-                '#' => level_map.tiles[x][y] = map::TileType::Tree,
-                '.' => (), 
-                '\n' => (),
+                '#' => {level_map.tiles[x][y] = map::TileType::Tree;},
+                '.' => (),
+                '\n' => continue,
                 other =>{panic!("NOT DEFINED CHARACTER TO LOAD -{other}")}
             };
-            
+
             x += 1;
             y += x / metadata_handler.level_metadata.map_size[0] as usize;
             x %= metadata_handler.level_metadata.map_size[0] as usize;
