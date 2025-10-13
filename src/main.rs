@@ -17,8 +17,8 @@ mod player;
 mod spirit;
 mod texture_handler;
 
-const SCREEN_WIDTH: i32 = 1280;
-const SCREEN_HEIGHT: i32 = 720;
+const SCREEN_WIDTH: i32 = 16 * 16 * 4;
+const SCREEN_HEIGHT: i32 = 16 * 9 * 4;
 
 fn main() {
     let (mut rl, thread) = raylib::init()
@@ -73,16 +73,8 @@ fn main() {
         // this is such a cool function fr fr tbh lowkey
         spirits.retain(|_, spirit| !spirit.get_dead());
 
-        if timer >= 0.5 {
-            timer = 0.;
-            for spirit in spirits.values_mut() {
-                spirit.update_behaviour(&mut level1, &mut order_handler, &mut rl);
-            }
-        } else {
-            for spirit in spirits.values_mut() {
-                spirit.update_position_smoothly(&mut rl);
-            }
-            timer += rl.get_frame_time()
+        for spirit in spirits.values_mut() {
+            spirit.update_behaviour(&mut level1, &mut timer, &mut order_handler, &mut rl);
         }
 
         order_handler.select_spirit(&mut spirits, &mut level1, &rl);

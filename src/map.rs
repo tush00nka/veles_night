@@ -11,7 +11,6 @@ pub const TILE_SIZE: i32 = TILE_SIZE_PX * TILE_SCALE;
 #[derive(Clone, Copy, PartialEq)]
 pub enum TileType {
     Air,
-    Fire,
     FireTD(bool),
     FireLR(bool),
     FireStop(bool),

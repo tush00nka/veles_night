@@ -6,7 +6,7 @@ use crate::{
     texture_handler::TextureHandler,
 };
 
-const SPIRIT_SPEED: f32 = 2.;
+const SPIRIT_SPEED: f32 = 5.;
 
 pub enum SpiritState {
     Patrol,
@@ -47,17 +47,28 @@ impl Spirit {
     pub fn update_behaviour(
         &mut self,
         level: &mut LevelMap,
+        timer: &mut f32,
         order_handler: &mut OrderHandler,
-        rl: &RaylibHandle,
+        rl: &mut RaylibHandle,
     ) {
         match self.state {
-            SpiritState::Patrol => self.patrol(level),
+            SpiritState::Patrol => {
+                if *timer >= 0.5 {
+                    self.patrol(level);
+                    *timer = 0.0;
+                } else {
+                    *timer += rl.get_frame_time();
+                    self.update_position_smoothly(rl);
+                }
+            }
             SpiritState::ChopTree(x, y) => self.chop_tree(x, y, level, order_handler, rl),
         }
     }
 
     pub fn update_position_smoothly(&mut self, rl: &mut RaylibHandle) {
-        self.draw_position = self.draw_position.lerp(self.position, SPIRIT_SPEED * rl.get_frame_time());
+        self.draw_position = self
+            .draw_position
+            .lerp(self.position, SPIRIT_SPEED * rl.get_frame_time());
     }
 
     fn patrol(&mut self, level: &LevelMap) {
@@ -75,12 +86,13 @@ impl Spirit {
 
         // let (next_x, next_y) = (tile_x + dir_x, tile_y + dir_y);
 
-        if tile_x>= LEVEL_WIDTH_TILES - 1
+        if tile_x >= LEVEL_WIDTH_TILES - 1
             || tile_y >= LEVEL_HEIGHT_TILES - 1
-            || tile_x <= 1
-            || tile_y <= 1
+            || tile_x <= 0
+            || tile_y <= 0
         {
             self.dead = true;
+            return;
         }
 
         // step on tile to activate
@@ -88,13 +100,13 @@ impl Spirit {
             TileType::FireTD(active) => {
                 if active && self.direction.y == 0. {
                     self.direction = Vector2::new(0., 1.);
-                    return
+                    return;
                 }
             }
             TileType::FireLR(active) => {
                 if active && self.direction.x == 0. {
                     self.direction = Vector2::new(1., 0.);
-                    return
+                    return;
                 }
             }
             _ => {}
@@ -104,12 +116,12 @@ impl Spirit {
         match level.tiles[next_x][next_y] {
             TileType::Tree => {
                 self.direction *= -1.;
-                return
+                return;
             }
             TileType::FireStop(active) => {
                 if active {
                     self.direction *= -1.;
-                    return
+                    return;
                 }
             }
             _ => {}
@@ -145,7 +157,9 @@ impl Spirit {
 
         self.position = self
             .position
-            .lerp(target, SPIRIT_SPEED * rl.get_frame_time())
+            .lerp(target, SPIRIT_SPEED * rl.get_frame_time());
+
+        self.draw_position = self.position;
     }
 
     pub fn draw(&self, rl: &mut RaylibDrawHandle, texture_handler: &TextureHandler) {
