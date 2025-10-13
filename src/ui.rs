@@ -3,9 +3,7 @@ use std::collections::HashMap;
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
 use crate::{
-    SCREEN_WIDTH,
-    map::{LevelMap, TILE_SIZE, TileType},
-    texture_handler::TextureHandler,
+    map::{LevelMap, TileType, TILE_SIZE}, order::{self, OrderHandler}, texture_handler::TextureHandler, SCREEN_WIDTH
 };
 
 struct Button {
@@ -43,7 +41,7 @@ impl UIHandler {
         }
     }
 
-    pub fn build(&mut self, level: &mut LevelMap, rl: &mut RaylibHandle) {
+    pub fn build(&mut self, order_handler: &mut OrderHandler, level: &mut LevelMap, rl: &mut RaylibHandle) {
         for (title, button) in self.build_buttons.iter_mut() {
             if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
                 if unsafe {
@@ -54,7 +52,7 @@ impl UIHandler {
             }
 
             if rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT) {
-                if button.selected {
+                if button.selected && order_handler.get_wood() > 0 {
                     let tile = match title.as_str() {
                         "fire_td" => TileType::FireTD { active: false },
                         "fire_lr" => TileType::FireLR { active: false },
@@ -68,6 +66,7 @@ impl UIHandler {
                     let (x, y) = (pos.x as usize, pos.y as usize);
 
                     level.tiles[x][y] = tile;
+                    order_handler.remove_wood();
                 }
 
                 button.selected = false;

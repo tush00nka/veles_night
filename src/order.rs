@@ -22,6 +22,10 @@ impl OrderHandler {
         }
     }
 
+    pub fn get_wood(&self) -> usize {
+        self.wood
+    }
+
     pub fn add_wood(&mut self) {
         self.wood += 1;
     }

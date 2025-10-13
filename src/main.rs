@@ -5,7 +5,6 @@ use raylib::prelude::*;
 use crate::{
     map::{LevelMap, TileType, TILE_SIZE},
     order::OrderHandler,
-    player::Player,
     spirit::Spirit,
     texture_handler::TextureHandler, ui::UIHandler,
 };
@@ -13,7 +12,6 @@ use crate::{
 // mod light;
 mod map;
 mod order;
-mod player;
 mod spirit;
 mod texture_handler;
 mod ui;
@@ -33,8 +31,6 @@ fn main() {
     let texture_handler = TextureHandler::new(&mut rl, &thread);
     //there're safe variants - get_safe/get_mut_safe
     //also common ones - get and get_mut
-
-    let mut player = Player::new();
 
     let mut level1 = LevelMap::new();
     // todo: remove this hardcoded mess
@@ -61,11 +57,11 @@ fn main() {
     let mut order_handler = OrderHandler::new();
     let mut ui_handler = UIHandler::new();
 
-    for i in 0..9 {
+    for i in 0..3 {
         spirits.insert(
             i,
             Spirit::new(Vector2::new(
-                (7. + (i % 3) as f32) * TILE_SIZE as f32 - i as f32 * 10.,
+                i as f32 * TILE_SIZE as f32 + 6. * TILE_SIZE as f32,
                 2. * TILE_SIZE as f32,
             )),
         );
@@ -74,7 +70,6 @@ fn main() {
     while !rl.window_should_close() {
         // update stuff
         // player.update_position(&level1, &mut rl);
-        player.put_campfire(&mut level1, &mut rl);
 
         // this is such a cool function fr fr tbh lowkey
         spirits.retain(|_, spirit| !spirit.get_dead());
@@ -86,7 +81,7 @@ fn main() {
         order_handler.select_spirit(&mut spirits, &mut level1, &rl);
         order_handler.update_line(&level1, &rl);
 
-        ui_handler.build(&mut level1, &mut rl);
+        ui_handler.build(&mut order_handler, &mut level1, &mut rl);
 
         // draw stuff
         let mut d = rl.begin_drawing(&thread);

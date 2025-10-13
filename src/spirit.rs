@@ -68,7 +68,7 @@ impl Spirit {
                 }
             }
             SpiritState::ChopTree(x, y) => self.chop_tree(x, y, level, order_handler, rl),
-            SpiritState::LightFire(x, y) => self.light_fire(x, y, level, order_handler, rl),
+            SpiritState::LightFire(x, y) => self.light_fire(x, y, level, rl),
         }
     }
 
@@ -141,7 +141,6 @@ impl Spirit {
         x: usize,
         y: usize,
         level: &mut LevelMap,
-        order_handler: &mut OrderHandler,
         rl: &RaylibHandle,
     ) {
         match level.tiles[x][y] {
