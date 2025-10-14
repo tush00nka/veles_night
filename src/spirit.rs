@@ -117,7 +117,7 @@ impl Spirit {
                     return;
                 }
             }
-            TileType::Exit => {
+            TileType::Exit(_) => {
                 self.dead = true; //todo: survive actually
                 println!("survived");
                 return;

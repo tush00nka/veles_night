@@ -22,8 +22,17 @@ impl MapLoader {
                 '#' => {
                     level_map.tiles[x][y] = map::TileType::Tree;
                 }
-                'E' => {
-                    level_map.tiles[x][y] = map::TileType::Exit;
+                '^' => {
+                    level_map.tiles[x][y] = map::TileType::Exit('^');
+                }
+                '<' => {
+                    level_map.tiles[x][y] = map::TileType::Exit('<');
+                }
+                '>' => {
+                    level_map.tiles[x][y] = map::TileType::Exit('>');
+                }
+                'v' => {
+                    level_map.tiles[x][y] = map::TileType::Exit('v');
                 }
                 '.' => {}
                 '\n' => continue,

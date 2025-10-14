@@ -15,7 +15,7 @@ pub enum TileType {
     FireLR { active: bool },
     FireStop { active: bool },
     Tree,
-    Exit,
+    Exit(char),
 }
 
 pub struct LevelMap {
@@ -142,13 +142,31 @@ impl LevelMap {
                             Color::WHITE,
                         );
                     }
-                    TileType::Exit => {
-                        rl.draw_rectangle(
-                            x as i32 * TILE_SIZE,
-                            y as i32 * TILE_SIZE,
-                            TILE_SIZE,
-                            TILE_SIZE,
-                            Color::CHARTREUSE,
+                    TileType::Exit(rotation) => {
+                        let offset = match rotation {
+                            '^' => TILE_SIZE_PX as f32,
+                            'v' => TILE_SIZE_PX as f32 * 3.,
+                            '<' => 0.0,
+                            '>' => TILE_SIZE_PX as f32 * 2.,
+                            _ => {
+                                panic!("impossible exit rotation")
+                            }
+                        };
+
+                        let source = Rectangle::new(offset, 0., 16., 16.);
+
+                        rl.draw_texture_pro(
+                            texture_handler.get_safe("exit"),
+                            source,
+                            Rectangle::new(
+                                (x as i32 * TILE_SIZE) as f32,
+                                (y as i32 * TILE_SIZE) as f32,
+                                TILE_SIZE as f32,
+                                TILE_SIZE as f32,
+                            ),
+                            Vector2::zero(),
+                            0.0,
+                            Color::WHITE,
                         );
                     }
                     _ => {}

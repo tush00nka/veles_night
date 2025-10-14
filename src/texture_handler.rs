@@ -39,23 +39,9 @@ impl TextureHandler{
         let default_texture = rl.load_texture(&thread, DEFAULT_TEXTURE).unwrap();
         Self {textures, default_texture}
     }
-    pub fn get_mut(&mut self, str: &str) -> &mut Texture2D {
-        return self.textures.get_mut(str).unwrap();   
-    }
     
     pub fn get(&self, str: &str) -> &Texture2D{
         return self.textures.get(str).unwrap();
-    }
-    
-    pub fn get_mut_safe(&mut self, str: &str) -> &mut Texture2D{
-        let texture = match self.textures.get_mut(str){
-            Some(f) => f,
-            _ => {
-                println!("COULDN'T LOAD PROPER TEXTURE! USING DEFAULT - {DEFAULT_TEXTURE}");
-                &mut self.default_texture
-            }
-        };
-        return texture;
     }
 
     pub fn get_safe(&self, str: &str) -> &Texture2D{

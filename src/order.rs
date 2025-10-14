@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use raylib::prelude::*;
 
 use crate::{
-    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, LevelMap, TILE_SIZE, TileType},
-    spirit::{Spirit, SpiritState},
+    map::{LevelMap, TileType, LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, TILE_SIZE},
+    spirit::{Spirit, SpiritState}, spirits_handler::{self, SpiritsHandler},
 };
 
 pub struct OrderHandler {
@@ -36,12 +36,12 @@ impl OrderHandler {
 
     pub fn select_spirit(
         &mut self,
-        spirits: &mut HashMap<usize, Spirit>,
+        spirits_handler: &mut SpiritsHandler,
         level: &LevelMap,
         rl: &RaylibHandle,
     ) {
         if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
-            for (key, spirit) in spirits.iter() {
+            for (key, spirit) in spirits_handler.spirits.iter() {
                 if spirit.get_position().distance_to(rl.get_mouse_position()) <= TILE_SIZE as f32 {
                     self.spirit = Some(*key);
                     break;
@@ -60,7 +60,7 @@ impl OrderHandler {
                 | TileType::FireStop { active } => {
                     if !active {
                         if let Some(key) = self.spirit {
-                            if let Some(spirit) = spirits.get_mut(&key) {
+                            if let Some(spirit) = spirits_handler.spirits.get_mut(&key) {
                                 spirit.set_state(SpiritState::LightFire(tile_x, tile_y));
                             }
                         }
@@ -68,7 +68,7 @@ impl OrderHandler {
                 }
                 TileType::Tree => {
                     if let Some(key) = self.spirit {
-                        if let Some(spirit) = spirits.get_mut(&key) {
+                        if let Some(spirit) = spirits_handler.spirits.get_mut(&key) {
                             spirit.set_state(SpiritState::ChopTree(tile_x, tile_y));
                         }
                     }
@@ -78,7 +78,7 @@ impl OrderHandler {
 
             if level.tiles[tile_x][tile_y] == TileType::Tree {
                 if let Some(key) = self.spirit {
-                    if let Some(spirit) = spirits.get_mut(&key) {
+                    if let Some(spirit) = spirits_handler.spirits.get_mut(&key) {
                         spirit.set_state(SpiritState::ChopTree(tile_x, tile_y));
                     }
                 }
@@ -125,12 +125,12 @@ impl OrderHandler {
         }
     }
 
-    pub fn draw(&self, spirits: &HashMap<usize, Spirit>, rl: &mut RaylibDrawHandle) {
+    pub fn draw(&self, spirits_handler: &SpiritsHandler, rl: &mut RaylibDrawHandle) {
         let Some(key) = self.spirit else {
             return;
         };
 
-        let Some(spirit) = spirits.get(&key) else {
+        let Some(spirit) = spirits_handler.spirits.get(&key) else {
             return;
         };
 
@@ -157,8 +157,8 @@ impl OrderHandler {
             format!("wood: {}", self.wood).as_str(),
             10,
             10,
-            28,
-            Color::BROWN,
+            32,
+            Color::RAYWHITE,
         );
     }
 }

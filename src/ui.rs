@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
 use crate::{
-    map::{LevelMap, TileType, TILE_SIZE}, order::{self, OrderHandler}, texture_handler::TextureHandler, SCREEN_WIDTH
+    map::{LevelMap, TileType, TILE_SIZE}, order::OrderHandler, texture_handler::TextureHandler, SCREEN_WIDTH
 };
 
 struct Button {
