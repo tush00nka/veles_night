@@ -11,7 +11,7 @@ const SPIRIT_SPEED: f32 = 5.;
 pub enum SpiritState {
     Patrol,
     ChopTree(usize, usize),
-    LightFire(usize, usize)
+    LightFire(usize, usize),
 }
 
 pub struct Spirit {
@@ -24,7 +24,8 @@ pub struct Spirit {
 }
 
 impl Spirit {
-    pub fn new(pos: Vector2) -> Self {
+    #[allow(unused)]
+    pub fn default(pos: Vector2) -> Self {
         Self {
             position: pos,
             draw_position: pos,
@@ -34,14 +35,15 @@ impl Spirit {
             dead: false,
         }
     }
-    pub fn new_w_dir(pos: Vector2, dir: Vector2) -> Self{
-        Self{
+
+    pub fn new(pos: Vector2, dir: Vector2) -> Self {
+        Self {
             position: pos,
             draw_position: pos,
             timer: 0.0,
             direction: dir,
             state: SpiritState::Patrol,
-            dead: false, 
+            dead: false,
         }
     }
 
@@ -101,12 +103,6 @@ impl Spirit {
             (next.y / TILE_SIZE as f32).round() as usize,
         );
 
-        if next_x >= LEVEL_WIDTH_TILES || next_y >= LEVEL_HEIGHT_TILES || next_x <= 0 || next_y <= 0
-        {
-            self.dead = true;
-            return;
-        }
-
         // step on tile to activate
         match level.tiles[tile_x][tile_y] {
             TileType::FireTD { active } => {
@@ -121,7 +117,18 @@ impl Spirit {
                     return;
                 }
             }
+            TileType::Exit => {
+                self.dead = true; //todo: survive actually
+                println!("survived");
+                return;
+            }
             _ => {}
+        }
+
+        if next_x >= LEVEL_WIDTH_TILES || next_y >= LEVEL_HEIGHT_TILES || tile_x <= 0 || tile_x <= 0
+        {
+            self.dead = true;
+            return;
         }
 
         // activate before tile
@@ -146,13 +153,7 @@ impl Spirit {
         self.position = next;
     }
 
-    fn light_fire(
-        &mut self,
-        x: usize,
-        y: usize,
-        level: &mut LevelMap,
-        rl: &RaylibHandle,
-    ) {
+    fn light_fire(&mut self, x: usize, y: usize, level: &mut LevelMap, rl: &RaylibHandle) {
         match level.tiles[x][y] {
             TileType::FireTD { active }
             | TileType::FireLR { active }
@@ -176,7 +177,9 @@ impl Spirit {
                 TileType::FireTD { active }
                 | TileType::FireLR { active }
                 | TileType::FireStop { active } => *active = true,
-                _ => { panic!("no such tile bruh") }
+                _ => {
+                    panic!("no such tile bruh")
+                }
             }
             self.dead = true;
         }

@@ -15,6 +15,7 @@ pub enum TileType {
     FireLR { active: bool },
     FireStop { active: bool },
     Tree,
+    Exit,
 }
 
 pub struct LevelMap {
@@ -31,12 +32,7 @@ impl LevelMap {
     pub fn draw(&self, rl: &mut RaylibDrawHandle, texture_handler: &TextureHandler) {
         for x in 0..LEVEL_WIDTH_TILES {
             for y in 0..LEVEL_HEIGHT_TILES {
-                let source = Rectangle::new(
-                    ((x+y) % 3) as f32 * 16.,
-                    0.,
-                    16.,
-                    16.,
-                );
+                let source = Rectangle::new(((x + y) % 3) as f32 * 16., 0., 16., 16.);
 
                 rl.draw_texture_pro(
                     texture_handler.get_safe("grass"),
@@ -144,6 +140,15 @@ impl LevelMap {
                             Vector2::zero(),
                             0.0,
                             Color::WHITE,
+                        );
+                    }
+                    TileType::Exit => {
+                        rl.draw_rectangle(
+                            x as i32 * TILE_SIZE,
+                            y as i32 * TILE_SIZE,
+                            TILE_SIZE,
+                            TILE_SIZE,
+                            Color::CHARTREUSE,
                         );
                     }
                     _ => {}

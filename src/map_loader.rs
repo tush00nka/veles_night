@@ -1,17 +1,13 @@
 const MAP_PATH: &str = "static/maps/";
-use crate::{map, metadata_handler::MetadataHandler};
+use crate::map::{self, LEVEL_WIDTH_TILES};
 use std::fs;
 pub struct MapLoader;
 
-impl MapLoader{
-    pub fn get_map(
-        level_number: u8
-        , level_map: &mut map::LevelMap
-        , metadata_handler: MetadataHandler
-        ){
+impl MapLoader {
+    pub fn get_map(level_number: u8, level_map: &mut map::LevelMap) {
         let level_path = MAP_PATH.to_string() + &level_number.to_string();
-        
-        let Ok(level_str) = fs::read_to_string(level_path) else{
+
+        let Ok(level_str) = fs::read_to_string(level_path) else {
             panic!("CAN'T LOAD LEVEL");
         };
 
@@ -19,19 +15,26 @@ impl MapLoader{
         let mut x: usize = 0;
         let mut y: usize = 0;
 
-        for tile in level_str.chars().into_iter(){
+        for tile in level_str.chars().into_iter() {
             // debug
             // print!("{tile}");
-            match tile{
-                '#' => {level_map.tiles[x][y] = map::TileType::Tree;},
-                '.' => (),
+            match tile {
+                '#' => {
+                    level_map.tiles[x][y] = map::TileType::Tree;
+                }
+                'E' => {
+                    level_map.tiles[x][y] = map::TileType::Exit;
+                }
+                '.' => {}
                 '\n' => continue,
-                other =>{panic!("NOT DEFINED CHARACTER TO LOAD -{other}")}
+                other => {
+                    panic!("NOT DEFINED CHARACTER TO LOAD -{other}")
+                }
             };
 
             x += 1;
-            y += x / metadata_handler.map_width as usize;
-            x %= metadata_handler.map_width as usize;
+            y += x / LEVEL_WIDTH_TILES as usize;
+            x %= LEVEL_WIDTH_TILES as usize;
         }
-    }  
+    }
 }

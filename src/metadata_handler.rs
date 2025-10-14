@@ -13,8 +13,7 @@ pub struct SpiritMetadata{
 
 #[derive(Deserialize, Clone)]
 pub struct MetadataHandler{
-    pub percent: f32,
-    pub map_width: u8, 
+    pub survive: usize,
     pub spirits: Vec<SpiritMetadata>,
 }
 
