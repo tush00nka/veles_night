@@ -34,6 +34,16 @@ impl Spirit {
             dead: false,
         }
     }
+    pub fn new_w_dir(pos: Vector2, dir: Vector2) -> Self{
+        Self{
+            position: pos,
+            draw_position: pos,
+            timer: 0.0,
+            direction: dir,
+            state: SpiritState::Patrol,
+            dead: false, 
+        }
+    }
 
     pub fn get_position(&self) -> Vector2 {
         self.position //+ Vector2::one() * (TILE_SIZE / 2) as f32

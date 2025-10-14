@@ -30,8 +30,8 @@ impl MapLoader{
             };
 
             x += 1;
-            y += x / metadata_handler.level_metadata.map_size[0] as usize;
-            x %= metadata_handler.level_metadata.map_size[0] as usize;
+            y += x / metadata_handler.map_width as usize;
+            x %= metadata_handler.map_width as usize;
         }
     }  
 }

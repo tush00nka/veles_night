@@ -1,4 +1,3 @@
-use raylib::prelude::*;
 use std::fs;
 use serde::Deserialize;
 
@@ -13,19 +12,14 @@ pub struct SpiritMetadata{
 }
 
 #[derive(Deserialize, Clone)]
-pub struct LevelMetadata{
+pub struct MetadataHandler{
     pub percent: f32,
-    pub map_size: Vec<u8>, 
+    pub map_width: u8, 
     pub spirits: Vec<SpiritMetadata>,
 }
 
-#[derive(Deserialize, Clone)]
-pub struct MetadataHandler{
-    pub level_metadata: LevelMetadata,
-}
-
 impl MetadataHandler{
-    pub fn new(level_number: u8) -> Self{
+    pub fn load(level_number: u8) -> Self{
         let path = METADATA_PATH.to_string() 
             + &level_number.to_string() 
             + &METADATA_EXTENSION.to_string();
@@ -34,7 +28,10 @@ impl MetadataHandler{
             panic!("COULDN'T LOAD JSON FOR LEVEL {level_number}");
         };
         
-        let level_metadata: LevelMetadata = serde_json::from_str(&string_json).unwrap();    
-        return Self{level_metadata};
+        let Ok(level_metadata) = serde_json::from_str(&string_json) else{
+            panic!("COULDN'T LOAD METADATA FOR LEVEL {level_number}");
+        };
+        return level_metadata;
     }
+    //todo add option to load by path
 }
