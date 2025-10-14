@@ -41,7 +41,7 @@ fn main() {
     //there're safe variants - get_safe/get_mut_safe
     //also common ones - get and get_mut
 
-    let level_number = 1;
+    let level_number = 0;
 
     let metadata_handler = metadata_handler::MetadataHandler::load(level_number);
     let mut level = LevelMap::new();
