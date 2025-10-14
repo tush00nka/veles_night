@@ -48,8 +48,8 @@ fn main() {
     let mut level = LevelMap::new();
 
     map_loader::MapLoader::get_map(level_number, &mut level);
-    map_loader::MapLoader::connect_swamps(&mut level, metadata_handler.clone());
-    
+    level.connect_swamps(metadata_handler.clone());
+
     let mut spirits_handler = SpiritsHandler::new();
     spirits_handler.spawn_spirits(metadata_handler);
 

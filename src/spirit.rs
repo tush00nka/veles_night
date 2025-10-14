@@ -21,6 +21,7 @@ pub struct Spirit {
     direction: Vector2,
     state: SpiritState,
     dead: bool,
+    teleported: u8,
 }
 
 impl Spirit {
@@ -33,6 +34,7 @@ impl Spirit {
             direction: Vector2::new(1., 0.),
             state: SpiritState::Patrol,
             dead: false,
+            teleported: 0,
         }
     }
 
@@ -44,6 +46,7 @@ impl Spirit {
             direction: dir,
             state: SpiritState::Patrol,
             dead: false,
+            teleported: 0,
         }
     }
 
@@ -96,7 +99,7 @@ impl Spirit {
             (self.get_position().y / TILE_SIZE as f32).floor() as usize,
         );
 
-        let next = self.get_position() + self.direction * TILE_SIZE as f32;
+        let mut next = self.get_position() + self.direction * TILE_SIZE as f32;
 
         let (next_x, next_y) = (
             (next.x / TILE_SIZE as f32).round() as usize,
@@ -122,6 +125,14 @@ impl Spirit {
                 println!("survived");
                 return;
             }
+            TileType::Swamp{teleport_position} =>{
+                if self.teleported == 0{
+                    next = teleport_position * TILE_SIZE as f32;
+                    self.teleported = 2;
+                }else{
+                self.teleported -= 1;
+                }
+            }
             _ => {}
         }
 
@@ -130,7 +141,7 @@ impl Spirit {
             self.dead = true;
             return;
         }
-
+        if self.teleported <= 1{
         // activate before tile
         match level.tiles[next_x][next_y] {
             TileType::Tree => {
@@ -144,6 +155,7 @@ impl Spirit {
                 }
             }
             _ => {}
+        }
         }
 
         // if level.tiles[next_x][next_y] == TileType::Tree {

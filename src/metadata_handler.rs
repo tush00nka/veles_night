@@ -1,5 +1,8 @@
 use std::fs;
+use raylib::{prelude::*};
 use serde::Deserialize;
+
+use crate::map::{self, TileType};
 
 const METADATA_PATH: &str = "static/metadata/";
 const METADATA_EXTENSION: &str = ".json";
@@ -38,6 +41,5 @@ impl MetadataHandler{
             panic!("COULDN'T LOAD METADATA FOR LEVEL {level_number}");
         };
         return level_metadata;
-    }
-    //todo add option to load by path
+    }    //todo add option to load by path
 }
