@@ -14,9 +14,7 @@ impl SpiritsHandler{
     }
     pub fn spawn_spirits(&mut self, metadata_handler: MetadataHandler){
         for spirits_list in 0..metadata_handler.spirits.len(){
-            println!("{} - {}", metadata_handler.spirits[spirits_list].position[0], metadata_handler.spirits[spirits_list].position[1]);
             for i in 0..metadata_handler.spirits[spirits_list].amount{
-             println!("GOT TWO");  
                 self.spirits.insert(
                     i as usize + spirits_list * 4,
                     Spirit::new_w_dir(
