@@ -1,6 +1,5 @@
 {
-    "percent": 5,
-    "map_width": 6,
+    "survive": 5,
     "spirits": [
         {
             "position": [1,2],
@@ -11,6 +10,16 @@
             "position": [2,3],
             "amount": 4,
             "direction": [1, 0]
+        }
+    ],
+    "swamps": [
+        {
+            "swamp": [4,1],
+            "teleport": [4,3]
+        },
+        {
+            "swamp": [4,3],
+            "teleport": [4,1]
         }
     ]
 }

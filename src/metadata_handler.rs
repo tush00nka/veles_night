@@ -6,15 +6,22 @@ const METADATA_EXTENSION: &str = ".json";
 
 #[derive(Deserialize, Clone)]
 pub struct SpiritMetadata{
-    pub position: Vec<u8>,
+    pub position: [u8;2],
     pub amount: u8,
-    pub direction: Vec<u8>,
+    pub direction: [u8;2],
+}
+
+#[derive(Deserialize,Clone)]
+pub struct SwampsMetadata{
+    pub swamp: [u8;2],
+    pub teleport: [u8;2]
 }
 
 #[derive(Deserialize, Clone)]
 pub struct MetadataHandler{
     pub survive: usize,
     pub spirits: Vec<SpiritMetadata>,
+    pub swamps: Vec<SwampsMetadata>,
 }
 
 impl MetadataHandler{

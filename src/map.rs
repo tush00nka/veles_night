@@ -15,6 +15,7 @@ pub enum TileType {
     FireLR { active: bool },
     FireStop { active: bool },
     Tree,
+    Swamp{teleport_position: Vector2},
     Exit(char),
 }
 
@@ -158,6 +159,24 @@ impl LevelMap {
                         rl.draw_texture_pro(
                             texture_handler.get_safe("exit"),
                             source,
+                            Rectangle::new(
+                                (x as i32 * TILE_SIZE) as f32,
+                                (y as i32 * TILE_SIZE) as f32,
+                                TILE_SIZE as f32,
+                                TILE_SIZE as f32,
+                            ),
+                            Vector2::zero(),
+                            0.0,
+                            Color::WHITE,
+                        );
+                    }
+                    TileType::Swamp{teleport_position} =>{
+                        if teleport_position.x.floor() == teleport_position.y.floor() && teleport_position.x.floor() == -1.0{
+                            panic!("ERROR SWAMP DATA");
+                        }
+                        rl.draw_texture_pro(
+                            texture_handler.get_safe("swamp"),
+                            Rectangle::new(0., 0., 16., 16.),    
                             Rectangle::new(
                                 (x as i32 * TILE_SIZE) as f32,
                                 (y as i32 * TILE_SIZE) as f32,
