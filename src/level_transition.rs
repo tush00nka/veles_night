@@ -71,7 +71,7 @@ impl LevelTransition {
         new_transition
     }
 
-    fn set_cards(&mut self, level_completed: usize) {
+    pub fn set_cards(&mut self, level_completed: usize) {
         self.cards[0].content =
             CardContentType::Image(self.unlock_wrapper.unlocks[level_completed].texture.clone());
         self.cards[1].content =

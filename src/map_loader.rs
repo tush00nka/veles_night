@@ -17,6 +17,8 @@ impl MapLoader {
         let mut y: usize = 0;
 
         for tile in level_str.chars().into_iter() {
+            // clear map beforehand
+            level_map.tiles[x][y] = TileType::Air;
             // debug
             // print!("{tile}");
             match tile {

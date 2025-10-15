@@ -1,6 +1,6 @@
 use raylib::{color::Color, prelude::*};
 
-use crate::{metadata_handler::MetadataHandler, scene::SceneHandler, texture_handler::TextureHandler};
+use crate::{map_loader, metadata_handler::MetadataHandler, scene::SceneHandler, texture_handler::TextureHandler};
 
 pub const LEVEL_WIDTH_TILES: usize = 16;
 pub const LEVEL_HEIGHT_TILES: usize = 9;
@@ -27,13 +27,21 @@ pub struct Level {
 }
 
 impl Level {
-    pub fn new(survive: usize) -> Self {
+    pub fn new() -> Self {
         Self {
             tiles: [[TileType::Air; LEVEL_HEIGHT_TILES]; LEVEL_WIDTH_TILES],
             wood: 0,
             survived: 0,
-            survive: survive
+            survive: 0
         }
+    }
+
+    pub fn load(&mut self, level_number: u8, metadata_handler: &mut MetadataHandler) {
+        map_loader::MapLoader::get_map(level_number, self);
+        self.survive = metadata_handler.get_survive();
+        self.survived = 0;
+        self.wood = 0;
+        self.connect_swamps(metadata_handler);
     }
 
     pub fn get_wood(&self) -> usize {
@@ -52,7 +60,7 @@ impl Level {
         self.survived += 1;
     }
 
-    pub fn connect_swamps(&mut self, metadata_handler: MetadataHandler) {
+    pub fn connect_swamps(&mut self, metadata_handler: &mut MetadataHandler) {
         for i in metadata_handler.swamps.iter() {
             match self.tiles[i.swamp[0] as usize][i.swamp[1] as usize] {
                 TileType::Swamp {

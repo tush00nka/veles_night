@@ -1,8 +1,9 @@
-use raylib::{ffi::MeasureTextEx, prelude::*};
+use raylib::prelude::*;
 
 use crate::{
     level_transition::LevelTransition,
     map::Level,
+    metadata_handler::MetadataHandler,
     order::OrderHandler,
     scene::{Scene, SceneHandler},
     spirit::Spirit,
@@ -52,17 +53,14 @@ fn main() {
     // there's a safe variation - get_safe
     // also a common one - get
 
-    let level_number = 1;
+    let mut level_number = 1;
 
-    let metadata_handler = metadata_handler::MetadataHandler::load(level_number);
-    // слегка костыль, но пока так
-    let mut level = Level::new(metadata_handler.get_survive());
-
-    map_loader::MapLoader::get_map(level_number, &mut level);
-    level.connect_swamps(metadata_handler.clone());
+    let mut level = Level::new();
+    let mut metadata_handler = MetadataHandler::new(level_number);
+    level.load(level_number, &mut metadata_handler);
 
     let mut spirits_handler = SpiritsHandler::new();
-    spirits_handler.spawn_spirits(metadata_handler);
+    spirits_handler.spawn_spirits(&mut metadata_handler);
 
     let mut order_handler = OrderHandler::new();
     let mut ui_handler = UIHandler::new();
@@ -82,7 +80,15 @@ fn main() {
                 &mut scene_handler,
                 &mut rl,
             ),
-            Scene::Transition => update_transition(&mut level_transition),
+            Scene::Transition => update_transition(
+                &mut level_transition,
+                &mut level_number,
+                &mut metadata_handler,
+                &mut level,
+                &mut scene_handler,
+                &mut spirits_handler,
+                &mut rl,
+            ),
         }
 
         // draw stuff
@@ -106,7 +112,9 @@ fn main() {
 }
 
 fn update_main_menu(scene_handler: &mut SceneHandler, rl: &mut RaylibHandle) {
-    if rl.is_key_pressed(KeyboardKey::KEY_ENTER) {
+    if rl.is_key_pressed(KeyboardKey::KEY_ENTER)
+        || rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+    {
         scene_handler.set(scene::Scene::Level);
     }
 }
@@ -117,7 +125,10 @@ fn draw_main_menu(font: &Font, rl: &mut RaylibDrawHandle) {
     rl.draw_text_pro(
         font,
         "ВЕЛЕСОВА НОЧЬ",
-        Vector2::new((SCREEN_WIDTH / 2) as f32 - 15. * 10., (SCREEN_HEIGHT / 2) as f32 - 32.),
+        Vector2::new(
+            (SCREEN_WIDTH / 2) as f32 - 15. * 10.,
+            (SCREEN_HEIGHT / 2) as f32 - 32.,
+        ),
         Vector2::zero(),
         0.0,
         64.,
@@ -127,7 +138,10 @@ fn draw_main_menu(font: &Font, rl: &mut RaylibDrawHandle) {
     rl.draw_text_pro(
         font,
         "ENTER чтобы начать",
-        Vector2::new((SCREEN_WIDTH / 2) as f32 - 155., (SCREEN_HEIGHT / 2) as f32 + 32.),
+        Vector2::new(
+            (SCREEN_WIDTH / 2) as f32 - 155.,
+            (SCREEN_HEIGHT / 2) as f32 + 32.,
+        ),
         Vector2::zero(),
         0.0,
         48.,
@@ -179,7 +193,24 @@ fn draw_level(
     ui_handler.draw(texture_handler, rl);
 }
 
-fn update_transition(level_transition: &mut LevelTransition) {}
+fn update_transition(
+    level_transition: &mut LevelTransition,
+    level_number: &mut u8,
+    metadata_handler: &mut MetadataHandler,
+    level: &mut Level,
+    scene_handler: &mut SceneHandler,
+    spirits_handler: &mut SpiritsHandler,
+    rl: &mut RaylibHandle,
+) {
+    if rl.is_key_pressed(KeyboardKey::KEY_ENTER) {
+        *level_number += 1;
+        level_transition.set_cards(*level_number as usize);
+        metadata_handler.load(*level_number);
+        level.load(*level_number, metadata_handler);
+        spirits_handler.spawn_spirits(metadata_handler);
+        scene_handler.set(Scene::Level);
+    }
+}
 
 fn draw_transition(
     texture_handler: &TextureHandler,

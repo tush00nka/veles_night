@@ -22,19 +22,44 @@
             "direction": [1,0]
         },
         {
-            "position": [2,5],
+            "position": [1,4],
             "amount": 1,
-            "direction": [0, 1]
+            "direction": [1,0]
+        }
+    ],
+    "swamps": [
+        {
+            "swamp": [2,0],
+            "teleport": [7,7]
         },
         {
-            "position": [2,4],
-            "amount": 1,
-            "direction": [0, 1]
+            "swamp": [7,7],
+            "teleport": [2,0]
         },
         {
-            "position": [2,3],
-            "amount": 1,
-            "direction": [0, 1]
+            "swamp": [13,0],
+            "teleport": [8,7]
+        },
+        {
+            "swamp": [8,7],
+            "teleport": [13,0]
+        },
+
+        {
+            "swamp": [2,8],
+            "teleport": [7,1]
+        },
+        {
+            "swamp": [7,1],
+            "teleport": [2,8]
+        },
+        {
+            "swamp": [13,8],
+            "teleport": [8,1]
+        },
+        {
+            "swamp": [8,1],
+            "teleport": [13,8]
         }
     ]
 }

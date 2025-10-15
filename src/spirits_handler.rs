@@ -12,7 +12,7 @@ impl SpiritsHandler{
             spirits: HashMap::new(),
         }
     }
-    pub fn spawn_spirits(&mut self, metadata_handler: MetadataHandler){
+    pub fn spawn_spirits(&mut self, metadata_handler: &mut MetadataHandler){
         for spirits_list in 0..metadata_handler.spirits.len(){
             for i in 0..metadata_handler.spirits[spirits_list].amount{
                 self.spirits.insert(
