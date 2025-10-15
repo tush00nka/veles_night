@@ -53,7 +53,14 @@ fn main() {
     // there's a safe variation - get_safe
     // also a common one - get
 
-    let mut level_number = 0;
+    let mut level_number; 
+        
+    if cfg!(debug_assertions) {
+        level_number = 0;
+    } else {
+        level_number = 1;
+    }
+    
 
     let mut level = Level::new();
     let mut metadata_handler = MetadataHandler::new(level_number);
