@@ -1,6 +1,6 @@
 use raylib::{color::Color, prelude::*};
 
-use crate::texture_handler::TextureHandler;
+use crate::{metadata_handler::{self, MetadataHandler}, texture_handler::TextureHandler};
 
 pub const LEVEL_WIDTH_TILES: usize = 16;
 pub const LEVEL_HEIGHT_TILES: usize = 9;
@@ -15,6 +15,7 @@ pub enum TileType {
     FireLR { active: bool },
     FireStop { active: bool },
     Tree,
+    Swamp{teleport_position: Vector2},
     Exit(char),
 }
 
@@ -26,6 +27,25 @@ impl LevelMap {
     pub fn new() -> Self {
         Self {
             tiles: [[TileType::Air; LEVEL_HEIGHT_TILES]; LEVEL_WIDTH_TILES],
+        }
+    }
+    pub fn connect_swamps(&mut self, metadata_handler: MetadataHandler){
+        for i in metadata_handler.swamps.iter(){
+            match self.tiles[i.swamp[0] as usize][i.swamp[1] as usize]{
+                TileType::Swamp{teleport_position: _} => {
+                    self.tiles[i.swamp[0] as usize][i.swamp[1] as usize] = TileType::Swamp{
+                        teleport_position: Vector2::new(
+                            i.teleport[0] as f32,
+                            i.teleport[1] as f32
+                        ),
+                    };
+                    println!("teleport position - {} {} {} {}",i.swamp[0], i.swamp[1], i.teleport[0], i.teleport[1]);
+                }
+                _ =>{
+                    println!("{} - {} - {} - {}", i.swamp[0], i.swamp[1], i.teleport[0], i.teleport[1]);
+                    panic!("COULDN'T PAIR METADATA WITH LOADED MAP");
+                }
+            } 
         }
     }
 
@@ -158,6 +178,21 @@ impl LevelMap {
                         rl.draw_texture_pro(
                             texture_handler.get_safe("exit"),
                             source,
+                            Rectangle::new(
+                                (x as i32 * TILE_SIZE) as f32,
+                                (y as i32 * TILE_SIZE) as f32,
+                                TILE_SIZE as f32,
+                                TILE_SIZE as f32,
+                            ),
+                            Vector2::zero(),
+                            0.0,
+                            Color::WHITE,
+                        );
+                    }
+                    TileType::Swamp{teleport_position: _} =>{
+                        rl.draw_texture_pro(
+                            texture_handler.get_safe("swamp"),
+                            Rectangle::new(0., 0., 16., 16.),    
                             Rectangle::new(
                                 (x as i32 * TILE_SIZE) as f32,
                                 (y as i32 * TILE_SIZE) as f32,

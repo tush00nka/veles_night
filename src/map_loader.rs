@@ -1,5 +1,6 @@
 const MAP_PATH: &str = "static/maps/";
-use crate::map::{self, LEVEL_WIDTH_TILES};
+use raylib::prelude::*;
+use crate::{map::{self, TileType, LEVEL_WIDTH_TILES}, metadata_handler};
 use std::fs;
 pub struct MapLoader;
 
@@ -35,6 +36,10 @@ impl MapLoader {
                     level_map.tiles[x][y] = map::TileType::Exit('v');
                 }
                 '.' => {}
+                's' => {
+                    println!("{} - {}", x, y);
+                    level_map.tiles[x][y] = map::TileType::Swamp{teleport_position: Vector2::zero()};
+                }
                 '\n' => continue,
                 other => {
                     panic!("NOT DEFINED CHARACTER TO LOAD -{other}")

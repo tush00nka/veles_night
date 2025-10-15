@@ -19,6 +19,7 @@ mod metadata_handler;
 mod order;
 mod scene;
 mod spirit;
+mod swamp;
 mod spirits_handler;
 mod texture_handler;
 mod ui;
@@ -41,12 +42,13 @@ fn main() {
     //there're safe variants - get_safe/get_mut_safe
     //also common ones - get and get_mut
 
-    let level_number = 1;
+    let level_number = 0;
 
     let metadata_handler = metadata_handler::MetadataHandler::load(level_number);
     let mut level = LevelMap::new();
 
     map_loader::MapLoader::get_map(level_number, &mut level);
+    level.connect_swamps(metadata_handler.clone());
 
     let mut spirits_handler = SpiritsHandler::new();
     spirits_handler.spawn_spirits(metadata_handler);
