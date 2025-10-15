@@ -2,24 +2,40 @@
     "survive": 5,
     "spirits": [
         {
-            "position": [1,2],
+            "position": [1,5],
             "amount": 1,
-            "direction": [0,1]
+            "direction": [1,0]
         },
         {
-            "position": [2,3],
+            "position": [2,5],
+            "amount": 1,
+            "direction": [1, 0]
+        },
+        {
+            "position": [3,5],
+            "amount": 1,
+            "direction": [1, 0]
+        },
+        {
+            "position": [4,5],
+            "amount": 1,
+            "direction": [1, 0]
+        },
+        {
+            "position": [5,5],
+            "amount": 1,
+            "direction": [1, 0]
+        },
+        {
+            "position": [6,5],
+            "amount": 1,
+            "direction": [1, 0]
+        },
+        {
+            "position": [7,5],
             "amount": 1,
             "direction": [1, 0]
         }
     ],
-    "swamps": [
-        {
-            "swamp": [4,1],
-            "teleport": [4,3]
-        },
-        {
-            "swamp": [4,3],
-            "teleport": [4,1]
-        }
-    ]
+    "swamps": []
 }

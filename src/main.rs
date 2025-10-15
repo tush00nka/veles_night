@@ -53,7 +53,7 @@ fn main() {
     // there's a safe variation - get_safe
     // also a common one - get
 
-    let mut level_number = 1;
+    let mut level_number = 0;
 
     let mut level = Level::new();
     let mut metadata_handler = MetadataHandler::new(level_number);
@@ -102,6 +102,7 @@ fn main() {
                 &mut spirits_handler,
                 &mut order_handler,
                 &mut ui_handler,
+                &font,
                 &mut d,
             ),
             Scene::Transition => {
@@ -181,6 +182,7 @@ fn draw_level(
     spirits_handler: &mut SpiritsHandler,
     order_handler: &mut OrderHandler,
     ui_handler: &mut UIHandler,
+    font: &Font,
     rl: &mut RaylibDrawHandle,
 ) {
     rl.clear_background(Color::from_hex("0b8a8f").unwrap());
@@ -190,7 +192,7 @@ fn draw_level(
         spirit.draw(rl, texture_handler);
     }
     order_handler.draw(spirits_handler, rl);
-    ui_handler.draw(texture_handler, rl);
+    ui_handler.draw(texture_handler, level, font, rl);
 }
 
 fn update_transition(

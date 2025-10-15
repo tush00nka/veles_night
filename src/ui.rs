@@ -3,7 +3,9 @@ use std::collections::HashMap;
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
 use crate::{
-    map::{Level, TileType, TILE_SIZE}, texture_handler::TextureHandler, SCREEN_WIDTH
+    SCREEN_WIDTH,
+    map::{Level, TILE_SIZE, TileType},
+    texture_handler::TextureHandler,
 };
 
 struct Button {
@@ -74,7 +76,13 @@ impl UIHandler {
         }
     }
 
-    pub fn draw(&self, texture_handler: &TextureHandler, rl: &mut RaylibDrawHandle) {
+    pub fn draw(
+        &self,
+        texture_handler: &TextureHandler,
+        level: &mut Level,
+        font: &Font,
+        rl: &mut RaylibDrawHandle,
+    ) {
         for (tex_name, button) in self.build_buttons.iter() {
             let color = if unsafe {
                 CheckCollisionPointRec(rl.get_mouse_position().into(), button.rect.into())
@@ -121,5 +129,14 @@ impl UIHandler {
                 );
             }
         }
+
+        rl.draw_text_ex(
+            font,
+            format!("Духов проведено: {}/{}\nДревесина: {}", level.survived, level.survive, level.get_wood()).as_str(),
+            Vector2::one() * 10.,
+            32.,
+            1.0,
+            Color::RAYWHITE,
+        );
     }
 }
