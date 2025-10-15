@@ -1,8 +1,5 @@
 use std::fs;
-use raylib::{prelude::*};
 use serde::Deserialize;
-
-use crate::map::{self, TileType};
 
 const METADATA_PATH: &str = "static/metadata/";
 const METADATA_EXTENSION: &str = ".json";
@@ -42,4 +39,8 @@ impl MetadataHandler{
         };
         return level_metadata;
     }    //todo add option to load by path
+
+    pub fn get_survive(&self) -> usize {
+        self.survive
+    }
 }

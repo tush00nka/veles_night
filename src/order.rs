@@ -1,16 +1,13 @@
-use std::collections::HashMap;
-
 use raylib::prelude::*;
 
 use crate::{
-    map::{LevelMap, TileType, LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, TILE_SIZE},
-    spirit::{Spirit, SpiritState}, spirits_handler::{self, SpiritsHandler},
+    map::{Level, TileType, LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, TILE_SIZE},
+    spirit::SpiritState, spirits_handler::SpiritsHandler,
 };
 
 pub struct OrderHandler {
     spirit: Option<usize>,
     line_end: Option<Vector2>,
-    wood: usize,
 }
 
 impl OrderHandler {
@@ -18,26 +15,13 @@ impl OrderHandler {
         Self {
             spirit: None,
             line_end: None,
-            wood: 0,
         }
-    }
-
-    pub fn get_wood(&self) -> usize {
-        self.wood
-    }
-
-    pub fn add_wood(&mut self) {
-        self.wood += 1;
-    }
-
-    pub fn remove_wood(&mut self) {
-        self.wood -= 1;
     }
 
     pub fn select_spirit(
         &mut self,
         spirits_handler: &mut SpiritsHandler,
-        level: &LevelMap,
+        level: &Level,
         rl: &RaylibHandle,
     ) {
         if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
@@ -88,7 +72,7 @@ impl OrderHandler {
         }
     }
 
-    pub fn update_line(&mut self, level: &LevelMap, rl: &RaylibHandle) {
+    pub fn update_line(&mut self, level: &Level, rl: &RaylibHandle) {
         let mouse_pos = rl.get_mouse_position();
         let tile_pos = mouse_pos / TILE_SIZE as f32;
         let (tile_x, tile_y) = (tile_pos.x.floor() as usize, tile_pos.y.floor() as usize);
@@ -150,15 +134,5 @@ impl OrderHandler {
             Color::LIGHTBLUE,
         );
         rl.draw_circle_v(line_end, 8., Color::LIGHTBLUE);
-    }
-
-    pub fn draw_ui(&self, rl: &mut RaylibDrawHandle) {
-        rl.draw_text(
-            format!("wood: {}", self.wood).as_str(),
-            10,
-            10,
-            32,
-            Color::RAYWHITE,
-        );
     }
 }

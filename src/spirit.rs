@@ -1,8 +1,7 @@
 use raylib::prelude::*;
 
 use crate::{
-    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, LevelMap, TILE_SIZE, TileType},
-    order::OrderHandler,
+    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, Level, TILE_SIZE, TileType},
     texture_handler::TextureHandler,
 };
 
@@ -66,12 +65,7 @@ impl Spirit {
         self.state = state;
     }
 
-    pub fn update_behaviour(
-        &mut self,
-        level: &mut LevelMap,
-        order_handler: &mut OrderHandler,
-        rl: &mut RaylibHandle,
-    ) {
+    pub fn update_behaviour(&mut self, level: &mut Level, rl: &mut RaylibHandle) {
         match self.state {
             SpiritState::Patrol => {
                 if self.timer >= 0.5 {
@@ -82,7 +76,7 @@ impl Spirit {
                     self.update_position_smoothly(rl);
                 }
             }
-            SpiritState::ChopTree(x, y) => self.chop_tree(x, y, level, order_handler, rl),
+            SpiritState::ChopTree(x, y) => self.chop_tree(x, y, level, rl),
             SpiritState::LightFire(x, y) => self.light_fire(x, y, level, rl),
         }
     }
@@ -93,7 +87,7 @@ impl Spirit {
             .lerp(self.position, SPIRIT_SPEED * rl.get_frame_time());
     }
 
-    fn patrol(&mut self, level: &LevelMap) {
+    fn patrol(&mut self, level: &mut Level) {
         let (tile_x, tile_y) = (
             (self.get_position().x / TILE_SIZE as f32).floor() as usize,
             (self.get_position().y / TILE_SIZE as f32).floor() as usize,
@@ -121,16 +115,16 @@ impl Spirit {
                 }
             }
             TileType::Exit(_) => {
-                self.dead = true; //todo: survive actually
-                println!("survived");
+                self.dead = true;
+                level.survive();
                 return;
             }
-            TileType::Swamp{teleport_position} =>{
-                if self.teleported == 0{
+            TileType::Swamp { teleport_position } => {
+                if self.teleported == 0 {
                     next = teleport_position * TILE_SIZE as f32;
                     self.teleported = 2;
-                }else{
-                self.teleported -= 1;
+                } else {
+                    self.teleported -= 1;
                 }
             }
             _ => {}
@@ -141,21 +135,21 @@ impl Spirit {
             self.dead = true;
             return;
         }
-        if self.teleported <= 1{
-        // activate before tile
-        match level.tiles[next_x][next_y] {
-            TileType::Tree => {
-                self.direction *= -1.;
-                return;
-            }
-            TileType::FireStop { active } => {
-                if active {
+        if self.teleported <= 1 {
+            // activate before tile
+            match level.tiles[next_x][next_y] {
+                TileType::Tree => {
                     self.direction *= -1.;
                     return;
                 }
+                TileType::FireStop { active } => {
+                    if active {
+                        self.direction *= -1.;
+                        return;
+                    }
+                }
+                _ => {}
             }
-            _ => {}
-        }
         }
 
         // if level.tiles[next_x][next_y] == TileType::Tree {
@@ -165,7 +159,7 @@ impl Spirit {
         self.position = next;
     }
 
-    fn light_fire(&mut self, x: usize, y: usize, level: &mut LevelMap, rl: &RaylibHandle) {
+    fn light_fire(&mut self, x: usize, y: usize, level: &mut Level, rl: &RaylibHandle) {
         match level.tiles[x][y] {
             TileType::FireTD { active }
             | TileType::FireLR { active }
@@ -203,14 +197,7 @@ impl Spirit {
         self.draw_position = self.position;
     }
 
-    fn chop_tree(
-        &mut self,
-        x: usize,
-        y: usize,
-        level: &mut LevelMap,
-        order_handler: &mut OrderHandler,
-        rl: &RaylibHandle,
-    ) {
+    fn chop_tree(&mut self, x: usize, y: usize, level: &mut Level, rl: &RaylibHandle) {
         if level.tiles[x][y] != TileType::Tree {
             self.state = SpiritState::Patrol;
             return;
@@ -220,7 +207,7 @@ impl Spirit {
 
         if self.position.distance_to(target) <= (TILE_SIZE / 10) as f32 {
             level.tiles[x][y] = TileType::Air;
-            order_handler.add_wood();
+            level.add_wood();
             self.dead = true;
         }
 

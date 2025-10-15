@@ -36,5 +36,6 @@
             "amount": 1,
             "direction": [0, 1]
         }
-    ]
+    ],
+    "swamps": []
 }

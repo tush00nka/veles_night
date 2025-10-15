@@ -1,7 +1,8 @@
 use raylib::prelude::*;
 
 use crate::{
-    map::LevelMap,
+    level_transition::LevelTransition,
+    map::Level,
     order::OrderHandler,
     scene::{Scene, SceneHandler},
     spirit::Spirit,
@@ -12,15 +13,15 @@ use crate::{
 
 // mod light;
 
-mod light;
+mod level_transition;
 mod map;
 mod map_loader;
 mod metadata_handler;
 mod order;
 mod scene;
 mod spirit;
-mod swamp;
 mod spirits_handler;
+mod swamp;
 mod texture_handler;
 mod ui;
 
@@ -36,16 +37,26 @@ fn main() {
 
     rl.set_target_fps(60);
 
+    let font = rl
+        .load_font_ex(
+            &thread,
+            "static/fonts/nizhegorodsky.ttf",
+            400,
+            Some("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя0123456789+-%[](),.:!?/"),
+        )
+        .expect("no font???");
+
     let mut scene_handler = SceneHandler::new();
 
     let texture_handler = TextureHandler::new(&mut rl, &thread);
-    //there're safe variants - get_safe/get_mut_safe
-    //also common ones - get and get_mut
+    // there's a safe variation - get_safe
+    // also a common one - get
 
-    let level_number = 0;
+    let level_number = 1;
 
     let metadata_handler = metadata_handler::MetadataHandler::load(level_number);
-    let mut level = LevelMap::new();
+    // слегка костыль, но пока так
+    let mut level = Level::new(metadata_handler.get_survive());
 
     map_loader::MapLoader::get_map(level_number, &mut level);
     level.connect_swamps(metadata_handler.clone());
@@ -55,6 +66,8 @@ fn main() {
 
     let mut order_handler = OrderHandler::new();
     let mut ui_handler = UIHandler::new();
+
+    let mut level_transition = LevelTransition::new();
 
     while !rl.window_should_close() {
         // update stuff
@@ -66,16 +79,17 @@ fn main() {
                 &mut level,
                 &mut order_handler,
                 &mut ui_handler,
+                &mut scene_handler,
                 &mut rl,
             ),
-            Scene::Transition => update_transition(),
+            Scene::Transition => update_transition(&mut level_transition),
         }
 
         // draw stuff
         let mut d = rl.begin_drawing(&thread);
 
         match scene_handler.get_current() {
-            Scene::MainMenu => draw_main_menu(&mut d),
+            Scene::MainMenu => draw_main_menu(&font, &mut d),
             Scene::Level => draw_level(
                 &mut level,
                 &texture_handler,
@@ -84,7 +98,9 @@ fn main() {
                 &mut ui_handler,
                 &mut d,
             ),
-            Scene::Transition => todo!("can't trasition between levels yet!"),
+            Scene::Transition => {
+                draw_transition(&texture_handler, &font, &mut level_transition, &mut d)
+            }
         }
     }
 }
@@ -95,22 +111,26 @@ fn update_main_menu(scene_handler: &mut SceneHandler, rl: &mut RaylibHandle) {
     }
 }
 
-fn draw_main_menu(rl: &mut RaylibDrawHandle) {
+fn draw_main_menu(font: &Font, rl: &mut RaylibDrawHandle) {
     rl.clear_background(Color::from_hex("0b8a8f").unwrap());
-    rl.draw_text(
-        "VELES NIGHT\npress ENTER to begin",
-        10,
-        10,
-        28,
+    rl.draw_text_pro(
+        font,
+        "ВЕЛЕСОВА НОЧЬ\nнажмите ENTER чтобы начать",
+        Vector2::one() * 10.,
+        Vector2::zero(),
+        0.0,
+        64.,
+        2.0,
         Color::RAYWHITE,
     );
 }
 
 fn update_level(
     spirits_handler: &mut SpiritsHandler,
-    level: &mut LevelMap,
+    level: &mut Level,
     order_handler: &mut OrderHandler,
     ui_handler: &mut UIHandler,
+    scene_handler: &mut SceneHandler,
     rl: &mut RaylibHandle,
 ) {
     // this is such a cool function fr fr tbh lowkey
@@ -119,17 +139,19 @@ fn update_level(
         .retain(|_, spirit| !spirit.get_dead());
 
     for spirit in spirits_handler.spirits.values_mut() {
-        spirit.update_behaviour(level, order_handler, rl);
+        spirit.update_behaviour(level, rl);
     }
 
     order_handler.select_spirit(spirits_handler, level, rl);
     order_handler.update_line(level, rl);
 
-    ui_handler.build(order_handler, level, rl);
+    ui_handler.build(level, rl);
+
+    level.update(scene_handler);
 }
 
 fn draw_level(
-    level: &mut LevelMap,
+    level: &mut Level,
     texture_handler: &TextureHandler,
     spirits_handler: &mut SpiritsHandler,
     order_handler: &mut OrderHandler,
@@ -143,10 +165,26 @@ fn draw_level(
         spirit.draw(rl, texture_handler);
     }
     order_handler.draw(spirits_handler, rl);
-    order_handler.draw_ui(rl);
     ui_handler.draw(texture_handler, rl);
 }
 
-fn update_transition() {
-    todo!("no level transition behaviour")
+fn update_transition(level_transition: &mut LevelTransition) {}
+
+fn draw_transition(
+    texture_handler: &TextureHandler,
+    font: &Font,
+    level_transition: &mut LevelTransition,
+    rl: &mut RaylibDrawHandle,
+) {
+    level_transition.draw(texture_handler, font, rl);
+    rl.draw_text_pro(
+        font,
+        "this is level transition scene",
+        Vector2::zero(),
+        Vector2::zero(),
+        0.0,
+        24.,
+        0.0,
+        Color::RAYWHITE,
+    );
 }

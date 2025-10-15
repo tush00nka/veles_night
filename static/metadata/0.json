@@ -3,7 +3,7 @@
     "spirits": [
         {
             "position": [1,2],
-            "amount": 0,
+            "amount": 1,
             "direction": [0,1]
         },
         {

@@ -1,11 +1,11 @@
 const MAP_PATH: &str = "static/maps/";
+use crate::map::{self, TileType, LEVEL_WIDTH_TILES};
 use raylib::prelude::*;
-use crate::{map::{self, TileType, LEVEL_WIDTH_TILES}, metadata_handler};
 use std::fs;
 pub struct MapLoader;
 
 impl MapLoader {
-    pub fn get_map(level_number: u8, level_map: &mut map::LevelMap) {
+    pub fn get_map(level_number: u8, level_map: &mut map::Level) {
         let level_path = MAP_PATH.to_string() + &level_number.to_string();
 
         let Ok(level_str) = fs::read_to_string(level_path) else {
@@ -21,24 +21,26 @@ impl MapLoader {
             // print!("{tile}");
             match tile {
                 '#' => {
-                    level_map.tiles[x][y] = map::TileType::Tree;
+                    level_map.tiles[x][y] = TileType::Tree;
                 }
                 '^' => {
-                    level_map.tiles[x][y] = map::TileType::Exit('^');
+                    level_map.tiles[x][y] = TileType::Exit('^');
                 }
                 '<' => {
-                    level_map.tiles[x][y] = map::TileType::Exit('<');
+                    level_map.tiles[x][y] = TileType::Exit('<');
                 }
                 '>' => {
-                    level_map.tiles[x][y] = map::TileType::Exit('>');
+                    level_map.tiles[x][y] = TileType::Exit('>');
                 }
                 'v' => {
-                    level_map.tiles[x][y] = map::TileType::Exit('v');
+                    level_map.tiles[x][y] = TileType::Exit('v');
                 }
                 '.' => {}
                 's' => {
                     println!("{} - {}", x, y);
-                    level_map.tiles[x][y] = map::TileType::Swamp{teleport_position: Vector2::zero()};
+                    level_map.tiles[x][y] = TileType::Swamp {
+                        teleport_position: Vector2::zero(),
+                    };
                 }
                 '\n' => continue,
                 other => {
