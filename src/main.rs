@@ -1,4 +1,4 @@
-use raylib::prelude::*;
+use raylib::{ffi::MeasureTextEx, prelude::*};
 
 use crate::{
     level_transition::LevelTransition,
@@ -113,13 +113,24 @@ fn update_main_menu(scene_handler: &mut SceneHandler, rl: &mut RaylibHandle) {
 
 fn draw_main_menu(font: &Font, rl: &mut RaylibDrawHandle) {
     rl.clear_background(Color::from_hex("0b8a8f").unwrap());
+
     rl.draw_text_pro(
         font,
-        "ВЕЛЕСОВА НОЧЬ\nнажмите ENTER чтобы начать",
-        Vector2::one() * 10.,
+        "ВЕЛЕСОВА НОЧЬ",
+        Vector2::new((SCREEN_WIDTH / 2) as f32 - 15. * 10., (SCREEN_HEIGHT / 2) as f32 - 32.),
         Vector2::zero(),
         0.0,
         64.,
+        2.0,
+        Color::RAYWHITE,
+    );
+    rl.draw_text_pro(
+        font,
+        "ENTER чтобы начать",
+        Vector2::new((SCREEN_WIDTH / 2) as f32 - 155., (SCREEN_HEIGHT / 2) as f32 + 32.),
+        Vector2::zero(),
+        0.0,
+        48.,
         2.0,
         Color::RAYWHITE,
     );
