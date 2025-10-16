@@ -110,12 +110,15 @@ impl LevelTransition {
         ];
 
         for i in 0..3 {
-            let offset = if self.cards[i].stage >= 5 {
-                64. * 5.
+            let offset; 
+            if self.cards[i].stage >= 5 {
+                offset = 64. * 5.;
             } else {
+                offset = self.cards[i].stage as f32 * 64.;
                 self.cards[i].stage = ((rl.get_time() * 6.) % 6.).floor() as usize;
-                self.cards[i].stage as f32 * 64.
             };
+
+            println!("{offset}");
 
             rl.draw_texture_pro(
                 texture_handler.get_safe("card"),
