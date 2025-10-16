@@ -1,8 +1,7 @@
 use raylib::prelude::*;
 
 use crate::{
-    map::{Level, TileType, LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, TILE_SIZE},
-    spirit::SpiritState, spirits_handler::SpiritsHandler,
+    hotkey_handler::{self, HotkeyCategory, HotkeyHandler}, map::{Level, TileType, LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, TILE_SIZE}, spirit::SpiritState, spirits_handler::SpiritsHandler
 };
 
 pub struct OrderHandler {
@@ -23,56 +22,68 @@ impl OrderHandler {
         spirits_handler: &mut SpiritsHandler,
         level: &Level,
         rl: &RaylibHandle,
+        hotkey_handler: &mut HotkeyHandler,
     ) {
-        if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
+        if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) || hotkey_handler.check_pressed(rl, HotkeyCategory::PickNearest) {
             for (key, spirit) in spirits_handler.spirits.iter() {
                 if spirit.get_position().distance_to(rl.get_mouse_position()) <= TILE_SIZE as f32 {
+                    println!("GOOT THERE");
                     self.spirit = Some(*key);
                     break;
                 }
             }
         }
+        let keyboard_last = hotkey_handler.get_last_key();
+        if !rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT) && keyboard_last == KeyboardKey::KEY_NUM_LOCK{
+            println!("Got");
+            return
+        }
 
-        if rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT) {
-            let mouse_pos = rl.get_mouse_position();
-            let tile_pos = mouse_pos / TILE_SIZE as f32;
-            let (tile_x, tile_y) = (tile_pos.x.floor() as usize, tile_pos.y.floor() as usize);
+        if keyboard_last != KeyboardKey::KEY_NUM_LOCK && !rl.is_key_released(keyboard_last){
+            println!("Mein");
+            return;
+        }
 
-            match level.tiles[tile_x][tile_y] {
-                TileType::FireTD { active }
-                | TileType::FireLR { active }
-                | TileType::FireStop { active } => {
-                    if !active {
-                        if let Some(key) = self.spirit {
-                            if let Some(spirit) = spirits_handler.spirits.get_mut(&key) {
-                                spirit.set_state(SpiritState::LightFire(tile_x, tile_y));
-                            }
-                        }
-                    }
-                }
-                TileType::Tree => {
+        hotkey_handler.clear_last();
+
+        let mouse_pos = rl.get_mouse_position();
+        let tile_pos = mouse_pos / TILE_SIZE as f32;
+        let (tile_x, tile_y) = (tile_pos.x.floor() as usize, tile_pos.y.floor() as usize);
+
+        match level.tiles[tile_x][tile_y] {
+            TileType::FireTD { active }
+            | TileType::FireLR { active }
+            | TileType::FireStop { active } => {
+                if !active {
                     if let Some(key) = self.spirit {
                         if let Some(spirit) = spirits_handler.spirits.get_mut(&key) {
-                            spirit.set_state(SpiritState::ChopTree(tile_x, tile_y));
+                            spirit.set_state(SpiritState::LightFire(tile_x, tile_y));
                         }
                     }
                 }
-                _ => {}
             }
-
-            if level.tiles[tile_x][tile_y] == TileType::Tree {
+            TileType::Tree => {
                 if let Some(key) = self.spirit {
                     if let Some(spirit) = spirits_handler.spirits.get_mut(&key) {
                         spirit.set_state(SpiritState::ChopTree(tile_x, tile_y));
                     }
                 }
             }
-
-            self.spirit = None;
+            _ => {}
         }
+
+        if level.tiles[tile_x][tile_y] == TileType::Tree {
+            if let Some(key) = self.spirit {
+                if let Some(spirit) = spirits_handler.spirits.get_mut(&key) {
+                    spirit.set_state(SpiritState::ChopTree(tile_x, tile_y));
+                }
+            }
+        }
+
+        self.spirit = None;
     }
 
-    pub fn update_line(&mut self, level: &Level, rl: &RaylibHandle) {
+    pub fn update_line(&mut self, level: &Level, rl: &RaylibHandle, hotkey_handler: &mut HotkeyHandler) {
         let mouse_pos = rl.get_mouse_position();
         let tile_pos = mouse_pos / TILE_SIZE as f32;
         let (tile_x, tile_y) = (tile_pos.x.floor() as usize, tile_pos.y.floor() as usize);
@@ -84,8 +95,8 @@ impl OrderHandler {
         if tile_y >= LEVEL_HEIGHT_TILES {
             return;
         }
-
-        if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT) {
+        
+        if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT) || hotkey_handler.check_down(rl, HotkeyCategory::PickNearest) {
             match level.tiles[tile_x][tile_y] {
                 TileType::Air => {}
                 _ => {

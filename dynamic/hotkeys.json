@@ -1,3 +1,14 @@
 {
-    "hotkeys": {"Exit":["KeyQ"],"Continue":["KeyEnter", "KeySpace"]}
+    "hotkeys": {
+        "Exit":[
+            "KeyQ"
+        ],
+        "Continue": [
+            "KeyEnter", 
+            "KeySpace"
+        ],
+        "PickNearest": [
+            "KeyP"
+        ]
+    }
 }

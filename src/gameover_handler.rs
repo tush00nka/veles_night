@@ -93,25 +93,24 @@ impl GameOverHandler {
         level_number: &mut u8,
         rl: &mut RaylibHandle,
         scene_handler: &mut SceneHandler,
-        hotkeys: &HotkeyHandler,
+        hotkeys: &mut HotkeyHandler,
     ) -> bool {
-        //проверка на коллизию и на хоткей - esc/enter
-        //
-        for (intent, i) in hotkeys.hotkeys.iter() {
-            for key in i.iter() {
-                if rl.is_key_pressed(*key) {
-                    let scene = match intent {
-                        HotkeyCategory::Exit => {
-                            *level_number = FIRST_LEVEL;
-                            crate::scene::Scene::MainMenu
-                        }
-                        HotkeyCategory::Continue => crate::scene::Scene::Level,
-                        // _ => panic!("UNHANDLED HOTKEY CATEGORY"),
-                    };
-                    scene_handler.set(scene);
-                    return true;
-                }
-            }
+        let mut scene = crate::scene::Scene::Level;
+        let mut check = false; 
+        
+        if hotkeys.check_pressed(rl, HotkeyCategory::Exit){
+            scene = crate::scene::Scene::MainMenu;
+            *level_number = FIRST_LEVEL; 
+            check = true;
+        }
+
+        if hotkeys.check_pressed(rl, HotkeyCategory::Continue){
+            check = true;
+        }
+
+        if check {
+            scene_handler.set(scene);
+            return true
         }
 
         for (title, button) in self.restart_buttons.iter_mut() {

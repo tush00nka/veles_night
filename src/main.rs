@@ -2,7 +2,7 @@ use raylib::prelude::*;
 
 use crate::{
     gameover_handler::GameOverHandler,
-    hotkey_handler::{HotkeyHandler, HotkeyLoaderStruct},
+    hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct},
     level_transition::LevelTransition,
     map::Level,
     metadata_handler::MetadataHandler,
@@ -60,7 +60,7 @@ fn main() {
     let mut scene_handler = SceneHandler::new();
 
     let hotkey_loader_struct = HotkeyLoaderStruct::new();
-    let hotkey_handler = HotkeyHandler::new(hotkey_loader_struct);
+    let mut hotkey_handler = HotkeyHandler::new(hotkey_loader_struct);
 
     let texture_handler = TextureHandler::new(&mut rl, &thread);
     // there's a safe variation - get_safe
@@ -85,13 +85,13 @@ fn main() {
         // update stuff
 
         match scene_handler.get_current() {
-            Scene::MainMenu => update_main_menu(&mut scene_handler, &mut rl),
+            Scene::MainMenu => update_main_menu(&mut scene_handler, &mut rl, &mut hotkey_handler),
             Scene::GameOver => {
                 if gameover_handler.update_gameover(
                     &mut level_number,
                     &mut rl,
                     &mut scene_handler,
-                    &hotkey_handler,
+                    &mut hotkey_handler,
                 ) {
                     reload_procedure(
                         level_number as u8,
@@ -109,6 +109,7 @@ fn main() {
                 &mut scene_handler,
                 &death_sound,
                 &mut rl,
+                &mut hotkey_handler,
             ),
             Scene::Transition => update_transition(
                 &mut level_transition,
@@ -117,7 +118,8 @@ fn main() {
                 &mut level,
                 &mut scene_handler,
                 &mut spirits_handler,
-                &mut rl,
+                &mut rl, 
+                &mut hotkey_handler,
             ),
         }
 
@@ -143,8 +145,8 @@ fn main() {
     }
 }
 
-fn update_main_menu(scene_handler: &mut SceneHandler, rl: &mut RaylibHandle) {
-    if rl.is_key_pressed(KeyboardKey::KEY_ENTER)
+fn update_main_menu(scene_handler: &mut SceneHandler, rl: &mut RaylibHandle, hotkey_handler: &mut HotkeyHandler) {
+    if hotkey_handler.check_pressed(rl, HotkeyCategory::Continue)
         || rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
     {
         scene_handler.set(scene::Scene::Level);
@@ -190,6 +192,7 @@ fn update_level(
     scene_handler: &mut SceneHandler,
     death_sound: &Sound<'_>,
     rl: &mut RaylibHandle,
+    hotkey_handler: &mut HotkeyHandler,
 ) {
     // this is such a cool function fr fr tbh lowkey
     spirits_handler
@@ -200,8 +203,8 @@ fn update_level(
         spirit.update_behaviour(level, rl);
     }
 
-    order_handler.select_spirit(spirits_handler, level, rl);
-    order_handler.update_line(level, rl);
+    order_handler.select_spirit(spirits_handler, level, rl, hotkey_handler);
+    order_handler.update_line(level, rl, hotkey_handler);
 
     ui_handler.build(level, rl);
 
@@ -235,15 +238,18 @@ fn update_transition(
     scene_handler: &mut SceneHandler,
     spirits_handler: &mut SpiritsHandler,
     rl: &mut RaylibHandle,
+    hotkey_handler: &mut HotkeyHandler,
 ) {
-    if rl.is_key_pressed(KeyboardKey::KEY_ENTER) {
-        *level_number += 1;
-        level_transition.set_cards(*level_number as usize);
-        metadata_handler.load(*level_number);
-        level.load(*level_number, metadata_handler);
-        spirits_handler.spawn_spirits(metadata_handler);
-        scene_handler.set(Scene::Level);
+    if !hotkey_handler.check_pressed(rl, HotkeyCategory::Continue){
+        return;
     }
+
+    *level_number += 1;
+    level_transition.set_cards(*level_number as usize);
+    metadata_handler.load(*level_number);
+    level.load(*level_number, metadata_handler);
+    spirits_handler.spawn_spirits(metadata_handler);
+    scene_handler.set(Scene::Level);
 }
 
 fn draw_transition(
