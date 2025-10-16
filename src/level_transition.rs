@@ -3,11 +3,7 @@ use std::fs;
 use raylib::prelude::*;
 use serde::Deserialize;
 
-use crate::{
-    SCREEN_HEIGHT, SCREEN_WIDTH,
-    map::{TILE_SIZE, TILE_SIZE_PX},
-    texture_handler::TextureHandler,
-};
+use crate::{SCREEN_HEIGHT, SCREEN_WIDTH, map::TILE_SIZE_PX, texture_handler::TextureHandler};
 
 pub enum CardContentType {
     Image(String),
@@ -15,14 +11,14 @@ pub enum CardContentType {
 }
 
 pub struct TransitionCard {
-    pub flipped: bool,
+    pub stage: usize,
     pub content: CardContentType,
 }
 
 impl TransitionCard {
     fn new(content: CardContentType) -> Self {
         Self {
-            flipped: false,
+            stage: 0,
             content: content,
         }
     }
@@ -72,6 +68,10 @@ impl LevelTransition {
     }
 
     pub fn set_cards(&mut self, level_completed: usize) {
+        for card in self.cards.iter_mut() {
+            card.stage = 0;
+        }
+
         self.cards[0].content =
             CardContentType::Image(self.unlock_wrapper.unlocks[level_completed].texture.clone());
         self.cards[1].content =
@@ -83,9 +83,9 @@ impl LevelTransition {
         );
     }
 
-    const CARD_SIZE: i32 = 200;
+    const CARD_SIZE: i32 = 256;
 
-    pub fn draw(&self, texture_handler: &TextureHandler, font: &Font, rl: &mut RaylibDrawHandle) {
+    pub fn draw(&mut self, texture_handler: &TextureHandler, font: &Font, rl: &mut RaylibDrawHandle) {
         rl.clear_background(Color::BROWN);
 
         let cards = [
@@ -110,7 +110,25 @@ impl LevelTransition {
         ];
 
         for i in 0..3 {
-            rl.draw_rectangle_rec(cards[i], Color::RAYWHITE);
+            let offset = if self.cards[i].stage >= 5 {
+                64. * 5.
+            } else {
+                self.cards[i].stage = ((rl.get_time() * 6.) % 6.).floor() as usize;
+                self.cards[i].stage as f32 * 64.
+            };
+
+            rl.draw_texture_pro(
+                texture_handler.get_safe("card"),
+                Rectangle::new(offset, 0.0, 64., 64.),
+                cards[i],
+                Vector2::zero(),
+                0.0,
+                Color::WHITE,
+            );
+
+            if self.cards[i].stage < 5 {
+                continue;
+            }
 
             match &self.cards[i].content {
                 CardContentType::Image(img) => rl.draw_texture_pro(
@@ -121,21 +139,28 @@ impl LevelTransition {
                         TILE_SIZE_PX as f32,
                         TILE_SIZE_PX as f32,
                     ),
-                    cards[i],
+                    Rectangle::new(cards[i].x + 128. - 32., cards[i].y + 128. - 32., 64., 64.),
                     Vector2::zero(),
                     0.0,
                     Color::WHITE,
                 ),
-                CardContentType::Text(text) => rl.draw_text_pro(
-                    font,
-                    text.as_str(),
-                    Vector2::new(cards[i].x, cards[i].y),
-                    Vector2::zero(),
-                    0.0,
-                    24.,
-                    0.0,
-                    Color::BLACK,
-                ),
+                CardContentType::Text(text) => {
+                    let line_count = text.chars().filter(|&c| c == '\n').count() as f32;
+
+                    rl.draw_text_pro(
+                        font,
+                        text.as_str(),
+                        Vector2::new(
+                            cards[i].x + 32.,
+                            cards[i].y + 128. - (line_count + 1.) * 14.,
+                        ),
+                        Vector2::zero(),
+                        0.0,
+                        28.,
+                        0.0,
+                        Color::BLACK,
+                    )
+                }
             }
         }
     }

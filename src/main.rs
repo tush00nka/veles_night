@@ -61,7 +61,6 @@ fn main() {
         level_number = 1;
     }
     
-
     let mut level = Level::new();
     let mut metadata_handler = MetadataHandler::new(level_number);
     level.load(level_number, &mut metadata_handler);
@@ -228,14 +227,14 @@ fn draw_transition(
     rl: &mut RaylibDrawHandle,
 ) {
     level_transition.draw(texture_handler, font, rl);
-    rl.draw_text_pro(
-        font,
-        "this is level transition scene",
-        Vector2::zero(),
-        Vector2::zero(),
-        0.0,
-        24.,
-        0.0,
-        Color::RAYWHITE,
-    );
+    // rl.draw_text_pro(
+    //     font,
+    //     "this is level transition scene",
+    //     Vector2::zero(),
+    //     Vector2::zero(),
+    //     0.0,
+    //     24.,
+    //     0.0,
+    //     Color::RAYWHITE,
+    // );
 }
