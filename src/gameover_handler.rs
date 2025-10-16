@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
-use crate::{scene::{self, SceneHandler}, ui::Button, FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH};
+use crate::{hotkey_handler::{HotkeyCategory, HotkeyHandler}, scene::{self, SceneHandler}, ui::Button, FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH};
 
 
 pub struct GameOverHandler{
@@ -88,9 +88,28 @@ impl GameOverHandler{
 
         }
     }
-    pub fn update_gameover(&mut self, level_number: &mut u8, rl: &mut RaylibHandle, scene_handler: &mut SceneHandler) -> bool{
+    pub fn update_gameover(&mut self, level_number: &mut u8, rl: &mut RaylibHandle, scene_handler: &mut SceneHandler, hotkeys: &HotkeyHandler) -> bool{
        //проверка на коллизию и на хоткей - esc/enter
        //
+      for (intent,i) in hotkeys.hotkeys.iter(){
+          for key in i.iter(){
+              if rl.is_key_pressed(*key){
+                  let scene = match intent{
+                      HotkeyCategory::Exit =>{
+                          *level_number = FIRST_LEVEL;
+                          crate::scene::Scene::MainMenu
+                      },
+                      HotkeyCategory::Continue =>{
+                          crate::scene::Scene::Level
+                      },
+                      _ => panic!("UNHANDLED HOTKEY CATEGORY"),
+                  };
+                  scene_handler.set(scene);
+                  return true;
+              }
+          }
+      }
+
         for (title, button) in self.restart_buttons.iter_mut(){
             if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT){
                 if unsafe{
@@ -99,22 +118,20 @@ impl GameOverHandler{
                     button.selected = true;
                 }
             }
-            if rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT){
-                if button.selected{
-                    let scene = match title.as_str(){
-                        "МЕНЮ" => {
-                           *level_number = FIRST_LEVEL;
-                            crate::scene::Scene::MainMenu
-                            },
-                        "РЕСТАРТ" => crate::Scene::Level,
-                        _ => {
-                            panic!("NOT EXISITNG BUTTON");
-                        }
-                    };
-                    button.selected = false;
-                    scene_handler.set(scene);
-                    return true
-                }
+            if (rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT) && button.selected){
+                let scene = match title.as_str(){
+                    "МЕНЮ" => {
+                        *level_number = FIRST_LEVEL;
+                        crate::scene::Scene::MainMenu
+                    },
+                    "РЕСТАРТ" => crate::Scene::Level,
+                    _ => {
+                        panic!("NOT EXISITNG BUTTON");
+                    }
+                };
+                button.selected = false;
+                scene_handler.set(scene);
+                return true
             }
         }
         return false

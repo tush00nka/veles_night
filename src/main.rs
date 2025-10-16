@@ -1,12 +1,13 @@
 use raylib::prelude::*;
 
 use crate::{
-    gameover_handler::GameOverHandler, level_transition::LevelTransition, map::Level, metadata_handler::MetadataHandler, order::OrderHandler, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
+    gameover_handler::GameOverHandler, hotkey_handler::{HotkeyHandler, HotkeyLoaderStruct}, level_transition::LevelTransition, map::Level, metadata_handler::MetadataHandler, order::OrderHandler, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
 };
 
 // mod light;
 
 mod level_transition;
+mod hotkey_handler;
 mod map;
 mod map_loader;
 mod metadata_handler;
@@ -47,6 +48,9 @@ fn main() {
         .expect("no font???");
 
     let mut scene_handler = SceneHandler::new();
+    
+    let hotkey_loader_struct= HotkeyLoaderStruct::new();
+    let hotkey_handler = HotkeyHandler::new(hotkey_loader_struct);
 
     let texture_handler = TextureHandler::new(&mut rl, &thread);
     // there's a safe variation - get_safe
@@ -73,10 +77,24 @@ fn main() {
         // update stuff
 
         match scene_handler.get_current() {
-            Scene::MainMenu => update_main_menu(&mut scene_handler, &mut rl),
+            Scene::MainMenu => update_main_menu(
+                &mut scene_handler, 
+                &mut rl,
+                ),
             Scene::GameOver => {
-                if gameover_handler.update_gameover(&mut level_number, &mut rl, &mut scene_handler){
-                    reload_procedure(level_number as u8, &mut level, &mut metadata_handler, &mut spirits_handler);
+                if gameover_handler.update_gameover(
+                    &mut level_number, 
+                    &mut rl, 
+                    &mut scene_handler, 
+                    &hotkey_handler,
+                ){
+
+                    reload_procedure(
+                        level_number as u8, 
+                        &mut level, 
+                        &mut metadata_handler, 
+                        &mut spirits_handler
+                    );
                 }
             }
             Scene::Level => update_level(
