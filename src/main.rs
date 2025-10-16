@@ -1,30 +1,30 @@
 use raylib::prelude::*;
 
 use crate::{
-    level_transition::LevelTransition,
-    map::Level,
-    metadata_handler::MetadataHandler,
-    order::OrderHandler,
-    scene::{Scene, SceneHandler},
-    spirit::Spirit,
-    spirits_handler::SpiritsHandler,
-    texture_handler::TextureHandler,
-    ui::UIHandler,
+    gameover_handler::GameOverHandler, hotkey_handler::{HotkeyHandler, HotkeyLoaderStruct}, level_transition::LevelTransition, map::Level, metadata_handler::MetadataHandler, order::OrderHandler, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
 };
 
 // mod light;
 
 mod level_transition;
+mod hotkey_handler;
 mod map;
 mod map_loader;
 mod metadata_handler;
 mod order;
+mod gameover_handler;
 mod scene;
 mod spirit;
 mod spirits_handler;
 mod swamp;
 mod texture_handler;
 mod ui;
+
+pub const FIRST_LEVEL: u8 = if cfg!(debug_assertions){
+    1
+}else{
+    0
+};
 
 const SCREEN_WIDTH: i32 = 16 * 16 * 4;
 const SCREEN_HEIGHT: i32 = 16 * 9 * 4;
@@ -48,19 +48,16 @@ fn main() {
         .expect("no font???");
 
     let mut scene_handler = SceneHandler::new();
+    
+    let hotkey_loader_struct= HotkeyLoaderStruct::new();
+    let hotkey_handler = HotkeyHandler::new(hotkey_loader_struct);
 
     let texture_handler = TextureHandler::new(&mut rl, &thread);
     // there's a safe variation - get_safe
     // also a common one - get
 
-    let mut level_number; 
-        
-    if cfg!(debug_assertions) {
-        level_number = 0;
-    } else {
-        level_number = 1;
-    }
-    
+    let mut level_number = FIRST_LEVEL; 
+       
     let mut level = Level::new();
     let mut metadata_handler = MetadataHandler::new(level_number);
     level.load(level_number, &mut metadata_handler);
@@ -70,14 +67,36 @@ fn main() {
 
     let mut order_handler = OrderHandler::new();
     let mut ui_handler = UIHandler::new();
+    let mut gameover_handler = GameOverHandler::new();
 
     let mut level_transition = LevelTransition::new();
-
+    
+    
+    
     while !rl.window_should_close() {
         // update stuff
 
         match scene_handler.get_current() {
-            Scene::MainMenu => update_main_menu(&mut scene_handler, &mut rl),
+            Scene::MainMenu => update_main_menu(
+                &mut scene_handler, 
+                &mut rl,
+                ),
+            Scene::GameOver => {
+                if gameover_handler.update_gameover(
+                    &mut level_number, 
+                    &mut rl, 
+                    &mut scene_handler, 
+                    &hotkey_handler,
+                ){
+
+                    reload_procedure(
+                        level_number as u8, 
+                        &mut level, 
+                        &mut metadata_handler, 
+                        &mut spirits_handler
+                    );
+                }
+            }
             Scene::Level => update_level(
                 &mut spirits_handler,
                 &mut level,
@@ -102,6 +121,7 @@ fn main() {
 
         match scene_handler.get_current() {
             Scene::MainMenu => draw_main_menu(&font, &mut d),
+            Scene::GameOver => gameover_handler.draw_gameover(&font, &mut d),
             Scene::Level => draw_level(
                 &mut level,
                 &texture_handler,
@@ -117,6 +137,8 @@ fn main() {
         }
     }
 }
+
+
 
 fn update_main_menu(scene_handler: &mut SceneHandler, rl: &mut RaylibHandle) {
     if rl.is_key_pressed(KeyboardKey::KEY_ENTER)
@@ -169,7 +191,7 @@ fn update_level(
     spirits_handler
         .spirits
         .retain(|_, spirit| !spirit.get_dead());
-
+   
     for spirit in spirits_handler.spirits.values_mut() {
         spirit.update_behaviour(level, rl);
     }
@@ -177,9 +199,9 @@ fn update_level(
     order_handler.select_spirit(spirits_handler, level, rl);
     order_handler.update_line(level, rl);
 
-    ui_handler.build(level, rl);
+    ui_handler.build(level, rl); 
 
-    level.update(scene_handler);
+    level.update(scene_handler, spirits_handler.spirits.len() as u8);
 }
 
 fn draw_level(
@@ -237,4 +259,13 @@ fn draw_transition(
     //     0.0,
     //     Color::RAYWHITE,
     // );
+}
+
+fn reload_procedure(current_level: u8, level: &mut Level, metadata_handler: &mut MetadataHandler, spirits_handler: &mut SpiritsHandler){
+    *level = Level::new();
+    *metadata_handler = MetadataHandler::new(current_level);
+    level.load(current_level, metadata_handler);
+
+    *spirits_handler = SpiritsHandler::new();
+    spirits_handler.spawn_spirits(metadata_handler);
 }

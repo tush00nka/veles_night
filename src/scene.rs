@@ -4,7 +4,8 @@
 pub enum Scene {
     MainMenu,
     Level,
-    Transition
+    Transition,
+    GameOver,
 }
 
 pub struct SceneHandler {

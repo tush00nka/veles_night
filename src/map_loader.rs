@@ -1,6 +1,6 @@
 const MAP_PATH: &str = "static/maps/";
-use crate::map::{self, TileType, LEVEL_WIDTH_TILES};
 use raylib::prelude::*;
+use crate::{map::{self, TileType, LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES}};
 use std::fs;
 pub struct MapLoader;
 
@@ -8,10 +8,14 @@ impl MapLoader {
     pub fn get_map(level_number: u8, level_map: &mut map::Level) {
         let level_path = MAP_PATH.to_string() + &level_number.to_string();
 
-        let Ok(level_str) = fs::read_to_string(level_path) else {
+        let Ok(mut level_str) = fs::read_to_string(level_path) else {
             panic!("CAN'T LOAD LEVEL");
         };
 
+        level_str = level_str.replace('\n', "");
+        if level_str.len() != LEVEL_WIDTH_TILES * LEVEL_HEIGHT_TILES{
+            panic!("MAP IS NOT PROPPER SIZE, IT SHOULD BE - {}, AND IT'S - {}", LEVEL_WIDTH_TILES * LEVEL_HEIGHT_TILES, level_str.len());
+        }
         //need to load json there and get metadata structure
         let mut x: usize = 0;
         let mut y: usize = 0;
@@ -44,7 +48,6 @@ impl MapLoader {
                         teleport_position: Vector2::zero(),
                     };
                 }
-                '\n' => continue,
                 other => {
                     panic!("NOT DEFINED CHARACTER TO LOAD -{other}")
                 }

@@ -44,6 +44,10 @@ impl Level {
         self.connect_swamps(metadata_handler);
     }
 
+    pub fn completed(&self) -> bool {
+        return self.survived >= self.survive
+    }
+
     pub fn get_wood(&self) -> usize {
         self.wood
     }
@@ -85,9 +89,11 @@ impl Level {
         }
     }
 
-    pub fn update(&self, scene_handler: &mut SceneHandler) {
-        if self.survived >= self.survive {
+    pub fn update(&self, scene_handler: &mut SceneHandler, left_amount: u8) {
+        if self.completed(){
             scene_handler.set(crate::scene::Scene::Transition);
+        }else if left_amount == 0{
+            scene_handler.set(crate::scene::Scene::GameOver); 
         }
     }
 
