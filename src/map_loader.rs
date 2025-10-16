@@ -1,10 +1,6 @@
 const MAP_PATH: &str = "static/maps/";
-use crate::map::{self, TileType, LEVEL_WIDTH_TILES};
 use raylib::prelude::*;
-<<<<<<< HEAD
-=======
-use crate::{map::{self, TileType, LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES}, metadata_handler};
->>>>>>> e02094c (Small fix: Map size check)
+use crate::{map::{self, TileType, LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES}};
 use std::fs;
 pub struct MapLoader;
 
