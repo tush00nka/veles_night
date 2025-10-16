@@ -21,7 +21,7 @@ impl UIHandler {
 
         let labels = ["fire_td", "fire_lr", "fire_stop"];
         
-        for i in 0..3 {
+        for i in 0..labels.len() {
             buttons.insert(
                 labels[i].to_string(),
                 Button {

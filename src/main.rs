@@ -44,6 +44,10 @@ fn main() {
 
     rl.set_target_fps(60);
 
+    let audio = raylib::core::audio::RaylibAudio::init_audio_device().unwrap();
+    let death_sound = audio.new_sound("static/audio/death.ogg").unwrap();
+    // death_sound.play();
+
     let font = rl
         .load_font_ex(
             &thread,
@@ -103,6 +107,7 @@ fn main() {
                 &mut order_handler,
                 &mut ui_handler,
                 &mut scene_handler,
+                &death_sound,
                 &mut rl,
             ),
             Scene::Transition => update_transition(
@@ -183,6 +188,7 @@ fn update_level(
     order_handler: &mut OrderHandler,
     ui_handler: &mut UIHandler,
     scene_handler: &mut SceneHandler,
+    death_sound: &Sound<'_>,
     rl: &mut RaylibHandle,
 ) {
     // this is such a cool function fr fr tbh lowkey
@@ -199,7 +205,7 @@ fn update_level(
 
     ui_handler.build(level, rl);
 
-    level.update(scene_handler, spirits_handler.spirits.len() as u8);
+    level.update(scene_handler, spirits_handler.spirits.len() as u8, death_sound);
 }
 
 fn draw_level(
