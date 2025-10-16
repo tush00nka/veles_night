@@ -3,14 +3,12 @@ use std::collections::HashMap;
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
 use crate::{
-    SCREEN_WIDTH,
-    map::{Level, TILE_SIZE, TileType},
-    texture_handler::TextureHandler,
+    map::{Level, TileType, TILE_SIZE}, texture_handler::TextureHandler, SCREEN_HEIGHT, SCREEN_WIDTH
 };
 
-struct Button {
-    rect: Rectangle,
-    selected: bool,
+pub struct Button {
+    pub rect: Rectangle,
+    pub selected: bool,
 }
 
 pub struct UIHandler {
@@ -22,7 +20,7 @@ impl UIHandler {
         let mut buttons = HashMap::new();
 
         let labels = ["fire_td", "fire_lr", "fire_stop"];
-
+        
         for i in 0..3 {
             buttons.insert(
                 labels[i].to_string(),
@@ -75,7 +73,6 @@ impl UIHandler {
             }
         }
     }
-
     pub fn draw(
         &self,
         texture_handler: &TextureHandler,
