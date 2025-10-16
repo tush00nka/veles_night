@@ -19,6 +19,12 @@ mod swamp;
 mod texture_handler;
 mod ui;
 
+pub const FIRST_LEVEL: u8 = if cfg!(debug_assertions){
+    1
+}else{
+    0
+};
+
 const SCREEN_WIDTH: i32 = 16 * 16 * 4;
 const SCREEN_HEIGHT: i32 = 16 * 9 * 4;
 
@@ -46,14 +52,8 @@ fn main() {
     // there's a safe variation - get_safe
     // also a common one - get
 
-    let mut level_number; 
-        
-    if cfg!(debug_assertions) {
-        level_number = 0;
-    } else {
-        level_number = 1;
-    }
-    
+    let mut level_number = FIRST_LEVEL; 
+       
     let mut level = Level::new();
     let mut metadata_handler = MetadataHandler::new(level_number);
     level.load(level_number, &mut metadata_handler);
@@ -66,13 +66,19 @@ fn main() {
     let mut gameover_handler = GameOverHandler::new();
 
     let mut level_transition = LevelTransition::new();
-
+    
+    
+    
     while !rl.window_should_close() {
         // update stuff
 
         match scene_handler.get_current() {
             Scene::MainMenu => update_main_menu(&mut scene_handler, &mut rl),
-            Scene::GameOver => gameover_handler.update_gameover(&mut rl),
+            Scene::GameOver => {
+                if gameover_handler.update_gameover(&mut level_number, &mut rl, &mut scene_handler){
+                    reload_procedure(level_number as u8, &mut level, &mut metadata_handler, &mut spirits_handler);
+                }
+            }
             Scene::Level => update_level(
                 &mut spirits_handler,
                 &mut level,
@@ -235,4 +241,13 @@ fn draw_transition(
     //     0.0,
     //     Color::RAYWHITE,
     // );
+}
+
+fn reload_procedure(current_level: u8, level: &mut Level, metadata_handler: &mut MetadataHandler, spirits_handler: &mut SpiritsHandler){
+    *level = Level::new();
+    *metadata_handler = MetadataHandler::new(current_level);
+    level.load(current_level, metadata_handler);
+
+    *spirits_handler = SpiritsHandler::new();
+    spirits_handler.spawn_spirits(metadata_handler);
 }
