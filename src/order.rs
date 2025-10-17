@@ -48,8 +48,16 @@ impl OrderHandler {
 
         let mouse_pos = rl.get_mouse_position();
         let tile_pos = mouse_pos / TILE_SIZE as f32;
-        let (tile_x, tile_y) = (tile_pos.x.floor() as usize, tile_pos.y.floor() as usize);
+        let (mut tile_x, mut tile_y) = (tile_pos.x.floor() as usize, tile_pos.y.floor() as usize);
+        
+        if tile_x >= LEVEL_WIDTH_TILES {
+            tile_x = LEVEL_WIDTH_TILES - 1;
+        } 
 
+        if tile_y >= LEVEL_HEIGHT_TILES{
+            tile_y = LEVEL_HEIGHT_TILES - 1;
+        } 
+        
         match level.tiles[tile_x][tile_y] {
             TileType::FireTD { active }
             | TileType::FireLR { active }
@@ -86,14 +94,14 @@ impl OrderHandler {
     pub fn update_line(&mut self, level: &Level, rl: &RaylibHandle, hotkey_handler: &mut HotkeyHandler) {
         let mouse_pos = rl.get_mouse_position();
         let tile_pos = mouse_pos / TILE_SIZE as f32;
-        let (tile_x, tile_y) = (tile_pos.x.floor() as usize, tile_pos.y.floor() as usize);
+        let (mut tile_x, mut tile_y) = (tile_pos.x.floor() as usize, tile_pos.y.floor() as usize);
 
         if tile_x >= LEVEL_WIDTH_TILES {
-            return;
+            tile_x = LEVEL_WIDTH_TILES - 1;
         }
 
         if tile_y >= LEVEL_HEIGHT_TILES {
-            return;
+            tile_y = LEVEL_HEIGHT_TILES - 1;
         }
         
         if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT) || hotkey_handler.check_down(rl, HotkeyCategory::PickNearest) {
