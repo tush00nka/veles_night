@@ -4,12 +4,16 @@ use raylib::prelude::*;
 
 const HOTKEYS_PATH: &str = "dynamic/hotkeys.json";
 
-#[derive(Deserialize,Serialize, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Deserialize,Serialize, Copy, Clone, PartialEq, Eq, Hash,)]
 pub enum HotkeyCategory {
-    Exit,
-    Continue,
-    Reset,
-    PickNearest,
+    Exit = 0,
+    Continue = 1,
+    Reset = 2,
+    PickNearest = 3,
+    PickBuilding1 = 4,
+    PickBuilding2 = 5,
+    PickBuilding3 = 6,
+    ERROR = 255,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -20,6 +24,31 @@ pub enum KeyboardKeyString{
     KeyQ,
     KeyR,
     KeyP,
+    Key1,
+    Key2,
+    Key3
+}
+impl HotkeyCategory{
+    pub fn from_bonfire(value: &str) -> HotkeyCategory{
+        match value {
+           x if x == "fire_td" => HotkeyCategory::PickBuilding1,
+            x if x == "fire_lr" => HotkeyCategory::PickBuilding2,
+            x if x == "fire_stop" => HotkeyCategory::PickBuilding3,
+            _ => HotkeyCategory::ERROR,
+        }
+    }
+    pub fn from_u8(value: u8) -> HotkeyCategory{
+        match value {
+            x if x == HotkeyCategory::Exit as u8 => HotkeyCategory::Exit, 
+            x if x == HotkeyCategory::Reset as u8 => HotkeyCategory::Reset,
+            x if x == HotkeyCategory::Continue as u8 => HotkeyCategory::Continue,
+            x if x == HotkeyCategory::PickNearest as u8 => HotkeyCategory::PickNearest,
+            x if x == HotkeyCategory::PickBuilding1 as u8 => HotkeyCategory::PickBuilding1,
+            x if x == HotkeyCategory::PickBuilding2 as u8 => HotkeyCategory::PickBuilding2,
+            x if x == HotkeyCategory::PickBuilding3 as u8 => HotkeyCategory::PickBuilding3,
+            _ => HotkeyCategory::ERROR,
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize)]
@@ -60,7 +89,10 @@ impl HotkeyHandler{
                     KeyboardKeyString::KeySpace => KeyboardKey::KEY_SPACE,
                     KeyboardKeyString::KeyQ => KeyboardKey::KEY_Q,
                     KeyboardKeyString::KeyR => KeyboardKey::KEY_R,
-                    KeyboardKeyString::KeyP => KeyboardKey::KEY_P
+                    KeyboardKeyString::KeyP => KeyboardKey::KEY_P,
+                    KeyboardKeyString::Key1 => KeyboardKey::KEY_ONE,
+                    KeyboardKeyString::Key2 => KeyboardKey::KEY_TWO,
+                    KeyboardKeyString::Key3 => KeyboardKey::KEY_THREE,
                 };
                 vec.push(key);
                 hotkeys.insert(target.clone(), vec.clone());

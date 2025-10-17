@@ -206,7 +206,7 @@ fn update_level(
     order_handler.select_spirit(spirits_handler, level, rl, hotkey_handler);
     order_handler.update_line(level, rl, hotkey_handler);
 
-    ui_handler.build(level, rl);
+    ui_handler.build(level, rl, hotkey_handler);
 
     level.update(scene_handler, spirits_handler.spirits.len() as u8, death_sound);
 }

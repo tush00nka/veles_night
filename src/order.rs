@@ -24,7 +24,8 @@ impl OrderHandler {
         rl: &RaylibHandle,
         hotkey_handler: &mut HotkeyHandler,
     ) {
-        if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) || hotkey_handler.check_pressed(rl, HotkeyCategory::PickNearest) {
+        let if_mouse = rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT);
+        if if_mouse || hotkey_handler.check_pressed(rl, HotkeyCategory::PickNearest) {
             for (key, spirit) in spirits_handler.spirits.iter() {
                 if spirit.get_position().distance_to(rl.get_mouse_position()) <= TILE_SIZE as f32 {
                     println!("GOOT THERE");
@@ -33,18 +34,19 @@ impl OrderHandler {
                 }
             }
         }
+        
+        if if_mouse{
+            hotkey_handler.clear_last();
+        }
+
         let keyboard_last = hotkey_handler.get_last_key();
         if !rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT) && keyboard_last == KeyboardKey::KEY_NUM_LOCK{
-            println!("Got");
             return
         }
 
         if keyboard_last != KeyboardKey::KEY_NUM_LOCK && !rl.is_key_released(keyboard_last){
-            println!("Mein");
             return;
         }
-
-        hotkey_handler.clear_last();
 
         let mouse_pos = rl.get_mouse_position();
         let tile_pos = mouse_pos / TILE_SIZE as f32;

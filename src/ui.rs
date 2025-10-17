@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
 use crate::{
-    map::{Level, TileType, TILE_SIZE}, texture_handler::TextureHandler, SCREEN_WIDTH
+    hotkey_handler::{self, HotkeyCategory, HotkeyHandler}, map::{Level, TileType, TILE_SIZE}, texture_handler::TextureHandler, SCREEN_WIDTH
 };
 
 pub struct Button {
@@ -41,36 +41,58 @@ impl UIHandler {
         }
     }
 
-    pub fn build(&mut self, level: &mut Level, rl: &mut RaylibHandle) {
+    pub fn build(
+        &mut self
+        , level: &mut Level
+        , rl: &mut RaylibHandle
+        , hotkey_h: &mut HotkeyHandler,
+        ) 
+    {
+        let mut intent: HotkeyCategory;
         for (title, button) in self.build_buttons.iter_mut() {
+            intent = HotkeyCategory::from_bonfire(title);
+            
+            if hotkey_h.check_pressed(rl, intent){
+                button.selected = true;
+            }
+            
             if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
                 if unsafe {
                     CheckCollisionPointRec(rl.get_mouse_position().into(), button.rect.into())
                 } {
                     button.selected = true;
                 }
+                hotkey_h.clear_last();
             }
 
-            if rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT) {
-                if button.selected && level.get_wood() > 0 {
-                    let tile = match title.as_str() {
-                        "fire_td" => TileType::FireTD { active: false },
-                        "fire_lr" => TileType::FireLR { active: false },
-                        "fire_stop" => TileType::FireStop { active: false },
-                        _ => {
-                            panic!("wait how")
-                        }
-                    };
+            let keyboard_last = hotkey_h.get_last_key();
 
-                    let pos = rl.get_mouse_position() / (Vector2::one() * TILE_SIZE as f32);
-                    let (x, y) = (pos.x as usize, pos.y as usize);
-
-                    level.tiles[x][y] = tile;
-                    level.remove_wood();
-                }
-
-                button.selected = false;
+            if !rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT) && keyboard_last == KeyboardKey::KEY_NUM_LOCK{
+                continue;
             }
+            
+            if keyboard_last != KeyboardKey::KEY_NUM_LOCK && !rl.is_key_released(keyboard_last){
+                println!("GOT THERE");
+                continue;
+            }
+            
+            if button.selected && level.get_wood() > 0 {
+                let tile = match title.as_str() {
+                    "fire_td" => TileType::FireTD { active: false },
+                    "fire_lr" => TileType::FireLR { active: false },
+                    "fire_stop" => TileType::FireStop { active: false },
+                    _ => {
+                        panic!("wait how")
+                    }
+                };
+
+                let pos = rl.get_mouse_position() / (Vector2::one() * TILE_SIZE as f32);
+                let (x, y) = (pos.x as usize, pos.y as usize);
+
+                level.tiles[x][y] = tile;
+                level.remove_wood();
+            }
+            button.selected = false;
         }
     }
     pub fn draw(

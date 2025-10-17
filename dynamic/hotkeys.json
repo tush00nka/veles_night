@@ -9,6 +9,15 @@
         ],
         "PickNearest": [
             "KeyP"
+        ],
+        "PickBuilding1": [
+            "Key1"
+        ],
+        "PickBuilding2": [
+            "Key2"
+        ],
+        "PickBuilding3": [
+            "Key3"
         ]
     }
 }
