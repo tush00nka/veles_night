@@ -1,46 +1,38 @@
 {
-    "survive": 4,
+    "survive": 3,
     "spirits": [
-         {
-            "position": [1,7],
-            "amount": 1,
-            "direction": [0,1]
-        },
-        
         {
-            "position": [1,5],
-            "amount": 1,
-            "direction": [1,0]
-        },
-        
-        {
-            "position": [1,2],
-            "amount": 1,
-            "direction": [0,1]
-        },
-        
-        {
-            "position": [1,7],
+            "position": [2,4],
             "amount": 1,
             "direction": [1,0]
         },
         {
-            "position": [1,6],
+            "position": [3,4],
             "amount": 1,
             "direction": [1,0]
         },
-       {
-            "position": [6,4],
+        {
+            "position": [4,4],
             "amount": 1,
-            "direction": [0,1]
+            "direction": [1,0]
         },
         {
-            "position": [5,5],
+            "position": [5,4],
             "amount": 1,
-            "direction": [0,1]
+            "direction": [1,0]
         },
         {
-            "position": [2,7],
+            "position": [2,5],
+            "amount": 1,
+            "direction": [0, 1]
+        },
+        {
+            "position": [2,4],
+            "amount": 1,
+            "direction": [0, 1]
+        },
+        {
+            "position": [2,3],
             "amount": 1,
             "direction": [0, 1]
         }

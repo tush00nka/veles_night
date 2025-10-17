@@ -84,7 +84,9 @@ impl OrderHandler {
                     }
                 }
             }
-            _ => {}
+            _ => {
+                println!("wht?");
+            }
         }
 
         match level.tiles[tile_x][tile_y] {

@@ -34,7 +34,9 @@ mod swamp;
 mod texture_handler;
 mod ui;
 
-pub const FIRST_LEVEL: u8 = if cfg!(debug_assertions) { 0 } else { 1 };
+//pub const FIRST_LEVEL: u8 = if cfg!(debug_assertions) { 0 } else { 1 };
+pub const FIRST_LEVEL: u8 = 0;
+
 
 const SCREEN_WIDTH: i32 = 16 * 16 * 4;
 const SCREEN_HEIGHT: i32 = 16 * 9 * 4;
@@ -75,7 +77,7 @@ fn main() {
     // there's a safe variation - get_safe
     // also a common one - get
 
-    let mut level_number = FIRST_LEVEL;
+    let mut level_number = 5;
 
     let mut level = Level::new();
     let mut metadata_handler = MetadataHandler::new(level_number);
@@ -86,13 +88,17 @@ fn main() {
 
     let mut order_handler = OrderHandler::new();
     let mut ui_handler = UIHandler::new();
-    let mut gameover_handler = GameOverHandler::new();
+    let mut gameover_handler = GameOverHandler::new(gameover_handler::GameOverHandlerType::Level);
+
+    let mut should_close = false;
+
+    let mut gameend_handler = GameOverHandler::new(gameover_handler::GameOverHandlerType::Game);
 
     let mut level_transition = LevelTransition::new();
 
     let mut particles: Vec<Particle> = vec![];
 
-    while !rl.window_should_close() {
+    while !rl.window_should_close() || should_close {
         // update stuff
 
         particles.retain(|particle| !particle.done);
@@ -108,7 +114,9 @@ fn main() {
                     &mut level_number,
                     &mut rl,
                     &mut scene_handler,
+                    &music_handler,
                     &mut hotkey_handler,
+                    &mut should_close,
                 ) {
                     reload_procedure(
                         level_number as u8,
@@ -304,21 +312,12 @@ fn update_transition(
     if !hotkey_handler.check_pressed(rl, HotkeyCategory::Continue) {
         return;
     }
-
-    *level_number += 1;
+    *level_number += 1; 
     level_transition.set_cards(*level_number as usize);
     metadata_handler.load(*level_number);
     level.load(*level_number, metadata_handler, rl);
     spirits_handler.spawn_spirits(metadata_handler);
     scene_handler.set(Scene::Level);
-    if rl.is_key_pressed(KeyboardKey::KEY_ENTER) {
-        *level_number += 1;
-        level_transition.set_cards(*level_number as usize);
-        metadata_handler.load(*level_number);
-        level.load(*level_number, metadata_handler, rl);
-        spirits_handler.spawn_spirits(metadata_handler);
-        scene_handler.set(Scene::Level);
-    }
 }
 
 fn draw_transition(

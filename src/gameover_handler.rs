@@ -1,27 +1,42 @@
 use std::collections::HashMap;
 
 use crate::{
-    FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH,
-    hotkey_handler::{HotkeyCategory, HotkeyHandler},
-    scene::SceneHandler,
-    ui::Button,
+    hotkey_handler::{HotkeyCategory, HotkeyHandler}, music_handler::MusicHandler, scene::SceneHandler, ui::Button, FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH
 };
-use raylib::{ffi::CheckCollisionPointRec, prelude::*};
+use raylib::{ffi::{CheckCollisionPointRec, CloseWindow}, prelude::*};
 
 pub struct GameOverHandler {
     restart_buttons: HashMap<String, Button>,
     restart_text: HashMap<String, Vector2>, //position
+    gameover_type: GameOverHandlerType,
 }
+
 const LABELS_RESTART: [&str; 2] = ["СДАТЬСЯ", "ЕЩЁ РАЗ"];
+const LABELS_ENDGAME: [&str; 2] = ["ВЕРНУТЬСЯ В МЕНЮ", "ВЫЙТИ"];
+
+const LEVEL_LOSE: [&str;1] = [
+    "Мы в canned meat studios хотим поблагодарить\nвас за игру в велесову ночь. Нам очень жаль,\nчто вы не добились успехов и надеемся,\nчто вы справитесь лучше в следующий раз.\nудачи!",
+];
+const GAME_END_TEXT: [&str;1] = ["затычка, ты спас духов, в таком духе чет"];
+
+pub enum GameOverHandlerType{
+    Level,
+    Game
+}
 
 impl GameOverHandler {
-    pub fn new() -> Self {
+    pub fn new(window_type: GameOverHandlerType) -> Self {
         let mut restart_buttons = HashMap::new();
         let mut restart_text = HashMap::new();
 
-        for i in 0..LABELS_RESTART.len() {
+        let text = match window_type{
+            GameOverHandlerType::Level => LABELS_RESTART,
+            GameOverHandlerType::Game => LABELS_ENDGAME,
+        };
+
+        for i in 0..text.len() {
             restart_buttons.insert(
-                LABELS_RESTART[i].to_string(),
+                text[i].to_string(),
                 Button {
                     rect: Rectangle::new(
                         SCREEN_WIDTH as f32 / 2. - 75.,
@@ -33,7 +48,7 @@ impl GameOverHandler {
                 },
             );
             restart_text.insert(
-                LABELS_RESTART[i].to_string(),
+                text[i].to_string(),
                 Vector2::new(
                     SCREEN_WIDTH as f32 / 2. - 70.,
                     (SCREEN_HEIGHT / 2 + 64) as f32 + i as f32 * 96. + 5.,
@@ -44,6 +59,7 @@ impl GameOverHandler {
         Self {
             restart_buttons,
             restart_text,
+            gameover_type: window_type,
         }
     }
 
@@ -63,10 +79,16 @@ impl GameOverHandler {
             } else {
                 Color::WHITE
             };
+            
+            let main_text = match self.gameover_type{
+                GameOverHandlerType::Level => LEVEL_LOSE[0], //can add pseudo-random to pick random
+                                                            //slur to player
+                GameOverHandlerType::Game => GAME_END_TEXT[0],
+            };
 
             rl.draw_text_pro(
                 font,
-                "мы в canned meat studios хотим поблагодарить\nвас за игру в велесову ночь. Нам очень жаль,\nчто вы не добились успехов и надеемся,\nчто вы справитесь лучше в следующий раз.\nудачи!",
+                main_text,
                 Vector2::new((128.) as f32, (SCREEN_HEIGHT / 6) as f32),
                 Vector2::zero(),
                 0.0,
@@ -88,12 +110,15 @@ impl GameOverHandler {
             );
         }
     }
+
     pub fn update_gameover(
         &mut self,
         level_number: &mut u8,
         rl: &mut RaylibHandle,
         scene_handler: &mut SceneHandler,
+        music_handler: &MusicHandler,
         hotkeys: &mut HotkeyHandler,
+        should_close: &mut bool,
     ) -> bool {
         let mut scene = crate::scene::Scene::Level;
         let mut check = false; 
@@ -110,6 +135,7 @@ impl GameOverHandler {
 
         if check {
             scene_handler.set(scene);
+            music_handler.stop("death");
             return true
         }
 
@@ -127,13 +153,18 @@ impl GameOverHandler {
                         *level_number = FIRST_LEVEL;
                         crate::scene::Scene::MainMenu
                     }
-                    "ЕЩЁ РАЗ" => crate::Scene::Level,
+                    "ЕЩЁ РАЗ" | "ВЕРНУТЬСЯ В МЕНЮ"=> crate::Scene::Level,
+                    "ВЫЙТИ" => {
+                        *should_close = true;
+                        return false;
+                    },
                     _ => {
                         panic!("NOT EXISITNG BUTTON");
                     }
                 };
                 button.selected = false;
                 scene_handler.set(scene);
+                music_handler.stop("death");
                 return true;
             }
         }
