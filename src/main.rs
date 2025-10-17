@@ -87,6 +87,7 @@ fn main() {
                     &mut level_number,
                     &mut rl,
                     &mut scene_handler,
+                    &music_handler,
                     &mut hotkey_handler,
                 ) {
                     reload_procedure(

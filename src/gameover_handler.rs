@@ -1,10 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH,
-    hotkey_handler::{HotkeyCategory, HotkeyHandler},
-    scene::SceneHandler,
-    ui::Button,
+    hotkey_handler::{HotkeyCategory, HotkeyHandler}, music_handler::MusicHandler, scene::SceneHandler, ui::Button, FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH
 };
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
@@ -93,6 +90,7 @@ impl GameOverHandler {
         level_number: &mut u8,
         rl: &mut RaylibHandle,
         scene_handler: &mut SceneHandler,
+        music_handler: &MusicHandler,
         hotkeys: &mut HotkeyHandler,
     ) -> bool {
         let mut scene = crate::scene::Scene::Level;
@@ -110,6 +108,7 @@ impl GameOverHandler {
 
         if check {
             scene_handler.set(scene);
+            music_handler.stop("death");
             return true
         }
 
@@ -134,6 +133,7 @@ impl GameOverHandler {
                 };
                 button.selected = false;
                 scene_handler.set(scene);
+                music_handler.stop("death");
                 return true;
             }
         }
