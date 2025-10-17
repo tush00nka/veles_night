@@ -109,7 +109,7 @@ fn main() {
                     &mut rl,
                     &mut hotkey_handler,
                 ){
-                    reload_procedure(level_number, &mut level, &mut metadata_handler, &mut spirits_handler);
+                    reload_procedure(level_number, &mut level, &mut metadata_handler, &mut spirits_handler, &mut rl);
                 }
             },
             Scene::Transition => update_transition(
@@ -253,7 +253,7 @@ fn update_transition(
     *level_number += 1;
     level_transition.set_cards(*level_number as usize);
     metadata_handler.load(*level_number);
-    level.load(*level_number, metadata_handler);
+    level.load(*level_number, metadata_handler, rl);
     spirits_handler.spawn_spirits(metadata_handler);
     scene_handler.set(Scene::Level);
     if rl.is_key_pressed(KeyboardKey::KEY_ENTER) {
