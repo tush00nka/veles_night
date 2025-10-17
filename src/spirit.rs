@@ -138,7 +138,7 @@ impl Spirit {
         if self.teleported <= 1 {
             // activate before tile
             match level.tiles[next_x][next_y] {
-                TileType::Tree (_) => {
+                TileType::Tree(_) => {
                     self.direction *= -1.;
                     return;
                 }
@@ -199,11 +199,11 @@ impl Spirit {
 
     fn chop_tree(&mut self, x: usize, y: usize, level: &mut Level, rl: &RaylibHandle) {
         match level.tiles[x][y] {
-            TileType::Tree(_) => {
+            TileType::Tree(_) => {}
+            _ => {
                 self.state = SpiritState::Patrol;
                 return;
             }
-            _ => (),
         }
 
         let target = Vector2::new(x as f32 * TILE_SIZE as f32, y as f32 * TILE_SIZE as f32);

@@ -85,7 +85,12 @@ impl LevelTransition {
 
     const CARD_SIZE: i32 = 256;
 
-    pub fn draw(&mut self, texture_handler: &TextureHandler, font: &Font, rl: &mut RaylibDrawHandle) {
+    pub fn draw(
+        &mut self,
+        texture_handler: &TextureHandler,
+        font: &Font,
+        rl: &mut RaylibDrawHandle,
+    ) {
         rl.clear_background(Color::BROWN);
 
         let cards = [
@@ -110,15 +115,13 @@ impl LevelTransition {
         ];
 
         for i in 0..3 {
-            let offset; 
+            let offset;
             if self.cards[i].stage >= 5 {
                 offset = 64. * 5.;
             } else {
                 offset = self.cards[i].stage as f32 * 64.;
                 self.cards[i].stage = ((rl.get_time() * 8.) % 6.).floor() as usize;
             };
-
-            println!("{offset}");
 
             rl.draw_texture_pro(
                 texture_handler.get_safe("card"),

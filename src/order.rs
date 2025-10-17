@@ -1,7 +1,8 @@
 use raylib::prelude::*;
 
 use crate::{
-    hotkey_handler::HotkeyCategory, HotkeyHandler,
+    HotkeyHandler,
+    hotkey_handler::HotkeyCategory,
     map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, Level, TILE_SIZE, TileType},
     spirit::SpiritState,
     spirits_handler::SpiritsHandler,

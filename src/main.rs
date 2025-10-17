@@ -1,7 +1,19 @@
 use raylib::prelude::*;
 
 use crate::{
-    gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, level_transition::LevelTransition, map::Level, metadata_handler::MetadataHandler, music_handler::MusicHandler, order::OrderHandler, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
+    gameover_handler::GameOverHandler,
+    hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct},
+    level_transition::LevelTransition,
+    map::{Level, TILE_SIZE},
+    metadata_handler::MetadataHandler,
+    music_handler::MusicHandler,
+    order::OrderHandler,
+    particle::Particle,
+    scene::{Scene, SceneHandler},
+    spirit::Spirit,
+    spirits_handler::SpiritsHandler,
+    texture_handler::TextureHandler,
+    ui::UIHandler,
 };
 
 // mod light;
@@ -9,11 +21,12 @@ use crate::{
 mod gameover_handler;
 mod hotkey_handler;
 mod level_transition;
-mod music_handler;
 mod map;
 mod map_loader;
 mod metadata_handler;
+mod music_handler;
 mod order;
+mod particle;
 mod scene;
 mod spirit;
 mod spirits_handler;
@@ -40,7 +53,7 @@ fn main() {
     let music_handler = MusicHandler::new(&mut rl_audio);
 
     //let audio = raylib::core::audio::RaylibAudio::init_audio_device().unwrap();
-    
+
     // let death_sound = audio.new_sound("static/audio/death.ogg").unwrap();
     // death_sound.play();
 
@@ -77,8 +90,16 @@ fn main() {
 
     let mut level_transition = LevelTransition::new();
 
+    let mut particles: Vec<Particle> = vec![];
+
     while !rl.window_should_close() {
         // update stuff
+
+        particles.retain(|particle| !particle.done);
+
+        for particle in particles.iter_mut() {
+            particle.update(&mut rl);
+        }
 
         match scene_handler.get_current() {
             Scene::MainMenu => update_main_menu(&mut scene_handler, &mut rl, &mut hotkey_handler),
@@ -101,6 +122,7 @@ fn main() {
             Scene::Level => {
                 if update_level(
                     &mut spirits_handler,
+                    &mut particles,
                     &mut level,
                     &mut order_handler,
                     &mut ui_handler,
@@ -108,10 +130,16 @@ fn main() {
                     &music_handler,
                     &mut rl,
                     &mut hotkey_handler,
-                ){
-                    reload_procedure(level_number, &mut level, &mut metadata_handler, &mut spirits_handler, &mut rl);
+                ) {
+                    reload_procedure(
+                        level_number,
+                        &mut level,
+                        &mut metadata_handler,
+                        &mut spirits_handler,
+                        &mut rl,
+                    );
                 }
-            },
+            }
             Scene::Transition => update_transition(
                 &mut level_transition,
                 &mut level_number,
@@ -119,7 +147,7 @@ fn main() {
                 &mut level,
                 &mut scene_handler,
                 &mut spirits_handler,
-                &mut rl, 
+                &mut rl,
                 &mut hotkey_handler,
             ),
         }
@@ -143,10 +171,18 @@ fn main() {
                 draw_transition(&texture_handler, &font, &mut level_transition, &mut d)
             }
         }
+
+        for particle in particles.iter_mut() {
+            particle.draw(&mut d);
+        }
     }
 }
 
-fn update_main_menu(scene_handler: &mut SceneHandler, rl: &mut RaylibHandle, hotkey_handler: &mut HotkeyHandler) {
+fn update_main_menu(
+    scene_handler: &mut SceneHandler,
+    rl: &mut RaylibHandle,
+    hotkey_handler: &mut HotkeyHandler,
+) {
     if hotkey_handler.check_pressed(rl, HotkeyCategory::Continue)
         || rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
     {
@@ -185,8 +221,9 @@ fn draw_main_menu(font: &Font, rl: &mut RaylibDrawHandle) {
     );
 }
 
-fn update_level (
+fn update_level(
     spirits_handler: &mut SpiritsHandler,
+    particles: &mut Vec<Particle>,
     level: &mut Level,
     order_handler: &mut OrderHandler,
     ui_handler: &mut UIHandler,
@@ -195,6 +232,20 @@ fn update_level (
     rl: &mut RaylibHandle,
     hotkey_handler: &mut HotkeyHandler,
 ) -> bool {
+    for spirit in spirits_handler.spirits.values() {
+        if spirit.get_dead() {
+            particles.push(Particle::new(
+                Vector2::new(
+                    spirit.get_position().x + TILE_SIZE as f32 / 2.,
+                    spirit.get_draw_position().y + TILE_SIZE as f32 / 2.,
+                ),
+                16,
+                32.,
+                5.,
+            ));
+        }
+    }
+
     // this is such a cool function fr fr tbh lowkey
     spirits_handler
         .spirits
@@ -209,7 +260,11 @@ fn update_level (
 
     ui_handler.build(level, rl, hotkey_handler);
 
-    level.update(scene_handler, spirits_handler.spirits.len() as u8, music_handler);
+    level.update(
+        scene_handler,
+        spirits_handler.spirits.len() as u8,
+        music_handler,
+    );
 
     if hotkey_handler.check_pressed(rl, HotkeyCategory::Reset) {
         return true;
@@ -246,7 +301,7 @@ fn update_transition(
     rl: &mut RaylibHandle,
     hotkey_handler: &mut HotkeyHandler,
 ) {
-    if !hotkey_handler.check_pressed(rl, HotkeyCategory::Continue){
+    if !hotkey_handler.check_pressed(rl, HotkeyCategory::Continue) {
         return;
     }
 
