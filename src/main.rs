@@ -1,17 +1,7 @@
 use raylib::prelude::*;
 
 use crate::{
-    gameover_handler::GameOverHandler,
-    hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct},
-    level_transition::LevelTransition,
-    map::Level,
-    metadata_handler::MetadataHandler,
-    order::OrderHandler,
-    scene::{Scene, SceneHandler},
-    spirit::Spirit,
-    spirits_handler::SpiritsHandler,
-    texture_handler::TextureHandler,
-    ui::UIHandler,
+    gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, level_transition::LevelTransition, map::Level, metadata_handler::MetadataHandler, music_handler::MusicHandler, order::OrderHandler, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
 };
 
 // mod light;
@@ -19,6 +9,7 @@ use crate::{
 mod gameover_handler;
 mod hotkey_handler;
 mod level_transition;
+mod music_handler;
 mod map;
 mod map_loader;
 mod metadata_handler;
@@ -44,8 +35,13 @@ fn main() {
 
     rl.set_target_fps(60);
 
-    let audio = raylib::core::audio::RaylibAudio::init_audio_device().unwrap();
-    let death_sound = audio.new_sound("static/audio/death.ogg").unwrap();
+    let mut rl_audio = RaylibAudio::init_audio_device().unwrap();
+
+    let music_handler = MusicHandler::new(&mut rl_audio);
+
+    //let audio = raylib::core::audio::RaylibAudio::init_audio_device().unwrap();
+    
+    // let death_sound = audio.new_sound("static/audio/death.ogg").unwrap();
     // death_sound.play();
 
     let font = rl
@@ -107,7 +103,7 @@ fn main() {
                 &mut order_handler,
                 &mut ui_handler,
                 &mut scene_handler,
-                &death_sound,
+                &music_handler,
                 &mut rl,
                 &mut hotkey_handler,
             ),
@@ -184,13 +180,13 @@ fn draw_main_menu(font: &Font, rl: &mut RaylibDrawHandle) {
     );
 }
 
-fn update_level(
+fn update_level (
     spirits_handler: &mut SpiritsHandler,
     level: &mut Level,
     order_handler: &mut OrderHandler,
     ui_handler: &mut UIHandler,
     scene_handler: &mut SceneHandler,
-    death_sound: &Sound<'_>,
+    music_handler: &MusicHandler,
     rl: &mut RaylibHandle,
     hotkey_handler: &mut HotkeyHandler,
 ) {
@@ -208,7 +204,7 @@ fn update_level(
 
     ui_handler.build(level, rl, hotkey_handler);
 
-    level.update(scene_handler, spirits_handler.spirits.len() as u8, death_sound);
+    level.update(scene_handler, spirits_handler.spirits.len() as u8, music_handler);
 }
 
 fn draw_level(

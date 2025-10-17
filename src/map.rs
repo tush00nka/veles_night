@@ -1,6 +1,6 @@
 use raylib::{color::Color, prelude::*};
 
-use crate::{map_loader, metadata_handler::MetadataHandler, scene::SceneHandler, texture_handler::TextureHandler};
+use crate::{map_loader, metadata_handler::MetadataHandler, music_handler::{self, MusicHandler}, scene::SceneHandler, texture_handler::TextureHandler};
 
 pub const LEVEL_WIDTH_TILES: usize = 16;
 pub const LEVEL_HEIGHT_TILES: usize = 9;
@@ -89,11 +89,11 @@ impl Level {
         }
     }
 
-    pub fn update(&self, scene_handler: &mut SceneHandler, left_amount: u8, death_sound: &Sound<'_>) {
+    pub fn update (&self, scene_handler: &mut SceneHandler, left_amount: u8, music_handler:&MusicHandler) {
         if self.completed(){
             scene_handler.set(crate::scene::Scene::Transition);
         }else if left_amount == 0{
-            death_sound.play();
+            music_handler.play("death");
             scene_handler.set(crate::scene::Scene::GameOver); 
         }
     }

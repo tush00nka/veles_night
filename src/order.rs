@@ -28,7 +28,6 @@ impl OrderHandler {
         if if_mouse || hotkey_handler.check_pressed(rl, HotkeyCategory::PickNearest) {
             for (key, spirit) in spirits_handler.spirits.iter() {
                 if spirit.get_position().distance_to(rl.get_mouse_position()) <= TILE_SIZE as f32 {
-                    println!("GOOT THERE");
                     self.spirit = Some(*key);
                     break;
                 }

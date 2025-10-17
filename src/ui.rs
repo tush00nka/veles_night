@@ -72,7 +72,6 @@ impl UIHandler {
             }
             
             if keyboard_last != KeyboardKey::KEY_NUM_LOCK && !rl.is_key_released(keyboard_last){
-                println!("GOT THERE");
                 continue;
             }
             
