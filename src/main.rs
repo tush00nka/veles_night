@@ -62,7 +62,7 @@ fn main() {
     // there's a safe variation - get_safe
     // also a common one - get
 
-    let mut level_number = FIRST_LEVEL;
+    let mut level_number = 4;
 
     let mut level = Level::new();
     let mut metadata_handler = MetadataHandler::new(level_number);
@@ -73,11 +73,15 @@ fn main() {
 
     let mut order_handler = OrderHandler::new();
     let mut ui_handler = UIHandler::new();
-    let mut gameover_handler = GameOverHandler::new();
+    let mut gameover_handler = GameOverHandler::new(gameover_handler::GameOverHandlerType::Level);
+
+    let mut should_close = false;
+
+    let mut gameend_handler = GameOverHandler::new(gameover_handler::GameOverHandlerType::Game);
 
     let mut level_transition = LevelTransition::new();
 
-    while !rl.window_should_close() {
+    while !rl.window_should_close() || should_close {
         // update stuff
 
         match scene_handler.get_current() {
@@ -89,6 +93,7 @@ fn main() {
                     &mut scene_handler,
                     &music_handler,
                     &mut hotkey_handler,
+                    &mut should_close,
                 ) {
                     reload_procedure(
                         level_number as u8,
