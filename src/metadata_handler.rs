@@ -8,7 +8,7 @@ const METADATA_EXTENSION: &str = ".json";
 pub struct SpiritMetadata {
     pub position: [u8; 2],
     pub amount: u8,
-    pub direction: [u8; 2],
+    pub direction: [i8; 2],
 }
 
 #[derive(Deserialize, Clone)]
