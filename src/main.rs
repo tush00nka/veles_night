@@ -62,7 +62,7 @@ fn main() {
     // there's a safe variation - get_safe
     // also a common one - get
 
-    let mut level_number = FIRST_LEVEL;
+    let mut level_number = 2;
 
     let mut level = Level::new();
     let mut metadata_handler = MetadataHandler::new(level_number);
@@ -97,16 +97,20 @@ fn main() {
                     );
                 }
             }
-            Scene::Level => update_level(
-                &mut spirits_handler,
-                &mut level,
-                &mut order_handler,
-                &mut ui_handler,
-                &mut scene_handler,
-                &music_handler,
-                &mut rl,
-                &mut hotkey_handler,
-            ),
+            Scene::Level => {
+                if update_level(
+                    &mut spirits_handler,
+                    &mut level,
+                    &mut order_handler,
+                    &mut ui_handler,
+                    &mut scene_handler,
+                    &music_handler,
+                    &mut rl,
+                    &mut hotkey_handler,
+                ){
+                    reload_procedure(level_number, &mut level, &mut metadata_handler, &mut spirits_handler);
+                }
+            },
             Scene::Transition => update_transition(
                 &mut level_transition,
                 &mut level_number,
@@ -189,7 +193,7 @@ fn update_level (
     music_handler: &MusicHandler,
     rl: &mut RaylibHandle,
     hotkey_handler: &mut HotkeyHandler,
-) {
+) -> bool {
     // this is such a cool function fr fr tbh lowkey
     spirits_handler
         .spirits
@@ -205,6 +209,11 @@ fn update_level (
     ui_handler.build(level, rl, hotkey_handler);
 
     level.update(scene_handler, spirits_handler.spirits.len() as u8, music_handler);
+
+    if hotkey_handler.check_pressed(rl, HotkeyCategory::Reset) {
+        return true;
+    }
+    return false;
 }
 
 fn draw_level(
