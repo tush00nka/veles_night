@@ -62,7 +62,7 @@ fn main() {
     // there's a safe variation - get_safe
     // also a common one - get
 
-    let mut level_number = 2;
+    let mut level_number = FIRST_LEVEL;
 
     let mut level = Level::new();
     let mut metadata_handler = MetadataHandler::new(level_number);

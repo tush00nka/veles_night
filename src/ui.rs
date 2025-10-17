@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
 use crate::{
-    hotkey_handler::{HotkeyCategory, HotkeyHandler}, map::{Level, TileType, TILE_SIZE}, texture_handler::TextureHandler, SCREEN_WIDTH
+    SCREEN_WIDTH,
+    hotkey_handler::{HotkeyCategory, HotkeyHandler},
+    map::{Level, TILE_SIZE, TileType},
+    texture_handler::TextureHandler,
 };
 
 pub struct Button {
@@ -20,14 +23,14 @@ impl UIHandler {
         let mut buttons = HashMap::new();
 
         let labels = ["fire_td", "fire_lr", "fire_stop"];
-        
+
         for i in 0..labels.len() {
             buttons.insert(
                 labels[i].to_string(),
                 Button {
                     rect: Rectangle::new(
                         i as f32 * 80. + (SCREEN_WIDTH / 2) as f32 - 40. * 3., // todo: pohui
-                        16.,
+                        5.,
                         64.,
                         64.,
                     ),
@@ -42,20 +45,19 @@ impl UIHandler {
     }
 
     pub fn build(
-        &mut self
-        , level: &mut Level
-        , rl: &mut RaylibHandle
-        , hotkey_h: &mut HotkeyHandler,
-        ) 
-    {
+        &mut self,
+        level: &mut Level,
+        rl: &mut RaylibHandle,
+        hotkey_h: &mut HotkeyHandler,
+    ) {
         let mut intent: HotkeyCategory;
         for (title, button) in self.build_buttons.iter_mut() {
             intent = HotkeyCategory::from_bonfire(title);
-            
-            if hotkey_h.check_pressed(rl, intent){
+
+            if hotkey_h.check_pressed(rl, intent) {
                 button.selected = true;
             }
-            
+
             if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
                 if unsafe {
                     CheckCollisionPointRec(rl.get_mouse_position().into(), button.rect.into())
@@ -67,14 +69,16 @@ impl UIHandler {
 
             let keyboard_last = hotkey_h.get_last_key();
 
-            if !rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT) && keyboard_last == KeyboardKey::KEY_NUM_LOCK{
+            if !rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT)
+                && keyboard_last == KeyboardKey::KEY_NUM_LOCK
+            {
                 continue;
             }
-            
-            if keyboard_last != KeyboardKey::KEY_NUM_LOCK && !rl.is_key_released(keyboard_last){
+
+            if keyboard_last != KeyboardKey::KEY_NUM_LOCK && !rl.is_key_released(keyboard_last) {
                 continue;
             }
-            
+
             if button.selected && level.get_wood() > 0 {
                 let tile = match title.as_str() {
                     "fire_td" => TileType::FireTD { active: false },
@@ -148,9 +152,17 @@ impl UIHandler {
             }
         }
 
+        rl.draw_rectangle(5, 5, 256, 74, Color::BLACK.alpha(0.5));
+
         rl.draw_text_ex(
             font,
-            format!("Духов проведено: {}/{}\nДревесина: {}", level.survived, level.survive, level.get_wood()).as_str(),
+            format!(
+                "Духов проведено: {}/{}\nДревесина: {}",
+                level.survived,
+                level.survive,
+                level.get_wood()
+            )
+            .as_str(),
             Vector2::one() * 10.,
             32.,
             1.0,
