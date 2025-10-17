@@ -95,7 +95,7 @@ impl UIHandler {
                 rl.draw_texture_pro(
                     texture_handler.get_safe(tex_name),
                     Rectangle::new(
-                        ((rl.get_time() * 4.) % 4.).floor() as f32 * 16.,
+                        ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,
                         16.,
                         16.,
                         16.,
@@ -109,7 +109,7 @@ impl UIHandler {
                 rl.draw_texture_pro(
                     texture_handler.get_safe(tex_name),
                     Rectangle::new(
-                        ((rl.get_time() * 4.) % 4.).floor() as f32 * 16.,
+                        ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,
                         16.,
                         16.,
                         16.,

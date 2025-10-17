@@ -1,8 +1,9 @@
 use raylib::prelude::*;
 
 use crate::{
-    map::{Level, TileType, LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, TILE_SIZE},
-    spirit::SpiritState, spirits_handler::SpiritsHandler,
+    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, Level, TILE_SIZE, TileType},
+    spirit::SpiritState,
+    spirits_handler::SpiritsHandler,
 };
 
 pub struct OrderHandler {
@@ -50,7 +51,7 @@ impl OrderHandler {
                         }
                     }
                 }
-                TileType::Tree => {
+                TileType::Tree(_) => {
                     if let Some(key) = self.spirit {
                         if let Some(spirit) = spirits_handler.spirits.get_mut(&key) {
                             spirit.set_state(SpiritState::ChopTree(tile_x, tile_y));
@@ -60,12 +61,15 @@ impl OrderHandler {
                 _ => {}
             }
 
-            if level.tiles[tile_x][tile_y] == TileType::Tree {
-                if let Some(key) = self.spirit {
-                    if let Some(spirit) = spirits_handler.spirits.get_mut(&key) {
-                        spirit.set_state(SpiritState::ChopTree(tile_x, tile_y));
+            match level.tiles[tile_x][tile_y] {
+                TileType::Tree(_) => {
+                    if let Some(key) = self.spirit {
+                        if let Some(spirit) = spirits_handler.spirits.get_mut(&key) {
+                            spirit.set_state(SpiritState::ChopTree(tile_x, tile_y));
+                        }
                     }
                 }
+                _ => {}
             }
 
             self.spirit = None;

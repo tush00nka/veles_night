@@ -115,7 +115,7 @@ impl LevelTransition {
                 offset = 64. * 5.;
             } else {
                 offset = self.cards[i].stage as f32 * 64.;
-                self.cards[i].stage = ((rl.get_time() * 6.) % 6.).floor() as usize;
+                self.cards[i].stage = ((rl.get_time() * 8.) % 6.).floor() as usize;
             };
 
             println!("{offset}");
@@ -137,7 +137,7 @@ impl LevelTransition {
                 CardContentType::Image(img) => rl.draw_texture_pro(
                     texture_handler.get_safe(img.as_str()),
                     Rectangle::new(
-                        ((rl.get_time() * 4.) % 4.).floor() as f32 * TILE_SIZE_PX as f32,
+                        ((rl.get_time() * 8.) % 4.).floor() as f32 * TILE_SIZE_PX as f32,
                         TILE_SIZE_PX as f32,
                         TILE_SIZE_PX as f32,
                         TILE_SIZE_PX as f32,

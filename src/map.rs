@@ -1,6 +1,9 @@
 use raylib::{color::Color, prelude::*};
 
-use crate::{map_loader, metadata_handler::MetadataHandler, scene::SceneHandler, texture_handler::TextureHandler};
+use crate::{
+    map_loader, metadata_handler::MetadataHandler, scene::SceneHandler,
+    texture_handler::TextureHandler,
+};
 
 pub const LEVEL_WIDTH_TILES: usize = 16;
 pub const LEVEL_HEIGHT_TILES: usize = 9;
@@ -14,7 +17,7 @@ pub enum TileType {
     FireTD { active: bool },
     FireLR { active: bool },
     FireStop { active: bool },
-    Tree,
+    Tree(i32),
     Swamp { teleport_position: Vector2 },
     Exit(char),
 }
@@ -32,12 +35,12 @@ impl Level {
             tiles: [[TileType::Air; LEVEL_HEIGHT_TILES]; LEVEL_WIDTH_TILES],
             wood: 0,
             survived: 0,
-            survive: 0
+            survive: 0,
         }
     }
 
-    pub fn load(&mut self, level_number: u8, metadata_handler: &mut MetadataHandler) {
-        map_loader::MapLoader::get_map(level_number, self);
+    pub fn load(&mut self, level_number: u8, metadata_handler: &mut MetadataHandler, rl: &mut RaylibHandle) {
+        map_loader::MapLoader::get_map(level_number, self, rl);
         self.survive = metadata_handler.get_survive();
         self.survived = 0;
         self.wood = 0;
@@ -45,7 +48,7 @@ impl Level {
     }
 
     pub fn completed(&self) -> bool {
-        return self.survived >= self.survive
+        return self.survived >= self.survive;
     }
 
     pub fn get_wood(&self) -> usize {
@@ -89,12 +92,17 @@ impl Level {
         }
     }
 
-    pub fn update(&self, scene_handler: &mut SceneHandler, left_amount: u8, death_sound: &Sound<'_>) {
-        if self.completed(){
+    pub fn update(
+        &self,
+        scene_handler: &mut SceneHandler,
+        left_amount: u8,
+        death_sound: &Sound<'_>,
+    ) {
+        if self.completed() {
             scene_handler.set(crate::scene::Scene::Transition);
-        }else if left_amount == 0{
+        } else if left_amount == 0 {
             death_sound.play();
-            scene_handler.set(crate::scene::Scene::GameOver); 
+            scene_handler.set(crate::scene::Scene::GameOver);
         }
     }
 
@@ -121,7 +129,7 @@ impl Level {
                     TileType::FireStop { active } => {
                         let source = if active {
                             Rectangle::new(
-                                ((rl.get_time() * 4.) % 4.).floor() as f32 * 16.,
+                                ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,
                                 16.,
                                 16.,
                                 16.,
@@ -144,10 +152,20 @@ impl Level {
                             Color::WHITE,
                         );
                     }
-                    TileType::Tree => {
+                    TileType::Tree(chance) => {
+                        let offset = if chance >= 50 {
+                            0
+                        } else if chance >= 25 {
+                            1
+                        } else {
+                            2
+                        };
+
+                        let source = Rectangle::new(offset as f32 * 16., 0., 16., 16.);
+
                         rl.draw_texture_pro(
-                            texture_handler.get_safe("tree"),
-                            Rectangle::new(0., 0., 16., 16.),
+                            texture_handler.get_safe("trees"),
+                            source,
                             Rectangle::new(
                                 (x as i32 * TILE_SIZE) as f32,
                                 (y as i32 * TILE_SIZE) as f32,
@@ -162,7 +180,7 @@ impl Level {
                     TileType::FireTD { active } => {
                         let source = if active {
                             Rectangle::new(
-                                ((rl.get_time() * 4.) % 4.).floor() as f32 * 16.,
+                                ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,
                                 16.,
                                 16.,
                                 16.,
@@ -188,7 +206,7 @@ impl Level {
                     TileType::FireLR { active } => {
                         let source = if active {
                             Rectangle::new(
-                                ((rl.get_time() * 4.) % 4.).floor() as f32 * 16.,
+                                ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,
                                 16.,
                                 16.,
                                 16.,
@@ -222,7 +240,12 @@ impl Level {
                             }
                         };
 
-                        let source = Rectangle::new(offset, 0., 16., 16.);
+                        let source = Rectangle::new(
+                            offset,
+                            ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,
+                            16.,
+                            16.,
+                        );
 
                         rl.draw_texture_pro(
                             texture_handler.get_safe("exit"),
@@ -238,7 +261,9 @@ impl Level {
                             Color::WHITE,
                         );
                     }
-                    TileType::Swamp { teleport_position: _ } => {
+                    TileType::Swamp {
+                        teleport_position: _,
+                    } => {
                         rl.draw_texture_pro(
                             texture_handler.get_safe("swamp"),
                             Rectangle::new(0., 0., 16., 16.),

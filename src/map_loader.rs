@@ -5,7 +5,7 @@ use std::fs;
 pub struct MapLoader;
 
 impl MapLoader {
-    pub fn get_map(level_number: u8, level_map: &mut map::Level) {
+    pub fn get_map(level_number: u8, level_map: &mut map::Level, rl: &mut RaylibHandle) {
         let level_path = MAP_PATH.to_string() + &level_number.to_string();
 
         let Ok(mut level_str) = fs::read_to_string(level_path) else {
@@ -27,7 +27,7 @@ impl MapLoader {
             // print!("{tile}");
             match tile {
                 '#' => {
-                    level_map.tiles[x][y] = TileType::Tree;
+                    level_map.tiles[x][y] = TileType::Tree(rl.get_random_value(0..100));
                 }
                 '^' => {
                     level_map.tiles[x][y] = TileType::Exit('^');

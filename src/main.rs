@@ -70,7 +70,7 @@ fn main() {
 
     let mut level = Level::new();
     let mut metadata_handler = MetadataHandler::new(level_number);
-    level.load(level_number, &mut metadata_handler);
+    level.load(level_number, &mut metadata_handler, &mut rl);
 
     let mut spirits_handler = SpiritsHandler::new();
     spirits_handler.spawn_spirits(&mut metadata_handler);
@@ -98,6 +98,7 @@ fn main() {
                         &mut level,
                         &mut metadata_handler,
                         &mut spirits_handler,
+                        &mut rl,
                     );
                 }
             }
@@ -240,7 +241,7 @@ fn update_transition(
         *level_number += 1;
         level_transition.set_cards(*level_number as usize);
         metadata_handler.load(*level_number);
-        level.load(*level_number, metadata_handler);
+        level.load(*level_number, metadata_handler, rl);
         spirits_handler.spawn_spirits(metadata_handler);
         scene_handler.set(Scene::Level);
     }
@@ -270,10 +271,11 @@ fn reload_procedure(
     level: &mut Level,
     metadata_handler: &mut MetadataHandler,
     spirits_handler: &mut SpiritsHandler,
+    rl: &mut RaylibHandle,
 ) {
     *level = Level::new();
     *metadata_handler = MetadataHandler::new(current_level);
-    level.load(current_level, metadata_handler);
+    level.load(current_level, metadata_handler, rl);
 
     *spirits_handler = SpiritsHandler::new();
     spirits_handler.spawn_spirits(metadata_handler);
