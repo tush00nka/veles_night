@@ -6,6 +6,7 @@ pub enum Scene {
     Level,
     Transition,
     GameOver,
+    GameEnd,
 }
 
 pub struct SceneHandler {

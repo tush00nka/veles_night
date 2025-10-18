@@ -121,10 +121,12 @@ impl Spirit {
                 level.survive();
                 return;
             }
+
             TileType::Swamp { teleport_position } => {
                 if self.teleported == 0 {
-                    next = teleport_position * TILE_SIZE as f32;
                     self.teleported = 2;
+                    next = teleport_position * TILE_SIZE as f32;
+                
                     did_we_jump = true;
                 } else {
                     self.teleported -= 1;

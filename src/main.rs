@@ -34,13 +34,12 @@ mod swamp;
 mod texture_handler;
 mod ui;
 
-//pub const FIRST_LEVEL: u8 = if cfg!(debug_assertions) { 0 } else { 1 };
-pub const FIRST_LEVEL: u8 = 0;
-
+pub const FIRST_LEVEL: u8 = 5;
 
 const SCREEN_WIDTH: i32 = 16 * 16 * 4;
 const SCREEN_HEIGHT: i32 = 16 * 9 * 4;
-
+const MAX_LEVEL: u8 = 5; //ЗАТЫЧКА, ПЕРЕДЕЛАТЬ
+                         //
 fn main() {
     let (mut rl, thread) = raylib::init()
         .size(SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -77,7 +76,7 @@ fn main() {
     // there's a safe variation - get_safe
     // also a common one - get
 
-    let mut level_number = 5;
+    let mut level_number = FIRST_LEVEL;
 
     let mut level = Level::new();
     let mut metadata_handler = MetadataHandler::new(level_number);
@@ -98,7 +97,7 @@ fn main() {
 
     let mut particles: Vec<Particle> = vec![];
 
-    while !rl.window_should_close() || should_close {
+    while !rl.window_should_close() && !should_close {
         // update stuff
 
         particles.retain(|particle| !particle.done);
@@ -109,6 +108,15 @@ fn main() {
 
         match scene_handler.get_current() {
             Scene::MainMenu => update_main_menu(&mut scene_handler, &mut rl, &mut hotkey_handler),
+            Scene::GameEnd =>{
+                gameend_handler.update_gameover(
+                    &mut level_number, 
+                    &mut rl,
+                    &mut scene_handler, 
+                    &music_handler, 
+                    &mut hotkey_handler, 
+                    &mut should_close);
+            },
             Scene::GameOver => {
                 if gameover_handler.update_gameover(
                     &mut level_number,
@@ -165,6 +173,7 @@ fn main() {
 
         match scene_handler.get_current() {
             Scene::MainMenu => draw_main_menu(&font, &mut d),
+            Scene::GameEnd => gameend_handler.draw_gameover(&font, &mut d),
             Scene::GameOver => gameover_handler.draw_gameover(&font, &mut d),
             Scene::Level => draw_level(
                 &mut level,
@@ -313,6 +322,11 @@ fn update_transition(
         return;
     }
     *level_number += 1; 
+    if *level_number > MAX_LEVEL{
+        scene_handler.set(Scene::GameEnd);
+        return
+    }
+
     level_transition.set_cards(*level_number as usize);
     metadata_handler.load(*level_number);
     level.load(*level_number, metadata_handler, rl);
