@@ -34,11 +34,11 @@ mod swamp;
 mod texture_handler;
 mod ui;
 
-pub const FIRST_LEVEL: u8 = 5;
+pub const FIRST_LEVEL: u8 = 6;
 
 const SCREEN_WIDTH: i32 = 16 * 16 * 4;
 const SCREEN_HEIGHT: i32 = 16 * 9 * 4;
-const MAX_LEVEL: u8 = 5; //ЗАТЫЧКА, ПЕРЕДЕЛАТЬ
+const MAX_LEVEL: u8 = 6; //ЗАТЫЧКА, ПЕРЕДЕЛАТЬ
                          //
 fn main() {
     let (mut rl, thread) = raylib::init()

@@ -1,0 +1,182 @@
+{
+    "survive": 2,
+    "spirits": [
+        {
+            "position": [1,1],
+            "amount": 1,
+            "direction": [0,1]
+        },
+        {
+            "position": [1,2],
+            "amount": 1,
+            "direction": [0,1]
+        },
+        {
+            "position": [1,3],
+            "amount": 1,
+            "direction": [0,1]
+        },
+        {
+            "position": [1,4],
+            "amount": 1,
+            "direction": [0,1]
+        },
+        {
+            "position": [1,5],
+            "amount": 1,
+            "direction": [0,1]
+        },
+        {
+            "position": [1,6],
+            "amount": 1,
+            "direction": [0,1]
+        },
+        {
+            "position": [1,7],
+            "amount": 1,
+            "direction": [0,1]
+        },
+        {
+            "position": [1,6],
+            "amount": 1,
+            "direction": [1,0]
+        },
+        {
+            "position": [1,6],
+            "amount": 1,
+            "direction": [-1,0]
+        },
+        {
+            "position": [1,4],
+            "amount": 1,
+            "direction": [-1,0]
+        },
+        {
+            "position": [1,2],
+            "amount": 1,
+            "direction": [-1,0]
+        },
+        {
+            "position": [7,7],
+            "amount": 1,
+            "direction": [0,1]
+        },
+        {
+            "position": [13,7],
+            "amount": 1,
+            "direction": [0,1]
+        },
+        {
+            "position": [14,7],
+            "amount": 1,
+            "direction": [0,1]
+        },
+        {
+            "position": [14,2],
+            "amount": 1,
+            "direction": [0,-1]
+        }
+    ],
+    "swamps": [
+        {
+            "swamp": [2,1],
+            "teleport": [6,3]
+        },
+        {
+            "swamp": [3,3],
+            "teleport": [6,1]
+        },
+        {
+            "swamp": [3,5],
+            "teleport": [6,7]
+        },
+        {
+            "swamp": [2,7],
+            "teleport": [6,5]
+        },
+
+
+        {
+            "swamp": [6,1],
+            "teleport": [3,3]
+        },
+
+        
+        {
+            "swamp": [8,2],
+            "teleport": [12,2]
+        },
+
+
+        {
+            "swamp": [6,3],
+            "teleport": [2,1]
+        },
+        
+        {
+            "swamp": [9,4],
+            "teleport": [12,6]
+        },
+        
+        {
+            "swamp": [6,5],
+            "teleport": [2,7]
+        },
+
+        {
+            "swamp": [9,6],
+            "teleport": [12,7]
+        },
+
+        {
+            "swamp": [8,7],
+            "teleport": [10,3]
+        },
+        {
+            "swamp": [10,3],
+            "teleport": [8,7]
+        },
+
+
+        
+        {
+            "swamp": [6,7],
+            "teleport": [3,5]
+        },
+
+
+        {
+            "swamp": [9,1],
+            "teleport": [12,4]
+        },
+        {
+            "swamp": [11,1],
+            "teleport": [14,4]
+        },
+
+
+
+        {
+            "swamp": [12,7],
+            "teleport": [9,6]
+        },
+        {
+            "swamp": [12,6],
+            "teleport": [9,4]
+        },
+        {
+            "swamp": [12,4],
+            "teleport": [9,1]
+        },
+        {
+            "swamp": [12,2],
+            "teleport": [8,2]
+        },
+
+
+        {
+            "swamp": [14,4],
+            "teleport": [11,1]
+        }
+    ]
+}

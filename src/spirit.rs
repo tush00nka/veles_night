@@ -128,13 +128,14 @@ impl Spirit {
                     next = teleport_position * TILE_SIZE as f32;
                 
                     did_we_jump = true;
-                } else {
-                    self.teleported -= 1;
                 }
             }
             _ => {}
         }
 
+        if self.teleported != 0 && !did_we_jump{
+            self.teleported -= 1;
+        }
         
         if !did_we_jump && (next_x >= LEVEL_WIDTH_TILES || next_y >= LEVEL_HEIGHT_TILES || tile_x <= 0 || tile_x <= 0)
         {
@@ -154,6 +155,7 @@ impl Spirit {
                         return;
                     }
                 }
+                TileType::Exit(_) =>{println!("THERE");},
                 _ => {}
             }
         }
