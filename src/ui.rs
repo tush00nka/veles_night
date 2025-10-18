@@ -154,7 +154,7 @@ impl UIHandler {
 
         rl.draw_rectangle(5, 5, 256, 74, Color::BLACK.alpha(0.5));
 
-        rl.draw_text_ex(
+       rl.draw_text_ex(
             font,
             format!(
                 "Духов проведено: {}/{}\nДревесина: {}",
@@ -168,5 +168,17 @@ impl UIHandler {
             1.0,
             Color::RAYWHITE,
         );
+
+        rl.draw_rectangle(SCREEN_WIDTH - 256, 5, 256, 74, Color::BLACK.alpha(0.5));
+        rl.draw_text_ex(
+            font,
+            "Нажмите R для \nперезапуска уровня",
+            Vector2::new(SCREEN_WIDTH as f32 - 256., 5.),
+            32.,
+            1.0,
+            Color::RAYWHITE,
+        );
+ 
+ 
     }
 }

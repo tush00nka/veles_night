@@ -34,7 +34,7 @@ mod swamp;
 mod texture_handler;
 mod ui;
 
-pub const FIRST_LEVEL: u8 = 6;
+pub const FIRST_LEVEL: u8 = 0;
 
 const SCREEN_WIDTH: i32 = 16 * 16 * 4;
 const SCREEN_HEIGHT: i32 = 16 * 9 * 4;
@@ -108,14 +108,22 @@ fn main() {
 
         match scene_handler.get_current() {
             Scene::MainMenu => update_main_menu(&mut scene_handler, &mut rl, &mut hotkey_handler),
-            Scene::GameEnd =>{
-                gameend_handler.update_gameover(
+            Scene::GameEnd =>{   
+                if gameend_handler.update_gameover(
                     &mut level_number, 
                     &mut rl,
                     &mut scene_handler, 
                     &music_handler, 
                     &mut hotkey_handler, 
-                    &mut should_close);
+                    &mut should_close)
+                {
+                    reload_procedure(
+                        level_number as u8,
+                        &mut level,
+                        &mut metadata_handler,
+                        &mut spirits_handler,
+                        &mut rl,);
+                }
             },
             Scene::GameOver => {
                 if gameover_handler.update_gameover(
@@ -322,12 +330,14 @@ fn update_transition(
         return;
     }
     *level_number += 1; 
+    if *level_number < MAX_LEVEL{
+         level_transition.set_cards(*level_number as usize);
+    }
     if *level_number > MAX_LEVEL{
         scene_handler.set(Scene::GameEnd);
-        return
+        return;
     }
-
-    level_transition.set_cards(*level_number as usize);
+    
     metadata_handler.load(*level_number);
     level.load(*level_number, metadata_handler, rl);
     spirits_handler.spawn_spirits(metadata_handler);

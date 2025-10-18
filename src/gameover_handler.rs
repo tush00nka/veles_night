@@ -149,11 +149,11 @@ impl GameOverHandler {
             }
             if rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT) && button.selected {
                 let scene = match title.as_str() {
-                    "СДАТЬСЯ" => {
+                    "СДАТЬСЯ" | "ВЕРНУТЬСЯ В МЕНЮ"=> {
                         *level_number = FIRST_LEVEL;
                         crate::scene::Scene::MainMenu
                     }
-                    "ЕЩЁ РАЗ" | "ВЕРНУТЬСЯ В МЕНЮ"=> crate::Scene::Level,
+                    "ЕЩЁ РАЗ" => crate::Scene::Level,
                     "ВЫЙТИ" => {
                         *should_close = true;
                         return false;
