@@ -2,6 +2,7 @@ use raylib::prelude::*;
 
 use crate::{
     map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, Level, TILE_SIZE, TileType},
+    music_handler::MusicHandler,
     texture_handler::TextureHandler,
 };
 
@@ -65,19 +66,24 @@ impl Spirit {
         self.state = state;
     }
 
-    pub fn update_behaviour(&mut self, level: &mut Level, rl: &mut RaylibHandle) {
+    pub fn update_behaviour(
+        &mut self,
+        level: &mut Level,
+        music_handler: &MusicHandler,
+        rl: &mut RaylibHandle,
+    ) {
         match self.state {
             SpiritState::Patrol => {
                 if self.timer >= 0.5 {
-                    self.patrol(level);
+                    self.patrol(music_handler, level);
                     self.timer = 0.0;
                 } else {
                     self.timer += rl.get_frame_time();
                     self.update_position_smoothly(rl);
                 }
             }
-            SpiritState::ChopTree(x, y) => self.chop_tree(x, y, level, rl),
-            SpiritState::LightFire(x, y) => self.light_fire(x, y, level, rl),
+            SpiritState::ChopTree(x, y) => self.chop_tree(x, y, level, music_handler, rl),
+            SpiritState::LightFire(x, y) => self.light_fire(x, y, level, music_handler, rl),
         }
     }
 
@@ -87,7 +93,7 @@ impl Spirit {
             .lerp(self.position, SPIRIT_SPEED * rl.get_frame_time());
     }
 
-    fn patrol(&mut self, level: &mut Level) {
+    fn patrol(&mut self, music_handler: &MusicHandler, level: &mut Level) {
         let (tile_x, tile_y) = (
             (self.get_position().x / TILE_SIZE as f32).floor() as usize,
             (self.get_position().y / TILE_SIZE as f32).floor() as usize,
@@ -99,7 +105,7 @@ impl Spirit {
             (next.x / TILE_SIZE as f32).round() as usize,
             (next.y / TILE_SIZE as f32).round() as usize,
         );
-        
+
         let mut did_we_jump = false;
 
         // step on tile to activate
@@ -118,6 +124,7 @@ impl Spirit {
             }
             TileType::Exit(_) => {
                 self.dead = true;
+                music_handler.play("foom");
                 level.survive();
                 return;
             }
@@ -126,7 +133,7 @@ impl Spirit {
                 if self.teleported == 0 {
                     self.teleported = 2;
                     next = teleport_position * TILE_SIZE as f32;
-                
+
                     did_we_jump = true;
                 } else {
                     self.teleported -= 1;
@@ -135,10 +142,14 @@ impl Spirit {
             _ => {}
         }
 
-        
-        if !did_we_jump && (next_x >= LEVEL_WIDTH_TILES || next_y >= LEVEL_HEIGHT_TILES || tile_x <= 0 || tile_x <= 0)
+        if !did_we_jump
+            && (next_x >= LEVEL_WIDTH_TILES
+                || next_y >= LEVEL_HEIGHT_TILES
+                || tile_x <= 0
+                || tile_x <= 0)
         {
             self.dead = true;
+            music_handler.play("foom");
             return;
         }
         if self.teleported <= 1 {
@@ -165,7 +176,7 @@ impl Spirit {
         self.position = next;
     }
 
-    fn light_fire(&mut self, x: usize, y: usize, level: &mut Level, rl: &RaylibHandle) {
+    fn light_fire(&mut self, x: usize, y: usize, level: &mut Level, music_handler: &MusicHandler, rl: &RaylibHandle) {
         match level.tiles[x][y] {
             TileType::FireTD { active }
             | TileType::FireLR { active }
@@ -194,6 +205,7 @@ impl Spirit {
                 }
             }
             self.dead = true;
+            music_handler.play("foom");
         }
 
         self.position = self
@@ -203,13 +215,13 @@ impl Spirit {
         self.draw_position = self.position;
     }
 
-    fn chop_tree(&mut self, x: usize, y: usize, level: &mut Level, rl: &RaylibHandle) {
+    fn chop_tree(&mut self, x: usize, y: usize, level: &mut Level, music_handler: &MusicHandler, rl: &RaylibHandle) {
         match level.tiles[x][y] {
             TileType::Tree(_) => {}
             _ => {
                 self.state = SpiritState::Patrol;
                 return;
-            },
+            }
         };
 
         let target = Vector2::new(x as f32 * TILE_SIZE as f32, y as f32 * TILE_SIZE as f32);
@@ -218,6 +230,7 @@ impl Spirit {
             level.tiles[x][y] = TileType::Air;
             level.add_wood();
             self.dead = true;
+            music_handler.play("foom");
         }
 
         self.position = self

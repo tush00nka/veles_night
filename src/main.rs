@@ -52,8 +52,8 @@ fn main() {
     rl.set_exit_key(None);
 
     let mut rl_audio = RaylibAudio::init_audio_device().unwrap();
-
     let music_handler = MusicHandler::new(&mut rl_audio);
+    music_handler.music_play();
 
     //let audio = raylib::core::audio::RaylibAudio::init_audio_device().unwrap();
 
@@ -114,6 +114,8 @@ fn main() {
     while !rl.window_should_close() && !should_close {
         // update stuff
 
+        music_handler.music_update();
+
         particles.retain(|particle| !particle.done);
 
         for particle in particles.iter_mut() {
@@ -138,6 +140,8 @@ fn main() {
                 );
             }
             Scene::GameOver => {
+                music_handler.music_pause();
+
                 rl.set_window_title(&thread, "Велесова Ночь - Поражение");
 
                 if gameover_handler.update_gameover(
@@ -148,6 +152,7 @@ fn main() {
                     &mut hotkey_handler,
                     &mut should_close,
                 ) {
+                    music_handler.music_resume();
                     reload_procedure(
                         level_number as u8,
                         &mut level,
@@ -297,7 +302,7 @@ fn update_level(
         .retain(|_, spirit| !spirit.get_dead());
 
     for spirit in spirits_handler.spirits.values_mut() {
-        spirit.update_behaviour(level, rl);
+        spirit.update_behaviour(level, music_handler, rl);
     }
 
     order_handler.select_spirit(spirits_handler, level, rl, hotkey_handler);
@@ -347,9 +352,12 @@ fn update_transition(
     hotkey_handler: &mut HotkeyHandler,
     ui_handler: &mut UIHandler,
 ) {
-    if !hotkey_handler.check_pressed(rl, HotkeyCategory::Continue) {
+    if !hotkey_handler.check_pressed(rl, HotkeyCategory::Continue)
+        && !rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT)
+    {
         return;
     }
+
     *level_number += 1;
     if *level_number > MAX_LEVEL {
         scene_handler.set(Scene::GameEnd);
