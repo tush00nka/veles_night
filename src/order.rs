@@ -42,6 +42,11 @@ impl OrderHandler {
             hotkey_handler.clear_last();
         }
 
+        if rl.is_key_pressed(KeyboardKey::KEY_ESCAPE) {
+            self.spirit = None;
+            return;
+        }
+
         let keyboard_last = hotkey_handler.get_last_key();
         if !rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT)
             && keyboard_last == KeyboardKey::KEY_NUM_LOCK
@@ -85,7 +90,7 @@ impl OrderHandler {
                 }
             }
             _ => {
-                println!("wht?");
+                // println!("wht?");
             }
         }
 

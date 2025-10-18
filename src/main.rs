@@ -34,12 +34,12 @@ mod swamp;
 mod texture_handler;
 mod ui;
 
-pub const FIRST_LEVEL: u8 = 5;
+pub const FIRST_LEVEL: u8 = 0;
 
 const SCREEN_WIDTH: i32 = 16 * 16 * 4;
 const SCREEN_HEIGHT: i32 = 16 * 9 * 4;
 const MAX_LEVEL: u8 = 5; //ЗАТЫЧКА, ПЕРЕДЕЛАТЬ
-                         //
+//
 fn main() {
     let (mut rl, thread) = raylib::init()
         .size(SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -48,6 +48,8 @@ fn main() {
         .build();
 
     rl.set_target_fps(60);
+
+    rl.set_exit_key(None);
 
     let mut rl_audio = RaylibAudio::init_audio_device().unwrap();
 
@@ -76,7 +78,19 @@ fn main() {
     // there's a safe variation - get_safe
     // also a common one - get
 
-    let mut level_number = FIRST_LEVEL;
+    let args: Vec<String> = std::env::args().collect();
+
+    let level_num = if args.len() > 1 {
+        let Ok(level_num) = args[1].parse::<u8>() else {
+            panic!("wrong cmd arg")
+        };
+
+        level_num
+    } else {
+        FIRST_LEVEL
+    };
+
+    let mut level_number = level_num;
 
     let mut level = Level::new();
     let mut metadata_handler = MetadataHandler::new(level_number);
@@ -86,7 +100,7 @@ fn main() {
     spirits_handler.spawn_spirits(&mut metadata_handler);
 
     let mut order_handler = OrderHandler::new();
-    let mut ui_handler = UIHandler::new();
+    let mut ui_handler = UIHandler::new(level_number as usize);
     let mut gameover_handler = GameOverHandler::new(gameover_handler::GameOverHandlerType::Level);
 
     let mut should_close = false;
@@ -107,17 +121,25 @@ fn main() {
         }
 
         match scene_handler.get_current() {
-            Scene::MainMenu => update_main_menu(&mut scene_handler, &mut rl, &mut hotkey_handler),
-            Scene::GameEnd =>{
+            Scene::MainMenu => {
+                rl.set_window_title(&thread, "Велесова Ночь");
+                update_main_menu(&mut scene_handler, &mut rl, &mut hotkey_handler)
+            }
+            Scene::GameEnd => {
+                rl.set_window_title(&thread, "Велесова Ночь - Победа");
+
                 gameend_handler.update_gameover(
-                    &mut level_number, 
+                    &mut level_number,
                     &mut rl,
-                    &mut scene_handler, 
-                    &music_handler, 
-                    &mut hotkey_handler, 
-                    &mut should_close);
-            },
+                    &mut scene_handler,
+                    &music_handler,
+                    &mut hotkey_handler,
+                    &mut should_close,
+                );
+            }
             Scene::GameOver => {
+                rl.set_window_title(&thread, "Велесова Ночь - Поражение");
+
                 if gameover_handler.update_gameover(
                     &mut level_number,
                     &mut rl,
@@ -136,6 +158,11 @@ fn main() {
                 }
             }
             Scene::Level => {
+                rl.set_window_title(
+                    &thread,
+                    format!("Велесова Ночь - Уровень {}", level_number + 1).as_str(),
+                );
+
                 if update_level(
                     &mut spirits_handler,
                     &mut particles,
@@ -165,6 +192,7 @@ fn main() {
                 &mut spirits_handler,
                 &mut rl,
                 &mut hotkey_handler,
+                &mut ui_handler,
             ),
         }
 
@@ -317,14 +345,15 @@ fn update_transition(
     spirits_handler: &mut SpiritsHandler,
     rl: &mut RaylibHandle,
     hotkey_handler: &mut HotkeyHandler,
+    ui_handler: &mut UIHandler,
 ) {
     if !hotkey_handler.check_pressed(rl, HotkeyCategory::Continue) {
         return;
     }
-    *level_number += 1; 
-    if *level_number > MAX_LEVEL{
+    *level_number += 1;
+    if *level_number > MAX_LEVEL {
         scene_handler.set(Scene::GameEnd);
-        return
+        return;
     }
 
     level_transition.set_cards(*level_number as usize);
@@ -332,6 +361,7 @@ fn update_transition(
     level.load(*level_number, metadata_handler, rl);
     spirits_handler.spawn_spirits(metadata_handler);
     scene_handler.set(Scene::Level);
+    *ui_handler = UIHandler::new(level_number.clone() as usize);
 }
 
 fn draw_transition(

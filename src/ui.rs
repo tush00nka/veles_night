@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{cmp::min, collections::HashMap};
 
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
@@ -19,12 +19,12 @@ pub struct UIHandler {
 }
 
 impl UIHandler {
-    pub fn new() -> Self {
+    pub fn new(level_number: usize) -> Self {
         let mut buttons = HashMap::new();
 
         let labels = ["fire_td", "fire_lr", "fire_stop"];
 
-        for i in 0..labels.len() {
+        for i in 0..min(labels.len(), level_number) {
             buttons.insert(
                 labels[i].to_string(),
                 Button {
@@ -69,6 +69,11 @@ impl UIHandler {
 
             let keyboard_last = hotkey_h.get_last_key();
 
+            if rl.is_key_pressed(KeyboardKey::KEY_ESCAPE) {
+                button.selected = false;
+                continue;
+            }
+
             if !rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT)
                 && keyboard_last == KeyboardKey::KEY_NUM_LOCK
             {
@@ -98,6 +103,7 @@ impl UIHandler {
             button.selected = false;
         }
     }
+
     pub fn draw(
         &self,
         texture_handler: &TextureHandler,
@@ -164,6 +170,16 @@ impl UIHandler {
             )
             .as_str(),
             Vector2::one() * 10.,
+            32.,
+            1.0,
+            Color::RAYWHITE,
+        );
+
+        rl.draw_rectangle(SCREEN_WIDTH - 260, 5, 256, 40, Color::BLACK.alpha(0.5));
+        rl.draw_text_ex(
+            font,
+            "R для перезапуска",
+            Vector2::new((SCREEN_WIDTH - 250) as f32, 10.),
             32.,
             1.0,
             Color::RAYWHITE,

@@ -1,9 +1,13 @@
 use std::collections::HashMap;
 
 use crate::{
-    hotkey_handler::{HotkeyCategory, HotkeyHandler}, music_handler::MusicHandler, scene::SceneHandler, ui::Button, FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH
+    FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH,
+    hotkey_handler::{HotkeyCategory, HotkeyHandler},
+    music_handler::MusicHandler,
+    scene::SceneHandler,
+    ui::Button,
 };
-use raylib::{ffi::{CheckCollisionPointRec, CloseWindow}, prelude::*};
+use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
 pub struct GameOverHandler {
     restart_buttons: HashMap<String, Button>,
@@ -12,16 +16,16 @@ pub struct GameOverHandler {
 }
 
 const LABELS_RESTART: [&str; 2] = ["СДАТЬСЯ", "ЕЩЁ РАЗ"];
-const LABELS_ENDGAME: [&str; 2] = ["ВЕРНУТЬСЯ В МЕНЮ", "ВЫЙТИ"];
+const LABELS_ENDGAME: [&str; 2] = ["В МЕНЮ", "ВЫЙТИ"];
 
-const LEVEL_LOSE: [&str;1] = [
+const LEVEL_LOSE: [&str; 1] = [
     "Мы в canned meat studios хотим поблагодарить\nвас за игру в велесову ночь. Нам очень жаль,\nчто вы не добились успехов и надеемся,\nчто вы справитесь лучше в следующий раз.\nудачи!",
 ];
-const GAME_END_TEXT: [&str;1] = ["затычка, ты спас духов, в таком духе чет"];
+const GAME_END_TEXT: [&str; 1] = ["Спасибо за игру в велесову ночь!\nБлагодаря Вам души предков обрели покой."];
 
-pub enum GameOverHandlerType{
+pub enum GameOverHandlerType {
     Level,
-    Game
+    Game,
 }
 
 impl GameOverHandler {
@@ -29,7 +33,7 @@ impl GameOverHandler {
         let mut restart_buttons = HashMap::new();
         let mut restart_text = HashMap::new();
 
-        let text = match window_type{
+        let text = match window_type {
             GameOverHandlerType::Level => LABELS_RESTART,
             GameOverHandlerType::Game => LABELS_ENDGAME,
         };
@@ -79,10 +83,10 @@ impl GameOverHandler {
             } else {
                 Color::WHITE
             };
-            
-            let main_text = match self.gameover_type{
+
+            let main_text = match self.gameover_type {
                 GameOverHandlerType::Level => LEVEL_LOSE[0], //can add pseudo-random to pick random
-                                                            //slur to player
+                //slur to player
                 GameOverHandlerType::Game => GAME_END_TEXT[0],
             };
 
@@ -121,22 +125,22 @@ impl GameOverHandler {
         should_close: &mut bool,
     ) -> bool {
         let mut scene = crate::scene::Scene::Level;
-        let mut check = false; 
-        
-        if hotkeys.check_pressed(rl, HotkeyCategory::Exit){
+        let mut check = false;
+
+        if hotkeys.check_pressed(rl, HotkeyCategory::Exit) {
             scene = crate::scene::Scene::MainMenu;
-            *level_number = FIRST_LEVEL; 
+            *level_number = FIRST_LEVEL;
             check = true;
         }
 
-        if hotkeys.check_pressed(rl, HotkeyCategory::Continue){
+        if hotkeys.check_pressed(rl, HotkeyCategory::Continue) {
             check = true;
         }
 
         if check {
             scene_handler.set(scene);
             music_handler.stop("death");
-            return true
+            return true;
         }
 
         for (title, button) in self.restart_buttons.iter_mut() {
@@ -149,15 +153,15 @@ impl GameOverHandler {
             }
             if rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT) && button.selected {
                 let scene = match title.as_str() {
-                    "СДАТЬСЯ" => {
+                    "СДАТЬСЯ" | "В МЕНЮ" => {
                         *level_number = FIRST_LEVEL;
                         crate::scene::Scene::MainMenu
                     }
-                    "ЕЩЁ РАЗ" | "ВЕРНУТЬСЯ В МЕНЮ"=> crate::Scene::Level,
+                    "ЕЩЁ РАЗ" => crate::Scene::Level,
                     "ВЫЙТИ" => {
                         *should_close = true;
                         return false;
-                    },
+                    }
                     _ => {
                         panic!("NOT EXISITNG BUTTON");
                     }
