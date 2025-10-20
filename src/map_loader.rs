@@ -42,8 +42,16 @@ impl MapLoader {
                     level_map.tiles[x][y] = TileType::Exit('v');
                 }
                 '.' => {}
+                '1' => {
+                    level_map.tiles[x][y] = TileType::FireTD { active: false };
+                }
+                '2' => {
+                    level_map.tiles[x][y] = TileType::FireLR { active: false };
+                }
+                '3' => {
+                    level_map.tiles[x][y] = TileType::FireStop { active: false };
+                }
                 's' => {
-                    println!("{} - {}", x, y);
                     level_map.tiles[x][y] = TileType::Swamp {
                         teleport_position: Vector2::zero(),
                     };

@@ -168,5 +168,6 @@
         }
     ],
 
-    "enemies": []
+    "enemies": [],
+    "bonfires": []
 }

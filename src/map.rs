@@ -42,8 +42,10 @@ impl Level {
         self.survived = 0;
         self.wood = 0;
         self.connect_swamps(metadata_handler);
+        self.light_bonfires(metadata_handler);
     }
-
+    
+    
     pub fn completed(&self) -> bool {
         return self.survived >= self.survive;
     }
@@ -89,6 +91,23 @@ impl Level {
         }
     }
 
+    pub fn light_bonfires(&mut self, metadata_handler: &mut MetadataHandler){
+        for bonfire in metadata_handler.bonfires.iter_mut(){
+            match self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize]{
+                TileType::FireLR { active: _} => {
+                    self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize] = TileType::FireLR { active: bonfire.active };
+                } 
+                TileType::FireTD { active: _} => {
+                    self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize] = TileType::FireTD { active: bonfire.active };
+                }
+                TileType::FireStop { active: _} => {
+                    self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize] = TileType::FireStop { active: bonfire.active };                
+                },
+                _ => panic!("ERROR WITH BONFIRES BINDING, METADATA POSITION - {} {}",bonfire.position[0], bonfire.position[1]),
+            };
+        }
+    }
+    
     pub fn update (&self, scene_handler: &mut SceneHandler, left_amount: u8, music_handler:&MusicHandler) {
         if self.completed() && left_amount == 0{
             scene_handler.set(crate::scene::Scene::Transition);

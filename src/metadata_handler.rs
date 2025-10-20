@@ -16,6 +16,12 @@ pub struct EnemyMetadata {
     pub position: [u8; 2],
 }
 
+#[derive(Deserialize,Clone)]
+pub struct BonfireMetadata{
+    pub position: [u8; 2],
+    pub active: bool,
+}
+
 #[derive(Deserialize, Clone)]
 pub struct SwampsMetadata {
     pub swamp: [u8; 2],
@@ -29,6 +35,7 @@ pub struct MetadataHandler {
     pub spirits: Vec<SpiritMetadata>,
     pub swamps: Vec<SwampsMetadata>,
     pub enemies: Vec<EnemyMetadata>,
+    pub bonfires: Vec<BonfireMetadata>,
 }
 
 impl MetadataHandler {
@@ -62,6 +69,7 @@ impl MetadataHandler {
         self.survive = level_metadata.survive;
         self.swamps = level_metadata.swamps;
         self.enemies = level_metadata.enemies;
+        self.bonfires = level_metadata.bonfires;
     }
 
     pub fn get_survive(&self) -> usize {
