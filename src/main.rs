@@ -1,21 +1,7 @@
-use std::f32::consts::PI;
-
 use raylib::prelude::*;
 
 use crate::{
-    gameover_handler::GameOverHandler,
-    hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct},
-    level_transition::LevelTransition,
-    map::{Level, TILE_SIZE},
-    metadata_handler::MetadataHandler,
-    music_handler::MusicHandler,
-    order::OrderHandler,
-    particle::Particle,
-    scene::{Scene, SceneHandler},
-    spirit::Spirit,
-    spirits_handler::SpiritsHandler,
-    texture_handler::TextureHandler,
-    ui::UIHandler,
+    gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, level_transition::LevelTransition, main_menu::MainMenuHandler, map::{Level, TILE_SIZE}, metadata_handler::MetadataHandler, music_handler::MusicHandler, order::OrderHandler, particle::Particle, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
 };
 
 // mod light;
@@ -35,6 +21,7 @@ mod spirits_handler;
 mod swamp;
 mod texture_handler;
 mod ui;
+mod main_menu;
 
 pub const FIRST_LEVEL: u8 = 0;
 
@@ -80,6 +67,8 @@ fn main() {
     // there's a safe variation - get_safe
     // also a common one - get
 
+    let mut main_menu = MainMenuHandler::new();
+
     let args: Vec<String> = std::env::args().collect();
 
     let level_num = if args.len() > 1 {
@@ -114,9 +103,6 @@ fn main() {
     let mut particles: Vec<Particle> = vec![];
 
     let mut shader = rl.load_shader(&thread, None, Some("static/shaders/bloom.fs"));
-    let mut target = rl
-        .load_render_texture(&thread, SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32)
-        .unwrap();
 
     while !rl.window_should_close() && !should_close {
         // update stuff
@@ -132,7 +118,7 @@ fn main() {
         match scene_handler.get_current() {
             Scene::MainMenu => {
                 rl.set_window_title(&thread, "Велесова Ночь");
-                update_main_menu(&mut scene_handler, &mut rl, &mut hotkey_handler)
+                main_menu.update(&mut scene_handler, &mut should_close, &mut rl)
             }
             Scene::GameEnd => {
                 rl.set_window_title(&thread, "Велесова Ночь - Победа");
@@ -245,7 +231,7 @@ fn main() {
         }
 
         match scene_handler.get_current() {
-            Scene::MainMenu => draw_main_menu(&font, &texture_handler, &mut d),
+            Scene::MainMenu => main_menu.draw(&font, &texture_handler, &mut d),
             Scene::GameEnd => gameend_handler.draw_gameover(&font, &mut d),
             Scene::GameOver => gameover_handler.draw_gameover(&font, &mut d),
             Scene::Level => {
@@ -292,55 +278,6 @@ fn update_main_menu(
     {
         scene_handler.set(scene::Scene::Level);
     }
-}
-
-fn draw_main_menu(font: &Font, texture_handler: &TextureHandler, rl: &mut RaylibDrawHandle) {
-    rl.clear_background(Color::from_hex("0b8a8f").unwrap());
-
-    const LOGO_WIDTH: f32 = 96. * 4.;
-    const LOGO_HEIGHT: f32 = 64. * 4.;
-
-    rl.draw_texture_ex(
-        texture_handler.get_safe("main_menu_bg"),
-        Vector2::zero(),
-        0.0,
-        4.,
-        Color::WHITE,
-    );
-
-    rl.draw_texture_ex(
-        texture_handler.get_safe("logo"),
-        Vector2::new(
-            (SCREEN_WIDTH / 2) as f32 - LOGO_WIDTH / 2.,
-            (SCREEN_HEIGHT / 4) as f32 - LOGO_HEIGHT / 2.,
-        ),
-        0.0,
-        4.,
-        Color::WHITE,
-    );
-
-    let start_button_rec = Rectangle::new(
-        (SCREEN_WIDTH / 2) as f32 - 98.,
-        (SCREEN_HEIGHT / 2) as f32 + 32.,
-        196.,
-        64.,
-    );
-
-    rl.draw_rectangle_rec(start_button_rec, Color::BLACK.alpha(0.5));
-
-    rl.draw_text_pro(
-        font,
-        "Начать",
-        Vector2::new(
-            (SCREEN_WIDTH / 2) as f32 - 56.,
-            (SCREEN_HEIGHT / 2) as f32 + 40.,
-        ),
-        Vector2::zero(),
-        0.0,
-        48.,
-        2.0,
-        Color::RAYWHITE,
-    );
 }
 
 fn update_level(
