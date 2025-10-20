@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use raylib::prelude::*;
 
 use crate::{
@@ -111,6 +113,11 @@ fn main() {
 
     let mut particles: Vec<Particle> = vec![];
 
+    let mut shader = rl.load_shader(&thread, None, Some("static/shaders/bloom.fs"));
+    let mut target = rl
+        .load_render_texture(&thread, SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32)
+        .unwrap();
+
     while !rl.window_should_close() && !should_close {
         // update stuff
 
@@ -201,30 +208,77 @@ fn main() {
             ),
         }
 
+        // {
+        //     let mut tm = rl.begin_texture_mode(&thread, &mut target);
+        //     let mut t = tm.begin_drawing(&thread);
+
+        //     // rl.begin_texture_mode(&thread, &mut target)
+        //     // .draw(&thread, |mut t| {
+
+        //     // });
+        // }
         // draw stuff
         let mut d = rl.begin_drawing(&thread);
 
+        {
+            let mut s = d.begin_shader_mode(&mut shader);
+            match scene_handler.get_current() {
+                // Scene::MainMenu => draw_main_menu(&font, &texture_handler, &mut s),
+                // Scene::GameEnd => gameend_handler.draw_gameover(&font, &mut s),
+                // Scene::GameOver => gameover_handler.draw_gameover(&font, &mut s),
+                Scene::Level => draw_level(
+                    &mut level,
+                    &texture_handler,
+                    &mut spirits_handler,
+                    &mut order_handler,
+                    &mut s,
+                ),
+                // Scene::Transition => {
+                    // draw_transition(&texture_handler, &font, &mut level_transition, &mut s)
+                // }
+                _ => {}
+            }
+
+            for particle in particles.iter_mut() {
+                particle.draw(&mut s);
+            }
+        }
+
         match scene_handler.get_current() {
-            Scene::MainMenu => draw_main_menu(&font, &mut d),
+            Scene::MainMenu => draw_main_menu(&font, &texture_handler, &mut d),
             Scene::GameEnd => gameend_handler.draw_gameover(&font, &mut d),
             Scene::GameOver => gameover_handler.draw_gameover(&font, &mut d),
-            Scene::Level => draw_level(
-                &mut level,
-                &texture_handler,
-                &mut spirits_handler,
-                &mut order_handler,
-                &mut ui_handler,
-                &font,
-                &mut d,
-            ),
+            Scene::Level => {
+                draw_level_ui(&mut level, &texture_handler, &mut ui_handler, &font, &mut d)
+            }
             Scene::Transition => {
                 draw_transition(&texture_handler, &font, &mut level_transition, &mut d)
             }
         }
 
-        for particle in particles.iter_mut() {
-            particle.draw(&mut d);
-        }
+        d.draw_fps(0, 0);
+
+        // match scene_handler.get_current() {
+        //     Scene::MainMenu => draw_main_menu(&font, &texture_handler, &mut d),
+        //     Scene::GameEnd => gameend_handler.draw_gameover(&font, &mut d),
+        //     Scene::GameOver => gameover_handler.draw_gameover(&font, &mut d),
+        //     Scene::Level => draw_level(
+        //         &mut level,
+        //         &texture_handler,
+        //         &mut spirits_handler,
+        //         &mut order_handler,
+        //         &mut ui_handler,
+        //         &font,
+        //         &mut d,
+        //     ),
+        //     Scene::Transition => {
+        //         draw_transition(&texture_handler, &font, &mut level_transition, &mut d)
+        //     }
+        // }
+
+        // for particle in particles.iter_mut() {
+        //     particle.draw(&mut d);
+        // }
     }
 }
 
@@ -240,28 +294,46 @@ fn update_main_menu(
     }
 }
 
-fn draw_main_menu(font: &Font, rl: &mut RaylibDrawHandle) {
+fn draw_main_menu(font: &Font, texture_handler: &TextureHandler, rl: &mut RaylibDrawHandle) {
     rl.clear_background(Color::from_hex("0b8a8f").unwrap());
+
+    const LOGO_WIDTH: f32 = 96. * 4.;
+    const LOGO_HEIGHT: f32 = 64. * 4.;
+
+    rl.draw_texture_ex(
+        texture_handler.get_safe("main_menu_bg"),
+        Vector2::zero(),
+        0.0,
+        4.,
+        Color::WHITE,
+    );
+
+    rl.draw_texture_ex(
+        texture_handler.get_safe("logo"),
+        Vector2::new(
+            (SCREEN_WIDTH / 2) as f32 - LOGO_WIDTH / 2.,
+            (SCREEN_HEIGHT / 4) as f32 - LOGO_HEIGHT / 2.,
+        ),
+        0.0,
+        4.,
+        Color::WHITE,
+    );
+
+    let start_button_rec = Rectangle::new(
+        (SCREEN_WIDTH / 2) as f32 - 98.,
+        (SCREEN_HEIGHT / 2) as f32 + 32.,
+        196.,
+        64.,
+    );
+
+    rl.draw_rectangle_rec(start_button_rec, Color::BLACK.alpha(0.5));
 
     rl.draw_text_pro(
         font,
-        "ВЕЛЕСОВА НОЧЬ",
+        "Начать",
         Vector2::new(
-            (SCREEN_WIDTH / 2) as f32 - 15. * 10.,
-            (SCREEN_HEIGHT / 2) as f32 - 32.,
-        ),
-        Vector2::zero(),
-        0.0,
-        64.,
-        2.0,
-        Color::RAYWHITE,
-    );
-    rl.draw_text_pro(
-        font,
-        "ENTER чтобы начать",
-        Vector2::new(
-            (SCREEN_WIDTH / 2) as f32 - 155.,
-            (SCREEN_HEIGHT / 2) as f32 + 32.,
+            (SCREEN_WIDTH / 2) as f32 - 56.,
+            (SCREEN_HEIGHT / 2) as f32 + 40.,
         ),
         Vector2::zero(),
         0.0,
@@ -327,8 +399,6 @@ fn draw_level(
     texture_handler: &TextureHandler,
     spirits_handler: &mut SpiritsHandler,
     order_handler: &mut OrderHandler,
-    ui_handler: &mut UIHandler,
-    font: &Font,
     rl: &mut RaylibDrawHandle,
 ) {
     rl.clear_background(Color::from_hex("0b8a8f").unwrap());
@@ -338,6 +408,15 @@ fn draw_level(
         spirit.draw(rl, texture_handler);
     }
     order_handler.draw(spirits_handler, rl);
+}
+
+fn draw_level_ui(
+    level: &mut Level,
+    texture_handler: &TextureHandler,
+    ui_handler: &mut UIHandler,
+    font: &Font,
+    rl: &mut RaylibDrawHandle,
+) {
     ui_handler.draw(texture_handler, level, font, rl);
 }
 
