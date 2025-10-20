@@ -1,12 +1,13 @@
 use raylib::prelude::*;
 
 use crate::{
-    gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, level_transition::LevelTransition, main_menu::MainMenuHandler, map::{Level, TILE_SIZE}, metadata_handler::MetadataHandler, music_handler::MusicHandler, order::OrderHandler, particle::Particle, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
+    enemy_spirit::EnemiesHandler, gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, level_transition::LevelTransition, main_menu::MainMenuHandler, map::{Level, TILE_SIZE}, metadata_handler::MetadataHandler, music_handler::MusicHandler, order::OrderHandler, particle::Particle, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
 };
 
 // mod light;
 
 mod gameover_handler;
+mod enemy_spirit;
 mod hotkey_handler;
 mod level_transition;
 mod map;
@@ -90,6 +91,9 @@ fn main() {
     let mut spirits_handler = SpiritsHandler::new();
     spirits_handler.spawn_spirits(&mut metadata_handler);
 
+    let mut enemies_handler = EnemiesHandler::new(); 
+    enemies_handler.spawn_enemies(&mut metadata_handler);
+
     let mut order_handler = OrderHandler::new();
     let mut ui_handler = UIHandler::new(level_number as usize);
     let mut gameover_handler = GameOverHandler::new(gameover_handler::GameOverHandlerType::Level);
@@ -150,6 +154,7 @@ fn main() {
                         level_number as u8,
                         &mut level,
                         &mut metadata_handler,
+                        &mut enemies_handler,
                         &mut spirits_handler,
                         &mut rl,
                     );
@@ -171,11 +176,13 @@ fn main() {
                     &music_handler,
                     &mut rl,
                     &mut hotkey_handler,
+                    &mut enemies_handler
                 ) {
                     reload_procedure(
                         level_number,
                         &mut level,
                         &mut metadata_handler,
+                        &mut enemies_handler,
                         &mut spirits_handler,
                         &mut rl,
                     );
@@ -188,6 +195,7 @@ fn main() {
                 &mut level,
                 &mut scene_handler,
                 &mut spirits_handler,
+                &mut enemies_handler,
                 &mut rl,
                 &mut hotkey_handler,
                 &mut ui_handler,
@@ -216,6 +224,7 @@ fn main() {
                     &mut level,
                     &texture_handler,
                     &mut spirits_handler,
+                    &mut enemies_handler,
                     &mut order_handler,
                     &mut s,
                 ),
@@ -290,6 +299,7 @@ fn update_level(
     music_handler: &MusicHandler,
     rl: &mut RaylibHandle,
     hotkey_handler: &mut HotkeyHandler,
+    enemies_handler: &mut EnemiesHandler,
 ) -> bool {
     for spirit in spirits_handler.spirits.values() {
         if spirit.get_dead() {
@@ -310,6 +320,11 @@ fn update_level(
         .spirits
         .retain(|_, spirit| !spirit.get_dead());
 
+    for (_, enemy) in enemies_handler.enemies.iter_mut(){
+        enemy.collide_check(spirits_handler);
+    }
+
+
     for spirit in spirits_handler.spirits.values_mut() {
         spirit.update_behaviour(level, music_handler, rl);
     }
@@ -324,7 +339,6 @@ fn update_level(
         spirits_handler.spirits.len() as u8,
         music_handler,
     );
-
     if hotkey_handler.check_pressed(rl, HotkeyCategory::Reset) {
         return true;
     }
@@ -335,6 +349,7 @@ fn draw_level(
     level: &mut Level,
     texture_handler: &TextureHandler,
     spirits_handler: &mut SpiritsHandler,
+    enemies_handler: &mut EnemiesHandler,
     order_handler: &mut OrderHandler,
     rl: &mut RaylibDrawHandle,
 ) {
@@ -344,6 +359,10 @@ fn draw_level(
     for spirit in spirits_handler.spirits.values() {
         spirit.draw(rl, texture_handler);
     }
+    for enemy in enemies_handler.enemies.values(){
+        enemy.draw(rl, texture_handler);
+    } 
+
     order_handler.draw(spirits_handler, rl);
 }
 
@@ -364,6 +383,7 @@ fn update_transition(
     level: &mut Level,
     scene_handler: &mut SceneHandler,
     spirits_handler: &mut SpiritsHandler,
+    enemies_handler: &mut EnemiesHandler,
     rl: &mut RaylibHandle,
     hotkey_handler: &mut HotkeyHandler,
     ui_handler: &mut UIHandler,
@@ -384,6 +404,7 @@ fn update_transition(
     metadata_handler.load(*level_number);
     level.load(*level_number, metadata_handler, rl);
     spirits_handler.spawn_spirits(metadata_handler);
+    enemies_handler.spawn_enemies(metadata_handler);
     scene_handler.set(Scene::Level);
     *ui_handler = UIHandler::new(level_number.clone() as usize);
 }
@@ -411,6 +432,7 @@ fn reload_procedure(
     current_level: u8,
     level: &mut Level,
     metadata_handler: &mut MetadataHandler,
+    enemies_handler: &mut EnemiesHandler,
     spirits_handler: &mut SpiritsHandler,
     rl: &mut RaylibHandle,
 ) {
@@ -420,4 +442,5 @@ fn reload_procedure(
 
     *spirits_handler = SpiritsHandler::new();
     spirits_handler.spawn_spirits(metadata_handler);
+    enemies_handler.spawn_enemies(metadata_handler);
 }

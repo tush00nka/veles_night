@@ -37,5 +37,6 @@
             "direction": [1, 0]
         }
     ],
-    "swamps": []
+    "swamps": [],
+    "enemies": [{"position": [9,5]}]
 }

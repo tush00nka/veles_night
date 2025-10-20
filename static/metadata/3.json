@@ -56,5 +56,7 @@
             "direction": [0, 1]
         }
     ],
-    "swamps": []
+    "swamps": [],
+
+    "enemies": []
 }

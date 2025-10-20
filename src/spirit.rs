@@ -49,6 +49,9 @@ impl Spirit {
             teleported: 0,
         }
     }
+    pub fn get_direction(&self) -> Vector2{
+        self.direction
+    }
 
     pub fn get_position(&self) -> Vector2 {
         self.position //+ Vector2::one() * (TILE_SIZE / 2) as f32
@@ -87,6 +90,9 @@ impl Spirit {
         }
     }
 
+    pub fn kill_spirit(&mut self){
+        self.dead = true;    
+    }
     pub fn update_position_smoothly(&mut self, rl: &mut RaylibHandle) {
         self.draw_position = self
             .draw_position
