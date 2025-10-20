@@ -10,7 +10,7 @@ use crate::{
 };
 
 pub struct MainMenuHandler {
-    buttons: HashMap<String, Button>,
+    buttons: HashMap<u8, Button>,
     labels: Vec<&'static str>,
 }
 
@@ -19,7 +19,7 @@ impl MainMenuHandler {
         let mut buttons = HashMap::new();
 
         buttons.insert(
-            "start".to_string(),
+            0,
             Button {
                 selected: false,
                 rect: Rectangle::new(
@@ -32,7 +32,7 @@ impl MainMenuHandler {
         );
 
         buttons.insert(
-            "quit".to_string(),
+            1,
             Button {
                 selected: false,
                 rect: Rectangle::new(
@@ -54,11 +54,11 @@ impl MainMenuHandler {
             if unsafe { CheckCollisionPointRec(rl.get_mouse_position().into(), button.rect.into()) }
                 && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
             {
-                match key.as_str() {
-                    "start" => {
+                match key{
+                    0 => {
                         scene_handler.set(Scene::Level);
                     }
-                    "quit" => {
+                    1 => {
                         *should_close = true;
                     }
                     _ => {}
@@ -97,11 +97,9 @@ impl MainMenuHandler {
             Color::WHITE,
         );
 
-        let mut button_id = -1;
-        let mut selected_button_id = -1;
+        let mut button_selected = 128;
 
-        for button in self.buttons.values() {
-            button_id += 1;
+        for (name, button) in self.buttons.iter_mut() {
             
             let color;
             if unsafe {
@@ -109,9 +107,9 @@ impl MainMenuHandler {
             } {
                 color = Color::WHITE;
 
-                selected_button_id = button_id;
+                button_selected = *name; 
             } else {
-                color = Color::BLACK.alpha(0.5);
+                color = Color::BLACK.alpha(0.5); 
             };
 
             rl.draw_rectangle_rec(button.rect, color);
@@ -119,7 +117,7 @@ impl MainMenuHandler {
 
         for i in 0..self.labels.len() {
             let color;
-            if i == selected_button_id as usize {
+            if i == button_selected as usize {
                 color = Color::BLACK;
             } else {
                 color = Color::RAYWHITE;
