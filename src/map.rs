@@ -45,7 +45,6 @@ impl Level {
         self.light_bonfires(metadata_handler);
     }
     
-    
     pub fn completed(&self) -> bool {
         return self.survived >= self.survive;
     }

@@ -49,6 +49,8 @@ impl Spirit {
             teleported: 0,
         }
     }
+
+    #[allow(unused)]
     pub fn get_direction(&self) -> Vector2{
         self.direction
     }

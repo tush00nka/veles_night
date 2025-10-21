@@ -38,6 +38,6 @@
         }
     ],
     "swamps": [],
-    "enemies": [],
+    "enemies": [{"position": [8,6]}],
     "bonfires": []
 }

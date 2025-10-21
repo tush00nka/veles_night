@@ -14,7 +14,7 @@ impl MapLoader {
 
         level_str = level_str.replace('\n', "");
         if level_str.len() != LEVEL_WIDTH_TILES * LEVEL_HEIGHT_TILES{
-            panic!("MAP IS NOT PROPPER SIZE, IT SHOULD BE - {}, AND IT'S - {}", LEVEL_WIDTH_TILES * LEVEL_HEIGHT_TILES, level_str.len());
+            panic!("MAP IS NOT OF PROPER SIZE, IT SHOULD BE {}x{}, BUT IT IS {}", LEVEL_WIDTH_TILES, LEVEL_HEIGHT_TILES, level_str.len());
         }
         //need to load json there and get metadata structure
         let mut x: usize = 0;

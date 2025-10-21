@@ -37,6 +37,8 @@ impl HotkeyCategory{
             _ => HotkeyCategory::ERROR,
         }
     }
+    
+    #[allow(unused)]
     pub fn from_u8(value: u8) -> HotkeyCategory{
         match value {
             x if x == HotkeyCategory::Exit as u8 => HotkeyCategory::Exit, 

@@ -1,15 +1,30 @@
 use raylib::prelude::*;
 
 use crate::{
-    enemy_spirit::EnemiesHandler, gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, level_transition::LevelTransition, main_menu::MainMenuHandler, map::{Level, TILE_SIZE}, metadata_handler::MetadataHandler, music_handler::MusicHandler, order::OrderHandler, particle::Particle, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
+    enemy_spirit::EnemiesHandler,
+    gameover_handler::GameOverHandler,
+    hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct},
+    level_transition::LevelTransition,
+    main_menu::MainMenuHandler,
+    map::{Level, TILE_SIZE},
+    metadata_handler::MetadataHandler,
+    music_handler::MusicHandler,
+    order::OrderHandler,
+    particle::Particle,
+    scene::{Scene, SceneHandler},
+    spirit::Spirit,
+    spirits_handler::SpiritsHandler,
+    texture_handler::TextureHandler,
+    ui::UIHandler,
 };
 
 // mod light;
 
-mod gameover_handler;
 mod enemy_spirit;
+mod gameover_handler;
 mod hotkey_handler;
 mod level_transition;
+mod main_menu;
 mod map;
 mod map_loader;
 mod metadata_handler;
@@ -22,7 +37,6 @@ mod spirits_handler;
 mod swamp;
 mod texture_handler;
 mod ui;
-mod main_menu;
 
 pub const FIRST_LEVEL: u8 = 0;
 
@@ -91,7 +105,7 @@ fn main() {
     let mut spirits_handler = SpiritsHandler::new();
     spirits_handler.spawn_spirits(&mut metadata_handler);
 
-    let mut enemies_handler = EnemiesHandler::new(); 
+    let mut enemies_handler = EnemiesHandler::new();
     enemies_handler.spawn_enemies(&mut metadata_handler);
 
     let mut order_handler = OrderHandler::new();
@@ -161,10 +175,22 @@ fn main() {
                 }
             }
             Scene::Level => {
-                rl.set_window_title(
-                    &thread,
-                    format!("Велесова Ночь - Уровень {}", level_number + 1).as_str(),
-                );
+                if cfg!(debug_assertions) {
+                    rl.set_window_title(
+                        &thread,
+                        format!(
+                            "[{}] Велесова Ночь - Уровень {}",
+                            rl.get_fps(),
+                            level_number + 1
+                        )
+                        .as_str(),
+                    );
+                } else {
+                    rl.set_window_title(
+                        &thread,
+                        format!("Велесова Ночь - Уровень {}", level_number + 1).as_str(),
+                    );
+                }
 
                 if update_level(
                     &mut spirits_handler,
@@ -176,7 +202,7 @@ fn main() {
                     &music_handler,
                     &mut rl,
                     &mut hotkey_handler,
-                    &mut enemies_handler
+                    &mut enemies_handler,
                 ) {
                     reload_procedure(
                         level_number,
@@ -202,24 +228,12 @@ fn main() {
             ),
         }
 
-        // {
-        //     let mut tm = rl.begin_texture_mode(&thread, &mut target);
-        //     let mut t = tm.begin_drawing(&thread);
-
-        //     // rl.begin_texture_mode(&thread, &mut target)
-        //     // .draw(&thread, |mut t| {
-
-        //     // });
-        // }
         // draw stuff
         let mut d = rl.begin_drawing(&thread);
 
         {
             let mut s = d.begin_shader_mode(&mut shader);
             match scene_handler.get_current() {
-                // Scene::MainMenu => draw_main_menu(&font, &texture_handler, &mut s),
-                // Scene::GameEnd => gameend_handler.draw_gameover(&font, &mut s),
-                // Scene::GameOver => gameover_handler.draw_gameover(&font, &mut s),
                 Scene::Level => draw_level(
                     &mut level,
                     &texture_handler,
@@ -228,9 +242,6 @@ fn main() {
                     &mut order_handler,
                     &mut s,
                 ),
-                // Scene::Transition => {
-                    // draw_transition(&texture_handler, &font, &mut level_transition, &mut s)
-                // }
                 _ => {}
             }
 
@@ -250,42 +261,6 @@ fn main() {
                 draw_transition(&texture_handler, &font, &mut level_transition, &mut d)
             }
         }
-
-        d.draw_fps(0, 0);
-
-        // match scene_handler.get_current() {
-        //     Scene::MainMenu => draw_main_menu(&font, &texture_handler, &mut d),
-        //     Scene::GameEnd => gameend_handler.draw_gameover(&font, &mut d),
-        //     Scene::GameOver => gameover_handler.draw_gameover(&font, &mut d),
-        //     Scene::Level => draw_level(
-        //         &mut level,
-        //         &texture_handler,
-        //         &mut spirits_handler,
-        //         &mut order_handler,
-        //         &mut ui_handler,
-        //         &font,
-        //         &mut d,
-        //     ),
-        //     Scene::Transition => {
-        //         draw_transition(&texture_handler, &font, &mut level_transition, &mut d)
-        //     }
-        // }
-
-        // for particle in particles.iter_mut() {
-        //     particle.draw(&mut d);
-        // }
-    }
-}
-
-fn update_main_menu(
-    scene_handler: &mut SceneHandler,
-    rl: &mut RaylibHandle,
-    hotkey_handler: &mut HotkeyHandler,
-) {
-    if hotkey_handler.check_pressed(rl, HotkeyCategory::Continue)
-        || rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
-    {
-        scene_handler.set(scene::Scene::Level);
     }
 }
 
@@ -320,10 +295,9 @@ fn update_level(
         .spirits
         .retain(|_, spirit| !spirit.get_dead());
 
-    for (_, enemy) in enemies_handler.enemies.iter_mut(){
+    for (_, enemy) in enemies_handler.enemies.iter_mut() {
         enemy.collide_check(spirits_handler);
     }
-
 
     for spirit in spirits_handler.spirits.values_mut() {
         spirit.update_behaviour(level, music_handler, rl);
@@ -359,9 +333,9 @@ fn draw_level(
     for spirit in spirits_handler.spirits.values() {
         spirit.draw(rl, texture_handler);
     }
-    for enemy in enemies_handler.enemies.values(){
+    for enemy in enemies_handler.enemies.values() {
         enemy.draw(rl, texture_handler);
-    } 
+    }
 
     order_handler.draw(spirits_handler, rl);
 }

@@ -5,7 +5,6 @@ use std::fs;
 const MUSIC_PATH: &str = "static/audio/";
 
 pub struct MusicHandler<'a> {
-    rl_audio: &'a RaylibAudio,
     sounds: HashMap<String, Sound<'a>>,
     music: Music<'a>,
 }
@@ -36,7 +35,6 @@ impl<'a> MusicHandler<'a> {
         }
 
         Self {
-            rl_audio: rl_audio,
             sounds: sounds,
             music: rl_audio
                 .new_music("static/music/forest_river_spirits.ogg")
