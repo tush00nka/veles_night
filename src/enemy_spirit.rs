@@ -64,7 +64,7 @@ impl Enemy {
         );
 
         rl.draw_texture_pro(
-            texture_handler.get("enemy_ghost"),
+            texture_handler.get("enemy"),
             source,
             Rectangle::new(
                 self.position.x as f32,
