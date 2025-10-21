@@ -3,10 +3,7 @@ use std::collections::HashMap;
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
 use crate::{
-    SCREEN_HEIGHT, SCREEN_WIDTH,
-    scene::{Scene, SceneHandler},
-    texture_handler::TextureHandler,
-    ui::Button,
+    map::TILE_SCALE, scene::{Scene, SceneHandler}, texture_handler::TextureHandler, ui::Button, SCREEN_HEIGHT, SCREEN_WIDTH
 };
 
 pub struct MainMenuHandler {
@@ -82,7 +79,7 @@ impl MainMenuHandler {
             texture_handler.get_safe("main_menu_bg"),
             Vector2::zero(),
             0.0,
-            4.,
+            TILE_SCALE as f32,
             Color::WHITE,
         );
 

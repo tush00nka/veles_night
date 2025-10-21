@@ -6,7 +6,7 @@ use crate::{
     hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct},
     level_transition::LevelTransition,
     main_menu::MainMenuHandler,
-    map::{Level, TILE_SIZE},
+    map::{Level, TILE_SCALE, TILE_SIZE},
     metadata_handler::MetadataHandler,
     music_handler::MusicHandler,
     order::OrderHandler,
@@ -40,8 +40,8 @@ mod ui;
 
 pub const FIRST_LEVEL: u8 = 0;
 
-const SCREEN_WIDTH: i32 = 16 * 16 * 4;
-const SCREEN_HEIGHT: i32 = 16 * 9 * 4;
+const SCREEN_WIDTH: i32 = 16 * 16 * TILE_SCALE;
+const SCREEN_HEIGHT: i32 = 16 * 9 * TILE_SCALE;
 const MAX_LEVEL: u8 = 5; //ЗАТЫЧКА, ПЕРЕДЕЛАТЬ
 //
 fn main() {
@@ -111,20 +111,18 @@ fn main() {
     let mut order_handler = OrderHandler::new();
     let mut ui_handler = UIHandler::new(level_number as usize);
     let mut gameover_handler = GameOverHandler::new(gameover_handler::GameOverHandlerType::Level);
+    let mut gameend_handler = GameOverHandler::new(gameover_handler::GameOverHandlerType::Game);
+    let mut level_transition = LevelTransition::new();
 
     let mut should_close = false;
-
-    let mut gameend_handler = GameOverHandler::new(gameover_handler::GameOverHandlerType::Game);
-
-    let mut level_transition = LevelTransition::new();
 
     let mut particles: Vec<Particle> = vec![];
 
     let mut shader = rl.load_shader(&thread, None, Some("static/shaders/bloom.fs"));
 
     while !rl.window_should_close() && !should_close {
+        
         // update stuff
-
         music_handler.music_update();
 
         particles.retain(|particle| !particle.done);
@@ -132,6 +130,8 @@ fn main() {
         for particle in particles.iter_mut() {
             particle.update(&mut rl);
         }
+
+        scene_handler.update(&mut rl);
 
         match scene_handler.get_current() {
             Scene::MainMenu => {
@@ -251,16 +251,20 @@ fn main() {
         }
 
         match scene_handler.get_current() {
-            Scene::MainMenu => main_menu.draw(&font, &texture_handler, &mut d),
+            Scene::MainMenu => {
+                main_menu.draw(&font, &texture_handler, &mut d);
+            }
             Scene::GameEnd => gameend_handler.draw_gameover(&font, &mut d),
             Scene::GameOver => gameover_handler.draw_gameover(&font, &mut d),
             Scene::Level => {
                 draw_level_ui(&mut level, &texture_handler, &mut ui_handler, &font, &mut d)
             }
             Scene::Transition => {
-                draw_transition(&texture_handler, &font, &mut level_transition, &mut d)
+                level_transition.draw(&texture_handler, &font, &mut d);
             }
         }
+
+        scene_handler.draw(&mut d);
     }
 }
 
@@ -313,9 +317,11 @@ fn update_level(
         spirits_handler.spirits.len() as u8,
         music_handler,
     );
+
     if hotkey_handler.check_pressed(rl, HotkeyCategory::Reset) {
         return true;
     }
+    
     return false;
 }
 
@@ -381,25 +387,6 @@ fn update_transition(
     enemies_handler.spawn_enemies(metadata_handler);
     scene_handler.set(Scene::Level);
     *ui_handler = UIHandler::new(level_number.clone() as usize);
-}
-
-fn draw_transition(
-    texture_handler: &TextureHandler,
-    font: &Font,
-    level_transition: &mut LevelTransition,
-    rl: &mut RaylibDrawHandle,
-) {
-    level_transition.draw(texture_handler, font, rl);
-    // rl.draw_text_pro(
-    //     font,
-    //     "this is level transition scene",
-    //     Vector2::zero(),
-    //     Vector2::zero(),
-    //     0.0,
-    //     24.,
-    //     0.0,
-    //     Color::RAYWHITE,
-    // );
 }
 
 fn reload_procedure(

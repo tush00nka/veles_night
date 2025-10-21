@@ -1,11 +1,14 @@
 use raylib::{color::Color, prelude::*};
 
-use crate::{map_loader, metadata_handler::MetadataHandler, music_handler::MusicHandler, scene::SceneHandler, texture_handler::TextureHandler};
+use crate::{
+    map_loader, metadata_handler::MetadataHandler, music_handler::MusicHandler,
+    scene::SceneHandler, texture_handler::TextureHandler,
+};
 
 pub const LEVEL_WIDTH_TILES: usize = 16;
 pub const LEVEL_HEIGHT_TILES: usize = 9;
 pub const TILE_SIZE_PX: i32 = 16;
-const TILE_SCALE: i32 = 4;
+pub const TILE_SCALE: i32 = 6;
 pub const TILE_SIZE: i32 = TILE_SIZE_PX * TILE_SCALE;
 
 #[derive(Clone, Copy, PartialEq)]
@@ -36,7 +39,12 @@ impl Level {
         }
     }
 
-    pub fn load(&mut self, level_number: u8, metadata_handler: &mut MetadataHandler, rl: &mut RaylibHandle) {
+    pub fn load(
+        &mut self,
+        level_number: u8,
+        metadata_handler: &mut MetadataHandler,
+        rl: &mut RaylibHandle,
+    ) {
         map_loader::MapLoader::get_map(level_number, self, rl);
         self.survive = metadata_handler.get_survive();
         self.survived = 0;
@@ -44,7 +52,7 @@ impl Level {
         self.connect_swamps(metadata_handler);
         self.light_bonfires(metadata_handler);
     }
-    
+
     pub fn completed(&self) -> bool {
         return self.survived >= self.survive;
     }
@@ -90,29 +98,46 @@ impl Level {
         }
     }
 
-    pub fn light_bonfires(&mut self, metadata_handler: &mut MetadataHandler){
-        for bonfire in metadata_handler.bonfires.iter_mut(){
-            match self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize]{
-                TileType::FireLR { active: _} => {
-                    self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize] = TileType::FireLR { active: bonfire.active };
-                } 
-                TileType::FireTD { active: _} => {
-                    self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize] = TileType::FireTD { active: bonfire.active };
+    pub fn light_bonfires(&mut self, metadata_handler: &mut MetadataHandler) {
+        for bonfire in metadata_handler.bonfires.iter_mut() {
+            match self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize] {
+                TileType::FireLR { active: _ } => {
+                    self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize] =
+                        TileType::FireLR {
+                            active: bonfire.active,
+                        };
                 }
-                TileType::FireStop { active: _} => {
-                    self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize] = TileType::FireStop { active: bonfire.active };                
-                },
-                _ => panic!("ERROR WITH BONFIRES BINDING, METADATA POSITION - {} {}",bonfire.position[0], bonfire.position[1]),
+                TileType::FireTD { active: _ } => {
+                    self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize] =
+                        TileType::FireTD {
+                            active: bonfire.active,
+                        };
+                }
+                TileType::FireStop { active: _ } => {
+                    self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize] =
+                        TileType::FireStop {
+                            active: bonfire.active,
+                        };
+                }
+                _ => panic!(
+                    "ERROR WITH BONFIRES BINDING, METADATA POSITION - {} {}",
+                    bonfire.position[0], bonfire.position[1]
+                ),
             };
         }
     }
-    
-    pub fn update (&self, scene_handler: &mut SceneHandler, left_amount: u8, music_handler:&MusicHandler) {
-        if self.completed() && left_amount == 0{
+
+    pub fn update(
+        &self,
+        scene_handler: &mut SceneHandler,
+        left_amount: u8,
+        music_handler: &MusicHandler,
+    ) {
+        if self.completed() && left_amount == 0 {
             scene_handler.set(crate::scene::Scene::Transition);
-        }else if left_amount == 0{
+        } else if left_amount == 0 {
             music_handler.play("death");
-            scene_handler.set(crate::scene::Scene::GameOver); 
+            scene_handler.set(crate::scene::Scene::GameOver);
         }
     }
 
