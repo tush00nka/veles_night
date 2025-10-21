@@ -72,8 +72,8 @@ impl MainMenuHandler {
     ) {
         rl.clear_background(Color::from_hex("0b8a8f").unwrap());
 
-        const LOGO_WIDTH: f32 = 96. * 4.;
-        const LOGO_HEIGHT: f32 = 64. * 4.;
+        const LOGO_WIDTH: f32 = 96. * TILE_SCALE as f32;
+        const LOGO_HEIGHT: f32 = 64. * TILE_SCALE as f32;
 
         rl.draw_texture_ex(
             texture_handler.get_safe("main_menu_bg"),
@@ -90,7 +90,7 @@ impl MainMenuHandler {
                 (SCREEN_HEIGHT / 4) as f32 - LOGO_HEIGHT / 2.,
             ),
             0.0,
-            4.,
+            TILE_SCALE as f32,
             Color::WHITE,
         );
 
