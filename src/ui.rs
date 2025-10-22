@@ -124,6 +124,10 @@ impl UIHandler {
             self.quitting = !self.quitting;
         }
 
+        if !self.quitting {
+            return;
+        }
+
         if unsafe { CheckCollisionPointRec(rl.get_mouse_position().into(), QUIT_BUTTON.into()) }
             && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
         {
