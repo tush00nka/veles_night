@@ -42,7 +42,7 @@ pub const FIRST_LEVEL: u8 = 0;
 
 const SCREEN_WIDTH: i32 = 16 * 16 * TILE_SCALE;
 const SCREEN_HEIGHT: i32 = 16 * 9 * TILE_SCALE;
-const MAX_LEVEL: u8 = 5; //ЗАТЫЧКА, ПЕРЕДЕЛАТЬ
+const MAX_LEVEL: u8 = 6; //ЗАТЫЧКА, ПЕРЕДЕЛАТЬ
 //
 fn main() {
     let (mut rl, thread) = raylib::init()
@@ -311,6 +311,7 @@ fn update_level(
     order_handler.update_line(level, rl, hotkey_handler);
 
     ui_handler.build(level, rl, hotkey_handler);
+    ui_handler.update(hotkey_handler, scene_handler, rl);
 
     level.update(
         scene_handler,

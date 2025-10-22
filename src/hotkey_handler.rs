@@ -1,10 +1,10 @@
-use std::{collections::HashMap, fs};
-use serde::{Serialize, Deserialize};
 use raylib::prelude::*;
+use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, fs};
 
 const HOTKEYS_PATH: &str = "dynamic/hotkeys.json";
 
-#[derive(Deserialize,Serialize, Copy, Clone, PartialEq, Eq, Hash,)]
+#[derive(Deserialize, Serialize, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum HotkeyCategory {
     Exit = 0,
     Continue = 1,
@@ -17,7 +17,7 @@ pub enum HotkeyCategory {
 }
 
 #[derive(Deserialize, Serialize)]
-pub enum KeyboardKeyString{
+pub enum KeyboardKeyString {
     KeyEnter,
     KeyEsc,
     KeySpace,
@@ -26,22 +26,22 @@ pub enum KeyboardKeyString{
     KeyP,
     Key1,
     Key2,
-    Key3
+    Key3,
 }
-impl HotkeyCategory{
-    pub fn from_bonfire(value: &str) -> HotkeyCategory{
+impl HotkeyCategory {
+    pub fn from_bonfire(value: &str) -> HotkeyCategory {
         match value {
-           x if x == "fire_td" => HotkeyCategory::PickBuilding1,
+            x if x == "fire_td" => HotkeyCategory::PickBuilding1,
             x if x == "fire_lr" => HotkeyCategory::PickBuilding2,
             x if x == "fire_stop" => HotkeyCategory::PickBuilding3,
             _ => HotkeyCategory::ERROR,
         }
     }
-    
+
     #[allow(unused)]
-    pub fn from_u8(value: u8) -> HotkeyCategory{
+    pub fn from_u8(value: u8) -> HotkeyCategory {
         match value {
-            x if x == HotkeyCategory::Exit as u8 => HotkeyCategory::Exit, 
+            x if x == HotkeyCategory::Exit as u8 => HotkeyCategory::Exit,
             x if x == HotkeyCategory::Reset as u8 => HotkeyCategory::Reset,
             x if x == HotkeyCategory::Continue as u8 => HotkeyCategory::Continue,
             x if x == HotkeyCategory::PickNearest as u8 => HotkeyCategory::PickNearest,
@@ -54,38 +54,38 @@ impl HotkeyCategory{
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct HotkeyLoaderStruct{
-    hotkeys: HashMap<HotkeyCategory, Vec<KeyboardKeyString>>
+pub struct HotkeyLoaderStruct {
+    hotkeys: HashMap<HotkeyCategory, Vec<KeyboardKeyString>>,
 }
 
-pub struct HotkeyHandler{
+pub struct HotkeyHandler {
     hotkeys: HashMap<HotkeyCategory, Vec<KeyboardKey>>,
-    last_pressed_hotkey: Option<KeyboardKey>,   
+    last_pressed_hotkey: Option<KeyboardKey>,
 }
 
-impl HotkeyLoaderStruct{
-    pub fn new() -> Self{
+impl HotkeyLoaderStruct {
+    pub fn new() -> Self {
         let path = HOTKEYS_PATH.to_string();
-        let Ok(string_hotkeys) = fs::read_to_string(path) else{
+        let Ok(string_hotkeys) = fs::read_to_string(path) else {
             panic!("COULDN'T LOAD HOTKEYS");
         };
-        println!("{}",string_hotkeys);
-        let Ok(hotkeys) = serde_json::from_str(&string_hotkeys) else{
+        println!("{}", string_hotkeys);
+        let Ok(hotkeys) = serde_json::from_str(&string_hotkeys) else {
             panic!("COULDN'T PARSE HOTKEYS JSON");
         };
 
         return hotkeys;
-    } 
+    }
 }
 
-impl HotkeyHandler{
-    pub fn new(hotkeys_raw: HotkeyLoaderStruct) -> Self{
+impl HotkeyHandler {
+    pub fn new(hotkeys_raw: HotkeyLoaderStruct) -> Self {
         let mut hotkeys = HashMap::new();
 
-        for (target, key_type) in hotkeys_raw.hotkeys.iter(){
+        for (target, key_type) in hotkeys_raw.hotkeys.iter() {
             let mut vec = vec![];
-            for i in key_type{
-                let key = match i{
+            for i in key_type {
+                let key = match i {
                     KeyboardKeyString::KeyEsc => KeyboardKey::KEY_ESCAPE,
                     KeyboardKeyString::KeyEnter => KeyboardKey::KEY_ENTER,
                     KeyboardKeyString::KeySpace => KeyboardKey::KEY_SPACE,
@@ -97,31 +97,33 @@ impl HotkeyHandler{
                     KeyboardKeyString::Key3 => KeyboardKey::KEY_THREE,
                 };
                 vec.push(key);
-                hotkeys.insert(target.clone(), vec.clone());
             }
+            hotkeys.insert(target.clone(), vec.clone());
         }
 
-        Self{
+        Self {
             hotkeys: hotkeys,
             last_pressed_hotkey: None,
         }
     }
-    pub fn get_last_key(&self) -> KeyboardKey{
-        return self.last_pressed_hotkey.unwrap_or(KeyboardKey::KEY_NUM_LOCK);
-    } 
-    
-    pub fn clear_last(&mut self){
+    pub fn get_last_key(&self) -> KeyboardKey {
+        return self
+            .last_pressed_hotkey
+            .unwrap_or(KeyboardKey::KEY_NUM_LOCK);
+    }
+
+    pub fn clear_last(&mut self) {
         self.last_pressed_hotkey = None;
     }
 
-    pub fn check_down(&mut self, rl: &RaylibHandle, target_intent: HotkeyCategory) -> bool{
-        for (intent, keys) in self.hotkeys.iter(){
-            if *intent != target_intent{
+    pub fn check_down(&mut self, rl: &RaylibHandle, target_intent: HotkeyCategory) -> bool {
+        for (intent, keys) in self.hotkeys.iter() {
+            if *intent != target_intent {
                 continue;
             }
 
-            for key in keys.iter(){
-                if rl.is_key_down(*key){
+            for key in keys.iter() {
+                if rl.is_key_down(*key) {
                     self.last_pressed_hotkey = Some(*key);
                     return true;
                 }
@@ -130,14 +132,14 @@ impl HotkeyHandler{
         return false;
     }
 
-    pub fn check_pressed(&mut self, rl: &RaylibHandle, target_intent: HotkeyCategory) -> bool{
-        for (intent, keys) in self.hotkeys.iter(){
-            if *intent != target_intent{
+    pub fn check_pressed(&mut self, rl: &RaylibHandle, target_intent: HotkeyCategory) -> bool {
+        for (intent, keys) in self.hotkeys.iter() {
+            if *intent != target_intent {
                 continue;
             }
 
-            for key in keys.iter(){
-                if rl.is_key_pressed(*key){
+            for key in keys.iter() {
+                if rl.is_key_pressed(*key) {
                     self.last_pressed_hotkey = Some(*key);
                     return true;
                 }

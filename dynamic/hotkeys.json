@@ -1,6 +1,7 @@
 {
     "hotkeys": {
         "Exit":[
+            "KeyEsc",
             "KeyQ"
         ],
         "Continue": [

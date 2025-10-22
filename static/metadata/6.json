@@ -1,0 +1,75 @@
+{
+    "survive": 3,
+    "spirits": [
+        {
+            "position": [5,2],
+            "amount": 1,
+            "direction": [0,1]
+        },
+        {
+            "position": [5,3],
+            "amount": 1,
+            "direction": [0,1]
+        },
+        {
+            "position": [5,4],
+            "amount": 1,
+            "direction": [0,1]
+        },
+        {
+            "position": [1,2],
+            "amount": 1,
+            "direction": [-1,0]
+        },
+        {
+            "position": [2,2],
+            "amount": 1,
+            "direction": [-1,0]
+        },
+        {
+            "position": [3,2],
+            "amount": 1,
+            "direction": [-1,0]
+        },
+        {
+            "position": [4,2],
+            "amount": 1,
+            "direction": [-1,0]
+        },
+        {
+            "position": [5,2],
+            "amount": 1,
+            "direction": [-1,0]
+        }
+    ],
+    "swamps": [
+        {
+            "swamp": [1,1],
+            "teleport": [14,1]
+        },
+        {
+            "swamp": [14,1],
+            "teleport": [1,1]
+        },
+        {
+            "swamp": [14,3],
+            "teleport": [1,6]
+        },
+        {
+            "swamp": [1,6],
+            "teleport": [14,3]
+        },
+
+        {
+            "swamp": [10,7],
+            "teleport": [14,5]
+        },
+        {
+            "swamp": [14,5],
+            "teleport": [10,7]
+        }
+    ],
+
+    "enemies": [],
+    "bonfires": []
+}

@@ -3,9 +3,10 @@ use std::{cmp::min, collections::HashMap};
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
 use crate::{
-    SCREEN_WIDTH,
+    SCREEN_HEIGHT, SCREEN_WIDTH,
     hotkey_handler::{HotkeyCategory, HotkeyHandler},
     map::{Level, TILE_SIZE, TileType},
+    scene::{Scene, SceneHandler},
     texture_handler::TextureHandler,
 };
 
@@ -14,8 +15,16 @@ pub struct Button {
     pub selected: bool,
 }
 
+const QUIT_BUTTON: Rectangle = Rectangle::new(
+    SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6. - 100.,
+    SCREEN_HEIGHT as f32 / 3. + 150.,
+    200.,
+    100.,
+);
+
 pub struct UIHandler {
     build_buttons: HashMap<String, Button>,
+    quitting: bool,
 }
 
 impl UIHandler {
@@ -41,6 +50,7 @@ impl UIHandler {
 
         Self {
             build_buttons: buttons,
+            quitting: false,
         }
     }
 
@@ -101,6 +111,23 @@ impl UIHandler {
                 level.remove_wood();
             }
             button.selected = false;
+        }
+    }
+
+    pub fn update(
+        &mut self,
+        hotkey_h: &mut HotkeyHandler,
+        scene_h: &mut SceneHandler,
+        rl: &mut RaylibHandle,
+    ) {
+        if hotkey_h.check_pressed(rl, HotkeyCategory::Exit) {
+            self.quitting = !self.quitting;
+        }
+
+        if unsafe { CheckCollisionPointRec(rl.get_mouse_position().into(), QUIT_BUTTON.into()) }
+            && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+        {
+            scene_h.set(Scene::MainMenu);
         }
     }
 
@@ -184,5 +211,56 @@ impl UIHandler {
             1.0,
             Color::RAYWHITE,
         );
+
+        if self.quitting {
+            rl.draw_rectangle(
+                SCREEN_WIDTH / 3,
+                SCREEN_HEIGHT / 3,
+                SCREEN_WIDTH / 3,
+                SCREEN_HEIGHT / 3,
+                Color::BLACK.alpha(0.5),
+            );
+
+            rl.draw_text_ex(
+                font,
+                "Выйти в меню?",
+                Vector2::new(
+                    SCREEN_WIDTH as f32 / 3. + 8. * 13.,
+                    SCREEN_HEIGHT as f32 / 3. + 10.,
+                ),
+                64.,
+                2.,
+                Color::RAYWHITE,
+            );
+
+            let mouse_over = unsafe {
+                CheckCollisionPointRec(rl.get_mouse_position().into(), QUIT_BUTTON.into())
+            };
+
+            rl.draw_rectangle_rec(
+                QUIT_BUTTON,
+                if mouse_over {
+                    Color::RAYWHITE
+                } else {
+                    Color::BLACK.alpha(0.5)
+                },
+            );
+
+            rl.draw_text_ex(
+                font,
+                "Да",
+                Vector2::new(
+                    QUIT_BUTTON.x + QUIT_BUTTON.width / 2. - 32.,
+                    QUIT_BUTTON.y + 16.,
+                ),
+                64.,
+                2.,
+                if mouse_over {
+                    Color::BLACK
+                } else {
+                    Color::RAYWHITE
+                },
+            );
+        }
     }
 }
