@@ -21,6 +21,7 @@ impl EnemiesHandler {
     }
 
     pub fn spawn_enemies(&mut self, metadata_handler: &mut MetadataHandler) {
+        self.enemies = HashMap::new();
         for i in 0..metadata_handler.enemies.len() {
             self.enemies.insert(
                 i as u8,

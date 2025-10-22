@@ -13,6 +13,7 @@ pub enum HotkeyCategory {
     PickBuilding1 = 4,
     PickBuilding2 = 5,
     PickBuilding3 = 6,
+    Skip = 7,
     ERROR = 255,
 }
 
@@ -21,6 +22,7 @@ pub enum KeyboardKeyString {
     KeyEnter,
     KeyEsc,
     KeySpace,
+    KeyS,
     KeyQ,
     KeyR,
     KeyP,
@@ -48,6 +50,7 @@ impl HotkeyCategory {
             x if x == HotkeyCategory::PickBuilding1 as u8 => HotkeyCategory::PickBuilding1,
             x if x == HotkeyCategory::PickBuilding2 as u8 => HotkeyCategory::PickBuilding2,
             x if x == HotkeyCategory::PickBuilding3 as u8 => HotkeyCategory::PickBuilding3,
+            x if x == HotkeyCategory::Skip as u8 => HotkeyCategory::Skip,
             _ => HotkeyCategory::ERROR,
         }
     }
@@ -95,6 +98,7 @@ impl HotkeyHandler {
                     KeyboardKeyString::Key1 => KeyboardKey::KEY_ONE,
                     KeyboardKeyString::Key2 => KeyboardKey::KEY_TWO,
                     KeyboardKeyString::Key3 => KeyboardKey::KEY_THREE,
+                    KeyboardKeyString::KeyS => KeyboardKey::KEY_S,
                 };
                 vec.push(key);
             }

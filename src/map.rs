@@ -1,8 +1,7 @@
 use raylib::{color::Color, prelude::*};
 
 use crate::{
-    map_loader, metadata_handler::MetadataHandler, music_handler::MusicHandler,
-    scene::SceneHandler, texture_handler::TextureHandler,
+    hotkey_handler::{self, HotkeyCategory, HotkeyHandler}, map_loader, metadata_handler::MetadataHandler, music_handler::MusicHandler, scene::SceneHandler, texture_handler::TextureHandler
 };
 
 pub const LEVEL_WIDTH_TILES: usize = 16;

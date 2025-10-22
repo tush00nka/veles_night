@@ -2,7 +2,7 @@ use raylib::prelude::*;
 
 use crate::{SCREEN_HEIGHT, SCREEN_WIDTH};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Scene {
     MainMenu,
     Level,
@@ -30,6 +30,10 @@ impl SceneHandler {
         }
     }
 
+    pub fn get_current(&self) -> Scene{
+        self.current
+    }
+
     pub fn set(&mut self, scene: Scene) {
         if self.initiated {
             return;
@@ -38,6 +42,16 @@ impl SceneHandler {
         self.fade_in = true;
         self.progress = 0.;
         self.next = Some(scene);
+    }
+
+    pub fn get_next(&self) -> Scene{
+        match self.current{
+            Scene::Level => Scene::Transition,
+            Scene::Transition => Scene::Level,
+            Scene::MainMenu => Scene::Level,
+            Scene::GameOver => Scene::GameOver,
+            _ => Scene::MainMenu,
+        }
     }
 
     const FADE_SPEED: f32 = 4.;
@@ -69,9 +83,5 @@ impl SceneHandler {
             Vector2::new(SCREEN_WIDTH as f32, SCREEN_HEIGHT as f32),
             Color::BLACK.alpha(self.progress),
         );
-    }
-
-    pub fn get_current(&self) -> Scene {
-        self.current
-    }
+    } 
 }

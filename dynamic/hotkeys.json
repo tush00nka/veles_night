@@ -20,6 +20,7 @@
         "PickBuilding3": [
             "Key3"
         ],
-        "Reset": ["KeyR"]
+        "Reset": ["KeyR"],
+        "Skip": ["KeyS"]
     }
 }

@@ -132,6 +132,18 @@ fn main() {
         }
 
         scene_handler.update(&mut rl);
+        if hotkey_handler.check_pressed(&rl, HotkeyCategory::Skip) 
+            && rl.is_key_down(KeyboardKey::KEY_LEFT_CONTROL) 
+                && rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT)
+        {
+            if scene_handler.get_current() == Scene::GameEnd{
+                println!("Why");
+                level_number = level_num;
+            }
+
+            let scene = scene_handler.get_next();
+            scene_handler.set(scene);
+        } 
 
         match scene_handler.get_current() {
             Scene::MainMenu => {
@@ -191,7 +203,6 @@ fn main() {
                         format!("Велесова Ночь - Уровень {}", level_number + 1).as_str(),
                     );
                 }
-
                 if update_level(
                     &mut spirits_handler,
                     &mut particles,
@@ -212,7 +223,7 @@ fn main() {
                         &mut spirits_handler,
                         &mut rl,
                     );
-                }
+                } 
             }
             Scene::Transition => update_transition(
                 &mut level_transition,
@@ -322,7 +333,7 @@ fn update_level(
     if hotkey_handler.check_pressed(rl, HotkeyCategory::Reset) {
         return true;
     }
-    
+
     return false;
 }
 
