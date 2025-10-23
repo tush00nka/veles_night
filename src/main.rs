@@ -180,6 +180,11 @@ fn main() {
                     &mut should_close,
                     &mut rl,
                     &mut save_handler,
+                    &mut level_number,
+                    &mut metadata_handler,
+                    &mut level,
+                    &mut spirits_handler,
+                    &mut enemies_handler,
                 );
             }
             Scene::GameEnd => {

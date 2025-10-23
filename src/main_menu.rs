@@ -3,7 +3,15 @@ use std::collections::HashMap;
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
 use crate::{
-    map::TILE_SCALE, save_handler::SaveHandler, scene::{Scene, SceneHandler}, texture_handler::TextureHandler, ui::Button, SCREEN_HEIGHT, SCREEN_WIDTH
+    FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH,
+    enemy_spirit::EnemiesHandler,
+    map::{Level, TILE_SCALE},
+    metadata_handler::{self, MetadataHandler},
+    save_handler::SaveHandler,
+    scene::{Scene, SceneHandler},
+    spirits_handler::{self, SpiritsHandler},
+    texture_handler::TextureHandler,
+    ui::Button,
 };
 
 pub struct MainMenuHandler {
@@ -54,22 +62,39 @@ impl MainMenuHandler {
             },
         );
 
-
-        let labels = vec!["Продолжить","Начать", "Закончить"];
+        let labels = vec!["Продолжить", "Начать", "Закончить"];
 
         Self { buttons, labels }
     }
 
-    pub fn update(&self, scene_handler: &mut SceneHandler, should_close: &mut bool, rl: &mut RaylibHandle, save_handler: &mut SaveHandler) {
+    pub fn update(
+        &self,
+        scene_handler: &mut SceneHandler,
+        should_close: &mut bool,
+        rl: &mut RaylibHandle,
+        save_handler: &mut SaveHandler,
+        level_number: &mut u8,
+        metadata_handler: &mut MetadataHandler,
+        level: &mut Level,
+        spirits_handler: &mut SpiritsHandler,
+        enemies_handler: &mut EnemiesHandler,
+    ) {
         for (key, button) in self.buttons.iter() {
             if unsafe { CheckCollisionPointRec(rl.get_mouse_position().into(), button.rect.into()) }
                 && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
             {
-                match key{
+                match key {
                     0 => {
-                        save_handler.set_to_load();
+                        if save_handler.is_there_saves {
+                            save_handler.set_to_load();
+                        }
                     }
                     1 => {
+                        *level_number = FIRST_LEVEL;
+                        metadata_handler.load(*level_number);
+                        level.load(*level_number, metadata_handler, rl);
+                        spirits_handler.spawn_spirits(metadata_handler);
+                        enemies_handler.spawn_enemies(metadata_handler);
                         scene_handler.set(Scene::Level);
                     }
                     2 => {
@@ -114,23 +139,29 @@ impl MainMenuHandler {
 
         let mut button_selected = 128;
 
-        for (name, button) in self.buttons.iter_mut() {
-            
+        for (key, button) in self.buttons.iter_mut() {
+            if *key == 0 && !save_handler.is_there_saves {
+                continue;
+            }
+
             let color;
-            if unsafe {
-                CheckCollisionPointRec(rl.get_mouse_position().into(), button.rect.into())
-            } {
+            if unsafe { CheckCollisionPointRec(rl.get_mouse_position().into(), button.rect.into()) }
+            {
                 color = Color::WHITE;
 
-                button_selected = *name; 
+                button_selected = *key;
             } else {
-                color = Color::BLACK.alpha(0.5); 
+                color = Color::BLACK.alpha(0.5);
             };
 
             rl.draw_rectangle_rec(button.rect, color);
         }
 
         for i in 0..self.labels.len() {
+            if i == 0 && !save_handler.is_there_saves {
+                continue;
+            }
+
             let color;
             if i == button_selected as usize {
                 color = Color::BLACK;

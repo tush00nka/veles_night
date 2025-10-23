@@ -1,9 +1,9 @@
 const MAP_PATH: &str = "static/maps/";
-pub const MAP_SAVE_PATH: &str = "dynamic/save/map/";
 
 use crate::{
     map::{self, LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, TileType},
     metadata_handler::MetadataHandler,
+    save_handler::SAVE_PATH,
 };
 use raylib::prelude::*;
 use std::{
@@ -15,12 +15,12 @@ pub struct MapLoader;
 
 impl MapLoader {
     pub fn get_map_save(level_number: u8, level_map: &mut map::Level, rl: &mut RaylibHandle) {
-        let level_path = MAP_SAVE_PATH.to_string() + &level_number.to_string();
+        let level_path = SAVE_PATH.to_string() + &level_number.to_string();
         MapLoader::map_loading(level_path, level_map, rl);
     }
 
     fn map_loading(level_path: String, level_map: &mut map::Level, rl: &mut RaylibHandle) {
-        let Ok(mut level_str) = fs::read_to_string(level_path) else {
+        let Ok(mut level_str) = fs::read_to_string(level_path.clone()) else {
             panic!("CAN'T LOAD LEVEL");
         };
 
@@ -122,9 +122,9 @@ impl MapLoader {
         }
         metadata_handler.change_bonfires(fire_td, fire_lr, fire_stop);
 
-        let path = MAP_SAVE_PATH.to_string() + &level_number.to_string();
+        let path = SAVE_PATH.to_string() + &level_number.to_string();
 
-        let filenames = fs::read_dir(MAP_SAVE_PATH).unwrap();
+        let filenames = fs::read_dir(SAVE_PATH).unwrap();
 
         for filename in filenames {
             let file = match filename {
@@ -132,10 +132,12 @@ impl MapLoader {
                 Err(e) => panic!("COULDN'T READ FILE IN SAVE MAP- {e}"),
             };
 
-            match remove_file(file.path()) {
-                Ok(_) => (),
-                Err(e) => panic!("ERROR OCCURED DURING CLEARING LAST SAVE - {e}"),
-            };
+            if file.file_name().to_str().unwrap().split('.').count() <= 1 {
+                match remove_file(file.path()) {
+                    Ok(_) => (),
+                    Err(e) => panic!("ERROR OCCURED DURING CLEARING LAST SAVE - {e}"),
+                };
+            }
         }
         let Ok(mut file) = File::create(path) else {
             panic!("COULDN'T SAVE LAST LEVEL MAP");

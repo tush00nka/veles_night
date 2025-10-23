@@ -6,12 +6,14 @@ use crate::{
     enemy_spirit::EnemiesHandler,
     level_transition::LevelTransition,
     map::Level,
-    map_loader::{MAP_SAVE_PATH, MapLoader},
-    metadata_handler::{MetadataHandler, SAVE_METADATA_PATH},
+    map_loader::MapLoader,
+    metadata_handler::MetadataHandler,
     scene::{Scene, SceneHandler},
     spirits_handler::SpiritsHandler,
     ui::UIHandler,
 };
+
+pub const SAVE_PATH: &str = "dynamic/save/";
 
 pub struct SaveHandler {
     pub should_save: bool,
@@ -37,15 +39,13 @@ impl SaveHandler {
     }
 
     pub fn check_saves(&mut self) {
-        let map_p = &MAP_SAVE_PATH.to_string();
-        let metadata_p = &SAVE_METADATA_PATH.to_string();
+        let save_p = &SAVE_PATH.to_string();
 
-        self.is_there_saves = fs::read_dir(map_p).unwrap().next().is_some()
-            && fs::read_dir(metadata_p).unwrap().next().is_some();
+        self.is_there_saves = fs::read_dir(save_p).unwrap().next().is_some();
     }
 
     fn get_level_number() -> u8 {
-        let filenames = fs::read_dir(MAP_SAVE_PATH).unwrap();
+        let filenames = fs::read_dir(SAVE_PATH).unwrap();
 
         for filename in filenames {
             let file = match filename {
