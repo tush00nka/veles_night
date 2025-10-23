@@ -1,21 +1,7 @@
 use raylib::prelude::*;
 
 use crate::{
-    enemy_spirit::EnemiesHandler,
-    gameover_handler::GameOverHandler,
-    hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct},
-    level_transition::LevelTransition,
-    main_menu::MainMenuHandler,
-    map::{Level, TILE_SCALE, TILE_SIZE},
-    metadata_handler::MetadataHandler,
-    music_handler::MusicHandler,
-    order::OrderHandler,
-    particle::Particle,
-    scene::{Scene, SceneHandler},
-    spirit::Spirit,
-    spirits_handler::SpiritsHandler,
-    texture_handler::TextureHandler,
-    ui::UIHandler,
+    enemy_spirit::EnemiesHandler, gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, level_transition::LevelTransition, main_menu::MainMenuHandler, map::{Level, TILE_SCALE, TILE_SIZE}, metadata_handler::MetadataHandler, music_handler::MusicHandler, order::OrderHandler, particle::Particle, save_handler::SaveHandler, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
 };
 
 // mod light;
@@ -28,6 +14,7 @@ mod main_menu;
 mod map;
 mod map_loader;
 mod metadata_handler;
+mod save_handler;
 mod music_handler;
 mod order;
 mod particle;
@@ -114,14 +101,19 @@ fn main() {
     let mut gameend_handler = GameOverHandler::new(gameover_handler::GameOverHandlerType::Game);
     let mut level_transition = LevelTransition::new();
 
+
     let mut should_close = false;
 
     let mut particles: Vec<Particle> = vec![];
 
     let mut shader = rl.load_shader(&thread, None, Some("static/shaders/bloom.fs"));
 
+    let mut save_handler = SaveHandler::new();
+
     while !rl.window_should_close() && !should_close {
-        
+        if save_handler.should_load{
+            save_handler.load_save(); //need to add button to start screen to load
+        }
         // update stuff
         music_handler.music_update();
 
@@ -162,7 +154,7 @@ fn main() {
                     &mut should_close,
                 );
             }
-            Scene::GameOver => {
+            Scene::GameOver => { 
                 music_handler.music_pause();
 
                 rl.set_window_title(&thread, "Велесова Ночь - Поражение");
@@ -214,6 +206,7 @@ fn main() {
                     &mut rl,
                     &mut hotkey_handler,
                     &mut enemies_handler,
+                    &mut save_handler,
                 ) {
                     reload_procedure(
                         level_number,
@@ -277,6 +270,7 @@ fn main() {
 
         scene_handler.draw(&mut d);
     }
+    metadata_handler.save(level_number);    
 }
 
 fn update_level(
@@ -290,6 +284,7 @@ fn update_level(
     rl: &mut RaylibHandle,
     hotkey_handler: &mut HotkeyHandler,
     enemies_handler: &mut EnemiesHandler,
+    save_handler: &mut SaveHandler,
 ) -> bool {
     for spirit in spirits_handler.spirits.values() {
         if spirit.get_dead() {
@@ -322,7 +317,9 @@ fn update_level(
     order_handler.update_line(level, rl, hotkey_handler);
 
     ui_handler.build(level, rl, hotkey_handler);
-    ui_handler.update(hotkey_handler, scene_handler, rl);
+    if ui_handler.update(hotkey_handler, scene_handler, rl){
+        save_handler.save_level();
+    };
 
     level.update(
         scene_handler,

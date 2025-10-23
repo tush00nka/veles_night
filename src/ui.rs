@@ -119,20 +119,22 @@ impl UIHandler {
         hotkey_h: &mut HotkeyHandler,
         scene_h: &mut SceneHandler,
         rl: &mut RaylibHandle,
-    ) {
+    ) -> bool{
         if hotkey_h.check_pressed(rl, HotkeyCategory::Exit) {
             self.quitting = !self.quitting;
         }
 
         if !self.quitting {
-            return;
+            return false;
         }
 
         if unsafe { CheckCollisionPointRec(rl.get_mouse_position().into(), QUIT_BUTTON.into()) }
-            && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+        && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
         {
             scene_h.set(Scene::MainMenu);
-        }
+            return true;
+        };
+        return false;
     }
 
     pub fn draw(

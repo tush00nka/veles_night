@@ -59,6 +59,10 @@ impl Spirit {
         self.position //+ Vector2::one() * (TILE_SIZE / 2) as f32
     }
 
+    #[allow(unused)]
+    pub fn get_teleported(&self) -> u8{
+        self.teleported
+    }
     pub fn get_draw_position(&self) -> Vector2 {
         self.draw_position
     }
@@ -154,7 +158,7 @@ impl Spirit {
             && (next_x >= LEVEL_WIDTH_TILES
                 || next_y >= LEVEL_HEIGHT_TILES
                 || tile_x <= 0
-                || tile_x <= 0)
+                || tile_y <= 0)
         {
             self.dead = true;
             music_handler.play("foom");

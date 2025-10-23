@@ -37,6 +37,14 @@ impl Level {
             survive: 0,
         }
     }
+    
+    fn set_load_data(&mut self, metadata_handler: &mut MetadataHandler){
+        self.survive = metadata_handler.get_survive();
+        self.survived = 0;
+        self.wood = 0;
+        self.connect_swamps(metadata_handler);
+        self.light_bonfires(metadata_handler);
+    }
 
     pub fn load(
         &mut self,
@@ -45,11 +53,16 @@ impl Level {
         rl: &mut RaylibHandle,
     ) {
         map_loader::MapLoader::get_map(level_number, self, rl);
-        self.survive = metadata_handler.get_survive();
-        self.survived = 0;
-        self.wood = 0;
-        self.connect_swamps(metadata_handler);
-        self.light_bonfires(metadata_handler);
+        self.set_load_data(metadata_handler);
+    }
+
+    pub fn load_save(&mut self,
+        level_number: u8,
+        metadata_handler: &mut MetadataHandler, 
+        rl: &mut RaylibHandle
+        ){
+        map_loader::MapLoader::get_map_save(level_number, self, rl);
+        self.set_load_data(metadata_handler);
     }
 
     pub fn completed(&self) -> bool {
