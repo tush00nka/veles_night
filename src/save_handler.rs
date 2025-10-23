@@ -41,7 +41,16 @@ impl SaveHandler {
     pub fn check_saves(&mut self) {
         let save_p = &SAVE_PATH.to_string();
 
-        self.is_there_saves = fs::read_dir(save_p).unwrap().next().is_some();
+        let mut dir;
+        match fs::read_dir(save_p) {
+            Ok(d) => dir = d,
+            Err(_) => {
+                fs::create_dir(save_p).expect("Couldn't create a dir :(");
+                dir = fs::read_dir(save_p).unwrap();
+            },
+        }
+
+        self.is_there_saves = dir.next().is_some();
     }
 
     fn get_level_number() -> u8 {

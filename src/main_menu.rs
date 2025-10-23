@@ -6,10 +6,10 @@ use crate::{
     FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH,
     enemy_spirit::EnemiesHandler,
     map::{Level, TILE_SCALE},
-    metadata_handler::{self, MetadataHandler},
+    metadata_handler::MetadataHandler,
     save_handler::SaveHandler,
     scene::{Scene, SceneHandler},
-    spirits_handler::{self, SpiritsHandler},
+    spirits_handler::SpiritsHandler,
     texture_handler::TextureHandler,
     ui::Button,
 };
