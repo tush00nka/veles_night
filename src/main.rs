@@ -57,8 +57,8 @@ fn main() {
 
     rl.set_exit_key(None);
 
-    let mut rl_audio = RaylibAudio::init_audio_device().unwrap();
-    let music_handler = MusicHandler::new(&mut rl_audio);
+    let rl_audio = RaylibAudio::init_audio_device().unwrap();
+    let music_handler = MusicHandler::new(&rl_audio);
     music_handler.music_play();
 
     //let audio = raylib::core::audio::RaylibAudio::init_audio_device().unwrap();
@@ -170,6 +170,17 @@ fn main() {
 
             let scene = scene_handler.get_next();
             scene_handler.set(scene);
+        }
+
+        if hotkey_handler.check_down(&rl, HotkeyCategory::VolumeUp){
+            rl_audio.set_master_volume(rl_audio.get_master_volume() + 0.01);
+        }
+        
+        if hotkey_handler.check_down(&rl, HotkeyCategory::VolumeDown){
+            rl_audio.set_master_volume(rl_audio.get_master_volume() - 0.01); 
+            if rl_audio.get_master_volume() >= 1.{
+                rl_audio.set_master_volume(1.0);
+            }
         }
 
         match scene_handler.get_current() {

@@ -14,6 +14,8 @@ pub enum HotkeyCategory {
     PickBuilding2 = 5,
     PickBuilding3 = 6,
     Skip = 7,
+    VolumeUp = 8,
+    VolumeDown = 9,
     ERROR = 255,
 }
 
@@ -29,6 +31,10 @@ pub enum KeyboardKeyString {
     Key1,
     Key2,
     Key3,
+    KeyU,
+    KeyI,
+    KeyPlus,
+    KeyMinus
 }
 impl HotkeyCategory {
     pub fn from_bonfire(value: &str) -> HotkeyCategory {
@@ -51,6 +57,8 @@ impl HotkeyCategory {
             x if x == HotkeyCategory::PickBuilding2 as u8 => HotkeyCategory::PickBuilding2,
             x if x == HotkeyCategory::PickBuilding3 as u8 => HotkeyCategory::PickBuilding3,
             x if x == HotkeyCategory::Skip as u8 => HotkeyCategory::Skip,
+            x if x == HotkeyCategory::VolumeUp as u8 => HotkeyCategory::VolumeUp,
+            x if x == HotkeyCategory::VolumeDown as u8 => HotkeyCategory::VolumeDown,
             _ => HotkeyCategory::ERROR,
         }
     }
@@ -99,6 +107,10 @@ impl HotkeyHandler {
                     KeyboardKeyString::Key2 => KeyboardKey::KEY_TWO,
                     KeyboardKeyString::Key3 => KeyboardKey::KEY_THREE,
                     KeyboardKeyString::KeyS => KeyboardKey::KEY_S,
+                    KeyboardKeyString::KeyMinus => KeyboardKey::KEY_MINUS,
+                    KeyboardKeyString::KeyPlus => KeyboardKey::KEY_EQUAL,
+                    KeyboardKeyString::KeyU => KeyboardKey::KEY_U,
+                    KeyboardKeyString::KeyI => KeyboardKey::KEY_I,
                 };
                 vec.push(key);
             }

@@ -21,6 +21,8 @@
             "Key3"
         ],
         "Reset": ["KeyR"],
-        "Skip": ["KeyS"]
+        "Skip": ["KeyS"],
+        "VolumeUp": ["KeyPlus","KeyU"],
+        "VolumeDown": ["KeyMinus","KeyI"]
     }
 }
