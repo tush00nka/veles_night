@@ -1,5 +1,5 @@
 const MAP_PATH: &str = "static/maps/";
-const MAP_SAVE_PATH: &str = "dynamic/save/map/";
+pub const MAP_SAVE_PATH: &str = "dynamic/save/map/";
 
 use raylib::prelude::*;
 use crate::{map::{self, TileType, LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES}, metadata_handler::{self, BonfireMetadata, MetadataHandler}};
@@ -74,37 +74,32 @@ impl MapLoader {
 
     pub fn save_map(level_number:u8, level_map: &mut map::Level, metadata_handler: &mut MetadataHandler){
         let mut map = "".to_string(); 
-        let mut x = 0;
-        let mut y = 0;
 
         let mut fire_td: HashMap<[u8;2], bool> = HashMap::new(); 
         let mut fire_lr: HashMap<[u8;2], bool> = HashMap::new(); 
         let mut fire_stop: HashMap<[u8;2], bool> = HashMap::new(); 
 
-        for tile_line in level_map.tiles{
-            for tile in tile_line{
-                match tile {
+        for y in 0..LEVEL_HEIGHT_TILES{
+            for x in 0..LEVEL_WIDTH_TILES{
+                match level_map.tiles[x][y]{
                     TileType::Air => map += ".",
                     TileType::Tree(_) => map += "#",
                     TileType::FireTD { active } => {
-                        fire_td.insert([x,y], active);
+                        fire_td.insert([x as u8,y as u8], active);
                         map += "1";
                     },
                     TileType::FireLR { active } => {
-                        fire_lr.insert([x,y], active);
+                        fire_lr.insert([x as u8,y as u8], active);
                         map += "2";
                     },
                     TileType::FireStop { active } => {
-                        fire_stop.insert([x,y],active);
+                        fire_stop.insert([x as u8,y as u8],active);
                         map += "3";
                     },
                     TileType::Swamp { teleport_position: _ } => map += "s",
                     TileType::Exit(val) => map += &val.to_string(),
                 };
-                x += 1;
             }
-            y += 1;
-            x = 0;
             map += "\n";
         }
         metadata_handler.change_bonfires(fire_td, fire_lr, fire_stop);
@@ -127,8 +122,10 @@ impl MapLoader {
         let Ok(mut file) = File::create(path) else{
             panic!("COULDN'T SAVE LAST LEVEL MAP");
         };
-        
-        write!(file, "{}", map);
+
+        let Ok(_) = write!(file, "{}", map) else{
+            panic!("Error during writing map!");
+        };
     }
 
     pub fn get_map(level_number: u8, level_map: &mut map::Level, rl: &mut RaylibHandle) {

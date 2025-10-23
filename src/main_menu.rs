@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
 use crate::{
-    map::TILE_SCALE, scene::{Scene, SceneHandler}, texture_handler::TextureHandler, ui::Button, SCREEN_HEIGHT, SCREEN_WIDTH
+    map::TILE_SCALE, save_handler::{self, SaveHandler}, scene::{Scene, SceneHandler}, texture_handler::TextureHandler, ui::Button, SCREEN_HEIGHT, SCREEN_WIDTH
 };
 
 pub struct MainMenuHandler {
@@ -22,7 +22,7 @@ impl MainMenuHandler {
                 rect: Rectangle::new(
                     (SCREEN_WIDTH / 2) as f32 - 98.,
                     (SCREEN_HEIGHT / 2) as f32 + 32.,
-                    196.,
+                    216.,
                     64.,
                 ),
             },
@@ -35,27 +35,44 @@ impl MainMenuHandler {
                 rect: Rectangle::new(
                     (SCREEN_WIDTH / 2) as f32 - 98.,
                     (SCREEN_HEIGHT / 2) as f32 + 100.,
-                    196.,
+                    216.,
                     64.,
                 ),
             },
         );
 
-        let labels = vec!["Начать", "Закончить"];
+        buttons.insert(
+            2,
+            Button {
+                selected: false,
+                rect: Rectangle::new(
+                    (SCREEN_WIDTH / 2) as f32 - 98.,
+                    (SCREEN_HEIGHT / 2) as f32 + 168.,
+                    216.,
+                    64.,
+                ),
+            },
+        );
+
+
+        let labels = vec!["Продолжить","Начать", "Закончить"];
 
         Self { buttons, labels }
     }
 
-    pub fn update(&self, scene_handler: &mut SceneHandler, should_close: &mut bool, rl: &mut RaylibHandle) {
+    pub fn update(&self, scene_handler: &mut SceneHandler, should_close: &mut bool, rl: &mut RaylibHandle, save_handler: &mut SaveHandler) {
         for (key, button) in self.buttons.iter() {
             if unsafe { CheckCollisionPointRec(rl.get_mouse_position().into(), button.rect.into()) }
                 && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
             {
                 match key{
                     0 => {
-                        scene_handler.set(Scene::Level);
+                        save_handler.set_to_load();
                     }
                     1 => {
+                        scene_handler.set(Scene::Level);
+                    }
+                    2 => {
                         *should_close = true;
                     }
                     _ => {}
@@ -67,6 +84,7 @@ impl MainMenuHandler {
     pub fn draw(
         &mut self,
         font: &Font,
+        save_handler: &SaveHandler,
         texture_handler: &TextureHandler,
         rl: &mut RaylibDrawHandle,
     ) {

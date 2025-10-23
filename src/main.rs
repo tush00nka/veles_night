@@ -1,7 +1,9 @@
+use std::fs;
+
 use raylib::prelude::*;
 
 use crate::{
-    enemy_spirit::EnemiesHandler, gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, level_transition::LevelTransition, main_menu::MainMenuHandler, map::{Level, TILE_SCALE, TILE_SIZE}, metadata_handler::MetadataHandler, music_handler::MusicHandler, order::OrderHandler, particle::Particle, save_handler::SaveHandler, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
+    enemy_spirit::EnemiesHandler, gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, level_transition::LevelTransition, main_menu::MainMenuHandler, map::{Level, TILE_SCALE, TILE_SIZE}, metadata_handler::{MetadataHandler, SAVE_METADATA_PATH}, music_handler::MusicHandler, order::OrderHandler, particle::Particle, save_handler::SaveHandler, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
 };
 
 // mod light;
@@ -101,7 +103,6 @@ fn main() {
     let mut gameend_handler = GameOverHandler::new(gameover_handler::GameOverHandlerType::Game);
     let mut level_transition = LevelTransition::new();
 
-
     let mut should_close = false;
 
     let mut particles: Vec<Particle> = vec![];
@@ -111,8 +112,30 @@ fn main() {
     let mut save_handler = SaveHandler::new();
 
     while !rl.window_should_close() && !should_close {
+    
+        save_handler.check_saves();
+
+        if save_handler.should_save{
+            save_handler.create_save_file(
+                &mut metadata_handler, 
+                &mut level, 
+                &mut spirits_handler, 
+                &mut level_number
+            );
+        }
+
         if save_handler.should_load{
-            save_handler.load_save(); //need to add button to start screen to load
+            save_handler.load_save(
+                &mut metadata_handler, 
+                &mut level, 
+                &mut spirits_handler, 
+                &mut enemies_handler, 
+                &mut ui_handler, 
+                &mut level_number, 
+                &mut level_transition, 
+                &mut rl, 
+                &mut scene_handler
+            );
         }
         // update stuff
         music_handler.music_update();
@@ -140,7 +163,7 @@ fn main() {
         match scene_handler.get_current() {
             Scene::MainMenu => {
                 rl.set_window_title(&thread, "Велесова Ночь");
-                main_menu.update(&mut scene_handler, &mut should_close, &mut rl)
+                main_menu.update(&mut scene_handler, &mut should_close, &mut rl, &mut save_handler);
             }
             Scene::GameEnd => {
                 rl.set_window_title(&thread, "Велесова Ночь - Победа");
@@ -256,7 +279,7 @@ fn main() {
 
         match scene_handler.get_current() {
             Scene::MainMenu => {
-                main_menu.draw(&font, &texture_handler, &mut d);
+                main_menu.draw(&font, &save_handler, &texture_handler, &mut d);
             }
             Scene::GameEnd => gameend_handler.draw_gameover(&font, &mut d),
             Scene::GameOver => gameover_handler.draw_gameover(&font, &mut d),
@@ -270,7 +293,60 @@ fn main() {
 
         scene_handler.draw(&mut d);
     }
-    metadata_handler.save(level_number);    
+    match scene_handler.get_current(){
+        Scene::Transition =>{
+            preparation_to_save(
+                &mut (level_number + 1), 
+                &mut metadata_handler, 
+                &mut level, 
+                &mut spirits_handler, 
+                &mut rl
+            );
+        
+            save_handler.create_save_file(
+                &mut metadata_handler, 
+                &mut level, 
+                &mut spirits_handler, 
+                &mut level_number
+            );
+        },
+        Scene::GameEnd => {
+            preparation_to_save(
+                &mut level_number, 
+                &mut metadata_handler, 
+                &mut level, 
+                &mut spirits_handler, 
+                &mut rl
+            );
+            
+            save_handler.create_save_file(
+                &mut metadata_handler, 
+                &mut level, 
+                &mut spirits_handler, 
+                &mut level_number
+            );
+        },
+        Scene::Level => save_handler.create_save_file(
+            &mut metadata_handler, 
+            &mut level, 
+            &mut spirits_handler, 
+            &mut level_number
+        ),
+        _ => (),
+    };
+      
+}
+
+fn preparation_to_save(
+    level_number: &mut u8, 
+    metadata_handler: &mut MetadataHandler, 
+    level: &mut Level, 
+    spirits_handler: &mut SpiritsHandler,
+    rl: &mut RaylibHandle,
+){
+    metadata_handler.load(*level_number);
+    level.load(*level_number, metadata_handler, rl);
+    spirits_handler.spawn_spirits(metadata_handler); 
 }
 
 fn update_level(
@@ -318,7 +394,7 @@ fn update_level(
 
     ui_handler.build(level, rl, hotkey_handler);
     if ui_handler.update(hotkey_handler, scene_handler, rl){
-        save_handler.save_level();
+        save_handler.set_to_save();
     };
 
     level.update(

@@ -4,7 +4,7 @@ use std::{collections::HashMap, fs::{self, remove_file, File}, io::BufWriter};
 use crate::{map::TILE_SIZE, spirits_handler::{self, SpiritsHandler}};
 
 const METADATA_PATH: &str = "static/metadata/";
-const SAVE_METADATA_PATH: &str = "dynamic/save/metadata/";
+pub const SAVE_METADATA_PATH: &str = "dynamic/save/metadata/";
 const METADATA_EXTENSION: &str = ".json";
 
 #[derive(Deserialize, Clone, Serialize)]
