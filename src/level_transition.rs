@@ -3,7 +3,7 @@ use std::fs;
 use raylib::prelude::*;
 use serde::Deserialize;
 
-use crate::{SCREEN_HEIGHT, SCREEN_WIDTH, map::TILE_SIZE_PX, texture_handler::TextureHandler};
+use crate::{map::TILE_SIZE_PX, map_loader::MAP_PATH, texture_handler::TextureHandler, SCREEN_HEIGHT, SCREEN_WIDTH};
 
 pub enum CardContentType {
     Image(String),
@@ -39,6 +39,7 @@ struct UnlockWrapper {
 pub struct LevelTransition {
     unlock_wrapper: UnlockWrapper,
     pub cards: [TransitionCard; 3],
+    pub max_level: u8,
 }
 
 impl LevelTransition {
@@ -59,7 +60,13 @@ impl LevelTransition {
                 TransitionCard::new(CardContentType::Text("".to_string())),
                 TransitionCard::new(CardContentType::Text("".to_string())),
             ],
+            max_level: 0,
         };
+        
+        let filenames = fs::read_dir(MAP_PATH).unwrap();
+        for _ in filenames{
+            new_transition.max_level += 1;
+        }
 
         // ensure we have something to show
         new_transition.set_cards(0);

@@ -1,4 +1,4 @@
-const MAP_PATH: &str = "static/maps/";
+pub const MAP_PATH: &str = "static/maps/";
 
 use crate::{
     map::{self, LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, TileType},

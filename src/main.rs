@@ -44,8 +44,6 @@ pub const FIRST_LEVEL: u8 = 0;
 
 const SCREEN_WIDTH: i32 = 16 * 16 * TILE_SCALE;
 const SCREEN_HEIGHT: i32 = 16 * 9 * TILE_SCALE;
-const MAX_LEVEL: u8 = 6; //ЗАТЫЧКА, ПЕРЕДЕЛАТЬ
-//
 fn main() {
     let (mut rl, thread) = raylib::init()
         .size(SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -56,7 +54,7 @@ fn main() {
     rl.set_target_fps(60);
 
     rl.set_exit_key(None);
-
+    
     let rl_audio = RaylibAudio::init_audio_device().unwrap();
     let music_handler = MusicHandler::new(&rl_audio);
     music_handler.music_play();
@@ -493,7 +491,7 @@ fn update_transition(
     }
 
     *level_number += 1;
-    if *level_number > MAX_LEVEL {
+    if *level_number >= level_transition.max_level{
         scene_handler.set(Scene::GameEnd);
         return;
     }
