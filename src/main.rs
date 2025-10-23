@@ -1,9 +1,22 @@
-use std::fs;
-
 use raylib::prelude::*;
 
 use crate::{
-    enemy_spirit::EnemiesHandler, gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, level_transition::LevelTransition, main_menu::MainMenuHandler, map::{Level, TILE_SCALE, TILE_SIZE}, metadata_handler::{MetadataHandler, SAVE_METADATA_PATH}, music_handler::MusicHandler, order::OrderHandler, particle::Particle, save_handler::SaveHandler, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
+    enemy_spirit::EnemiesHandler,
+    gameover_handler::GameOverHandler,
+    hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct},
+    level_transition::LevelTransition,
+    main_menu::MainMenuHandler,
+    map::{Level, TILE_SCALE, TILE_SIZE},
+    metadata_handler::MetadataHandler,
+    music_handler::MusicHandler,
+    order::OrderHandler,
+    particle::Particle,
+    save_handler::SaveHandler,
+    scene::{Scene, SceneHandler},
+    spirit::Spirit,
+    spirits_handler::SpiritsHandler,
+    texture_handler::TextureHandler,
+    ui::UIHandler,
 };
 
 // mod light;
@@ -16,10 +29,10 @@ mod main_menu;
 mod map;
 mod map_loader;
 mod metadata_handler;
-mod save_handler;
 mod music_handler;
 mod order;
 mod particle;
+mod save_handler;
 mod scene;
 mod spirit;
 mod spirits_handler;
@@ -112,29 +125,28 @@ fn main() {
     let mut save_handler = SaveHandler::new();
 
     while !rl.window_should_close() && !should_close {
-    
         save_handler.check_saves();
 
-        if save_handler.should_save{
+        if save_handler.should_save {
             save_handler.create_save_file(
-                &mut metadata_handler, 
-                &mut level, 
-                &mut spirits_handler, 
-                &mut level_number
+                &mut metadata_handler,
+                &mut level,
+                &mut spirits_handler,
+                &mut level_number,
             );
         }
 
-        if save_handler.should_load{
+        if save_handler.should_load {
             save_handler.load_save(
-                &mut metadata_handler, 
-                &mut level, 
-                &mut spirits_handler, 
-                &mut enemies_handler, 
-                &mut ui_handler, 
-                &mut level_number, 
-                &mut level_transition, 
-                &mut rl, 
-                &mut scene_handler
+                &mut metadata_handler,
+                &mut level,
+                &mut spirits_handler,
+                &mut enemies_handler,
+                &mut ui_handler,
+                &mut level_number,
+                &mut level_transition,
+                &mut rl,
+                &mut scene_handler,
             );
         }
         // update stuff
@@ -147,23 +159,28 @@ fn main() {
         }
 
         scene_handler.update(&mut rl);
-        if hotkey_handler.check_pressed(&rl, HotkeyCategory::Skip) 
-            && rl.is_key_down(KeyboardKey::KEY_LEFT_CONTROL) 
-                && rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT)
+        if hotkey_handler.check_pressed(&rl, HotkeyCategory::Skip)
+            && rl.is_key_down(KeyboardKey::KEY_LEFT_CONTROL)
+            && rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT)
         {
-            if scene_handler.get_current() == Scene::GameEnd{
+            if scene_handler.get_current() == Scene::GameEnd {
                 println!("Why");
                 level_number = level_num;
             }
 
             let scene = scene_handler.get_next();
             scene_handler.set(scene);
-        } 
+        }
 
         match scene_handler.get_current() {
             Scene::MainMenu => {
                 rl.set_window_title(&thread, "Велесова Ночь");
-                main_menu.update(&mut scene_handler, &mut should_close, &mut rl, &mut save_handler);
+                main_menu.update(
+                    &mut scene_handler,
+                    &mut should_close,
+                    &mut rl,
+                    &mut save_handler,
+                );
             }
             Scene::GameEnd => {
                 rl.set_window_title(&thread, "Велесова Ночь - Победа");
@@ -177,7 +194,7 @@ fn main() {
                     &mut should_close,
                 );
             }
-            Scene::GameOver => { 
+            Scene::GameOver => {
                 music_handler.music_pause();
 
                 rl.set_window_title(&thread, "Велесова Ночь - Поражение");
@@ -239,7 +256,7 @@ fn main() {
                         &mut spirits_handler,
                         &mut rl,
                     );
-                } 
+                }
             }
             Scene::Transition => update_transition(
                 &mut level_transition,
@@ -293,60 +310,59 @@ fn main() {
 
         scene_handler.draw(&mut d);
     }
-    match scene_handler.get_current(){
-        Scene::Transition =>{
+    match scene_handler.get_current() {
+        Scene::Transition => {
             preparation_to_save(
-                &mut (level_number + 1), 
-                &mut metadata_handler, 
-                &mut level, 
-                &mut spirits_handler, 
-                &mut rl
+                &mut (level_number + 1),
+                &mut metadata_handler,
+                &mut level,
+                &mut spirits_handler,
+                &mut rl,
             );
-        
+
             save_handler.create_save_file(
-                &mut metadata_handler, 
-                &mut level, 
-                &mut spirits_handler, 
-                &mut level_number
+                &mut metadata_handler,
+                &mut level,
+                &mut spirits_handler,
+                &mut level_number,
             );
-        },
+        }
         Scene::GameEnd => {
             preparation_to_save(
-                &mut level_number, 
-                &mut metadata_handler, 
-                &mut level, 
-                &mut spirits_handler, 
-                &mut rl
+                &mut level_number,
+                &mut metadata_handler,
+                &mut level,
+                &mut spirits_handler,
+                &mut rl,
             );
-            
+
             save_handler.create_save_file(
-                &mut metadata_handler, 
-                &mut level, 
-                &mut spirits_handler, 
-                &mut level_number
+                &mut metadata_handler,
+                &mut level,
+                &mut spirits_handler,
+                &mut level_number,
             );
-        },
+        }
         Scene::Level => save_handler.create_save_file(
-            &mut metadata_handler, 
-            &mut level, 
-            &mut spirits_handler, 
-            &mut level_number
+            &mut metadata_handler,
+            &mut level,
+            &mut spirits_handler,
+            &mut level_number,
         ),
         _ => (),
     };
-      
 }
 
 fn preparation_to_save(
-    level_number: &mut u8, 
-    metadata_handler: &mut MetadataHandler, 
-    level: &mut Level, 
+    level_number: &mut u8,
+    metadata_handler: &mut MetadataHandler,
+    level: &mut Level,
     spirits_handler: &mut SpiritsHandler,
     rl: &mut RaylibHandle,
-){
+) {
     metadata_handler.load(*level_number);
     level.load(*level_number, metadata_handler, rl);
-    spirits_handler.spawn_spirits(metadata_handler); 
+    spirits_handler.spawn_spirits(metadata_handler);
 }
 
 fn update_level(
@@ -381,7 +397,8 @@ fn update_level(
         .spirits
         .retain(|_, spirit| !spirit.get_dead());
 
-    for (_, enemy) in enemies_handler.enemies.iter_mut() {
+    // better than iter_mut() with (_, enemy)
+    for enemy in enemies_handler.enemies.values_mut() {
         enemy.collide_check(spirits_handler);
     }
 
@@ -393,7 +410,7 @@ fn update_level(
     order_handler.update_line(level, rl, hotkey_handler);
 
     ui_handler.build(level, rl, hotkey_handler);
-    if ui_handler.update(hotkey_handler, scene_handler, rl){
+    if ui_handler.update(hotkey_handler, scene_handler, rl) {
         save_handler.set_to_save();
     };
 
@@ -454,7 +471,7 @@ fn update_transition(
     ui_handler: &mut UIHandler,
 ) {
     if !hotkey_handler.check_pressed(rl, HotkeyCategory::Continue)
-        && !rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT)
+        && !rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
     {
         return;
     }

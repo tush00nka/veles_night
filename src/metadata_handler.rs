@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fs::{self, remove_file, File}, io::BufWriter};
 
-use crate::{map::TILE_SIZE, spirits_handler::{self, SpiritsHandler}};
+use crate::{map::TILE_SIZE, spirits_handler::SpiritsHandler};
 
 const METADATA_PATH: &str = "static/metadata/";
 pub const SAVE_METADATA_PATH: &str = "dynamic/save/metadata/";

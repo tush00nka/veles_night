@@ -1,7 +1,11 @@
 use raylib::{color::Color, prelude::*};
 
 use crate::{
-    hotkey_handler::{self, HotkeyCategory, HotkeyHandler}, map_loader, metadata_handler::MetadataHandler, music_handler::MusicHandler, scene::SceneHandler, texture_handler::TextureHandler
+    map_loader,
+    metadata_handler::MetadataHandler,
+    music_handler::MusicHandler,
+    scene::{Scene, SceneHandler},
+    texture_handler::TextureHandler,
 };
 
 pub const LEVEL_WIDTH_TILES: usize = 16;
@@ -37,8 +41,8 @@ impl Level {
             survive: 0,
         }
     }
-    
-    fn set_load_data(&mut self, metadata_handler: &mut MetadataHandler){
+
+    fn set_load_data(&mut self, metadata_handler: &mut MetadataHandler) {
         self.survive = metadata_handler.get_survive();
         self.survived = 0;
         self.wood = 0;
@@ -56,11 +60,12 @@ impl Level {
         self.set_load_data(metadata_handler);
     }
 
-    pub fn load_save(&mut self,
+    pub fn load_save(
+        &mut self,
         level_number: u8,
-        metadata_handler: &mut MetadataHandler, 
-        rl: &mut RaylibHandle
-        ){
+        metadata_handler: &mut MetadataHandler,
+        rl: &mut RaylibHandle,
+    ) {
         map_loader::MapLoader::get_map_save(level_number, self, rl);
         self.set_load_data(metadata_handler);
     }
@@ -94,10 +99,10 @@ impl Level {
                     self.tiles[i.swamp[0] as usize][i.swamp[1] as usize] = TileType::Swamp {
                         teleport_position: Vector2::new(i.teleport[0] as f32, i.teleport[1] as f32),
                     };
-                    println!(
-                        "teleport position - {} {} {} {}",
-                        i.swamp[0], i.swamp[1], i.teleport[0], i.teleport[1]
-                    );
+                    // println!(
+                    //     "teleport position - {} {} {} {}",
+                    //     i.swamp[0], i.swamp[1], i.teleport[0], i.teleport[1]
+                    // );
                 }
                 _ => {
                     println!(
@@ -146,10 +151,10 @@ impl Level {
         music_handler: &MusicHandler,
     ) {
         if self.completed() && left_amount == 0 {
-            scene_handler.set(crate::scene::Scene::Transition);
+            scene_handler.set(Scene::Transition);
         } else if left_amount == 0 {
             music_handler.play("death");
-            scene_handler.set(crate::scene::Scene::GameOver);
+            scene_handler.set(Scene::GameOver);
         }
     }
 

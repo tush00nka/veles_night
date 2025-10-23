@@ -1,9 +1,11 @@
-use std::collections::HashMap;
-
 use raylib::prelude::*;
 
 use crate::{
-    hotkey_handler::HotkeyCategory, map::{Level, TileType, LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, TILE_SIZE}, spirit::{Spirit, SpiritState}, spirits_handler::SpiritsHandler, HotkeyHandler
+    HotkeyHandler,
+    hotkey_handler::HotkeyCategory,
+    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, Level, TILE_SIZE, TileType},
+    spirit::SpiritState,
+    spirits_handler::SpiritsHandler,
 };
 
 pub struct OrderHandler {
@@ -28,7 +30,6 @@ impl OrderHandler {
     ) {
         let if_mouse = rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT);
         if if_mouse || hotkey_handler.check_pressed(rl, HotkeyCategory::PickNearest) {
-
             let mouse_pos = rl.get_mouse_position();
 
             let mut key_nearest = usize::MAX;
@@ -36,17 +37,17 @@ impl OrderHandler {
 
             for (key, spirit) in spirits_handler.spirits.iter() {
                 let dist = spirit.get_draw_position().distance_to(mouse_pos);
-                if spirit.get_draw_position().distance_to(mouse_pos) <= TILE_SIZE as f32 && dist < nearest_dist{
+                if spirit.get_draw_position().distance_to(mouse_pos) <= TILE_SIZE as f32
+                    && dist < nearest_dist
+                {
                     key_nearest = *key;
                     nearest_dist = dist;
                 }
             }
-            if key_nearest != usize::MAX{
+            if key_nearest != usize::MAX {
                 self.spirit = Some(key_nearest);
-            } 
+            }
         }
-        
-                
 
         if if_mouse {
             hotkey_handler.clear_last();

@@ -132,6 +132,7 @@ impl UIHandler {
         && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
         {
             scene_h.set(Scene::MainMenu);
+            self.quitting = false;
             return true;
         };
         return false;
