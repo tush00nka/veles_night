@@ -1,4 +1,7 @@
-use raylib::prelude::*;
+use raylib::{
+    ffi::{GetCurrentMonitor, GetMonitorHeight, GetMonitorWidth},
+    prelude::*,
+};
 
 use crate::{
     enemy_spirit::EnemiesHandler,
@@ -122,9 +125,15 @@ fn main() {
 
     let mut save_handler = SaveHandler::new();
 
-    while !rl.window_should_close() && !should_close {
+    let monitor_width = unsafe { GetMonitorWidth(GetCurrentMonitor()) };
+    let monitor_height = unsafe { GetMonitorHeight(GetCurrentMonitor()) };
 
+    while !rl.window_should_close() && !should_close {
+        // a bit broken, so don't use on journalists  
         if rl.is_key_pressed(KeyboardKey::KEY_F) {
+            if rl.is_window_fullscreen() {
+                rl.set_window_size(SCREEN_WIDTH, SCREEN_HEIGHT);
+            }
             rl.toggle_fullscreen();
         }
 
@@ -334,6 +343,7 @@ fn main() {
             ),
             _ => (),
         };
+
         // draw stuff
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::BLACK);
@@ -377,16 +387,27 @@ fn main() {
             scene_handler.draw(&mut t);
         }
 
-        // we draw the texture in the middle of the screen
-        d.draw_texture_pro(
-            &target,
-            Rectangle::new(0., 0., SCREEN_WIDTH as f32, -SCREEN_HEIGHT as f32),
+        let dest_rec = if d.is_window_fullscreen() {
+            Rectangle::new(
+                monitor_width as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                monitor_height as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                SCREEN_WIDTH as f32,
+                SCREEN_HEIGHT as f32,
+            )
+        } else {
             Rectangle::new(
                 d.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
                 d.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
                 SCREEN_WIDTH as f32,
                 SCREEN_HEIGHT as f32,
-            ),
+            )
+        };
+
+        // we draw the texture in the middle of the screen
+        d.draw_texture_pro(
+            &target,
+            Rectangle::new(0., 0., SCREEN_WIDTH as f32, -SCREEN_HEIGHT as f32),
+            dest_rec,
             Vector2::zero(),
             0.0,
             Color::WHITE,
