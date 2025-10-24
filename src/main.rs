@@ -162,7 +162,6 @@ fn main() {
             && rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT)
         {
             if scene_handler.get_current() == Scene::GameEnd {
-                println!("Why");
                 level_number = level_num;
             }
 
