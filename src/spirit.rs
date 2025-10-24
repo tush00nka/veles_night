@@ -118,10 +118,10 @@ impl Spirit {
             (next.y / TILE_SIZE as f32).round() as usize,
         );
 
-        let mut did_we_jump = false;
         if self.teleported != 0{
             self.teleported -= 1;
         }
+
         // step on tile to activate
         match level.tiles[tile_x][tile_y] {
             TileType::FireTD { active } => {
@@ -147,15 +147,12 @@ impl Spirit {
                 if self.teleported == 0 {
                     self.teleported = 2;
                     next = teleport_position * TILE_SIZE as f32;
-
-                    did_we_jump = true;
                 }
             }
             _ => {}
         }
         
-        if !did_we_jump
-            && (next_x >= LEVEL_WIDTH_TILES
+        if self.teleported <= 1 && (next_x >= LEVEL_WIDTH_TILES
                 || next_y >= LEVEL_HEIGHT_TILES
                 || tile_x <= 0
                 || tile_y <= 0)
