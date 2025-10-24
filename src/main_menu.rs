@@ -62,7 +62,21 @@ impl MainMenuHandler {
             },
         );
 
-        let labels = vec!["Продолжить", "Начать", "Закончить"];
+
+        buttons.insert(
+            3,
+            Button {
+                selected: false,
+                rect: Rectangle::new(
+                    (SCREEN_WIDTH / 2) as f32 - 98.,
+                    (SCREEN_HEIGHT / 2) as f32 + 236.,
+                    216.,
+                    64.,
+                ),
+            },
+        );
+
+        let labels = vec!["Продолжить", "Начать", "Управление", "Закончить"];
 
         Self { buttons, labels }
     }
@@ -98,6 +112,9 @@ impl MainMenuHandler {
                         scene_handler.set(Scene::Level);
                     }
                     2 => {
+                        scene_handler.set(Scene::HotkeyMenu);
+                    }
+                    3 => {
                         *should_close = true;
                     }
                     _ => {}

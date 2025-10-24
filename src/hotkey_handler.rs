@@ -37,6 +37,20 @@ pub enum KeyboardKeyString {
     KeyMinus
 }
 impl HotkeyCategory {
+    pub fn to_string(hotkey_category: HotkeyCategory) -> String{
+        match hotkey_category{
+            Self::Exit => "Выйти".to_string(),
+            Self::Continue => "Продолжить".to_string(),
+            Self::Reset => "Перезапустить уровень".to_string(),
+            Self::PickNearest => "Выбрать ближайшего духа".to_string(),
+            Self::PickBuilding1 => "Выбрать вертикальный костер\nдля постройки".to_string(),
+            Self::PickBuilding2 => "Выбрать горизонтальный костер\nдля постройки".to_string(),
+            Self::PickBuilding3 => "Выбрать костер-блок для \nпостройки".to_string(),
+            Self::VolumeUp => "Увеличить громкость".to_string(),
+            Self::VolumeDown => "Уменьшить громкость".to_string(),
+            _ => panic!("WRONG HOTKEY_TYPE"),
+        } 
+    }
     pub fn from_bonfire(value: &str) -> HotkeyCategory {
         match value {
             x if x == "fire_td" => HotkeyCategory::PickBuilding1,
@@ -70,7 +84,7 @@ pub struct HotkeyLoaderStruct {
 }
 
 pub struct HotkeyHandler {
-    hotkeys: HashMap<HotkeyCategory, Vec<KeyboardKey>>,
+    pub hotkeys: HashMap<HotkeyCategory, Vec<KeyboardKey>>,
     last_pressed_hotkey: Option<KeyboardKey>,
 }
 

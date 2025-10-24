@@ -1,26 +1,12 @@
 use raylib::prelude::*;
 
 use crate::{
-    enemy_spirit::EnemiesHandler,
-    gameover_handler::GameOverHandler,
-    hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct},
-    level_transition::LevelTransition,
-    main_menu::MainMenuHandler,
-    map::{Level, TILE_SCALE, TILE_SIZE},
-    metadata_handler::MetadataHandler,
-    music_handler::MusicHandler,
-    order::OrderHandler,
-    particle::Particle,
-    save_handler::SaveHandler,
-    scene::{Scene, SceneHandler},
-    spirit::Spirit,
-    spirits_handler::SpiritsHandler,
-    texture_handler::TextureHandler,
-    ui::UIHandler,
+    enemy_spirit::EnemiesHandler, gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, hotkey_menu::HotkeyMenuHandler, level_transition::LevelTransition, main_menu::MainMenuHandler, map::{Level, TILE_SCALE, TILE_SIZE}, metadata_handler::MetadataHandler, music_handler::MusicHandler, order::OrderHandler, particle::Particle, save_handler::SaveHandler, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
 };
 
 // mod light;
 
+mod hotkey_menu;
 mod enemy_spirit;
 mod gameover_handler;
 mod hotkey_handler;
@@ -79,6 +65,7 @@ fn main() {
     // also a common one - get
 
     let mut main_menu = MainMenuHandler::new();
+    let mut hotkey_menu = HotkeyMenuHandler::new(&mut hotkey_handler);
 
     let args: Vec<String> = std::env::args().collect();
 
@@ -196,6 +183,10 @@ fn main() {
                     &mut enemies_handler,
                 );
             }
+            Scene::HotkeyMenu =>{
+                hotkey_menu.update(&mut hotkey_handler, &mut scene_handler, &mut rl);
+            }
+
             Scene::GameEnd => {
                 rl.set_window_title(&thread, "Велесова Ночь - Победа");
 
@@ -318,6 +309,9 @@ fn main() {
             }
             Scene::Transition => {
                 level_transition.draw(&texture_handler, &font, &mut d);
+            }
+            Scene::HotkeyMenu => {
+                hotkey_menu.draw(&font, &save_handler, &texture_handler, &mut d);
             }
         }
 

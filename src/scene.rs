@@ -9,6 +9,7 @@ pub enum Scene {
     Transition,
     GameOver,
     GameEnd,
+    HotkeyMenu,
 }
 
 pub struct SceneHandler {
