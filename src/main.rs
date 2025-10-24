@@ -51,7 +51,8 @@ fn main() {
         .title("Велесова Ночь")
         .build();
 
-    rl.set_target_fps(60);
+
+    rl.set_target_fps(get_monitor_refresh_rate(get_current_monitor() as i32) as u32);
 
     rl.set_exit_key(None);
     
@@ -123,6 +124,9 @@ fn main() {
     let mut save_handler = SaveHandler::new();
 
     while !rl.window_should_close() && !should_close {
+
+        music_handler.music_update();
+
         save_handler.check_saves();
 
         if save_handler.should_save {
@@ -148,8 +152,6 @@ fn main() {
             );
         }
         // update stuff
-        music_handler.music_update();
-
         particles.retain(|particle| !particle.done);
 
         for particle in particles.iter_mut() {
@@ -162,7 +164,6 @@ fn main() {
             && rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT)
         {
             if scene_handler.get_current() == Scene::GameEnd {
-                println!("Why");
                 level_number = level_num;
             }
 
@@ -180,6 +181,10 @@ fn main() {
                 rl_audio.set_master_volume(1.0);
             }
         }
+        match scene_handler.get_current() {
+            Scene::GameOver => (),
+            _ => music_handler.music_resume(),
+        };
 
         match scene_handler.get_current() {
             Scene::MainMenu => {
@@ -285,7 +290,6 @@ fn main() {
                 &mut ui_handler,
             ),
         }
-
         // draw stuff
         let mut d = rl.begin_drawing(&thread);
 

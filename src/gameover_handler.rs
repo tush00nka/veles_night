@@ -1,11 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH,
-    hotkey_handler::{HotkeyCategory, HotkeyHandler},
-    music_handler::MusicHandler,
-    scene::SceneHandler,
-    ui::Button,
+    hotkey_handler::{HotkeyCategory, HotkeyHandler}, music_handler::MusicHandler, scene::{Scene, SceneHandler}, ui::Button, FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH
 };
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
@@ -23,6 +19,7 @@ const LEVEL_LOSE: [&str; 1] = [
 ];
 const GAME_END_TEXT: [&str; 1] = ["Спасибо за игру в велесову ночь!\nБлагодаря Вам души предков обрели покой."];
 
+#[derive(Clone,PartialEq, Eq)]
 pub enum GameOverHandlerType {
     Level,
     Game,
@@ -127,6 +124,10 @@ impl GameOverHandler {
         let mut scene = crate::scene::Scene::Level;
         let mut check = false;
 
+        if self.gameover_type == GameOverHandlerType::Level{
+            music_handler.music_pause();
+        }
+
         if hotkeys.check_pressed(rl, HotkeyCategory::Exit) {
             scene = crate::scene::Scene::MainMenu;
             *level_number = FIRST_LEVEL;
@@ -134,6 +135,9 @@ impl GameOverHandler {
         }
 
         if hotkeys.check_pressed(rl, HotkeyCategory::Continue) {
+            if self.gameover_type == GameOverHandlerType::Game{
+                scene = Scene::MainMenu;
+            }
             check = true;
         }
 
