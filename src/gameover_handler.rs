@@ -124,6 +124,10 @@ impl GameOverHandler {
         let mut scene = crate::scene::Scene::Level;
         let mut check = false;
 
+        if self.gameover_type == GameOverHandlerType::Level{
+            music_handler.music_pause();
+        }
+
         if hotkeys.check_pressed(rl, HotkeyCategory::Exit) {
             scene = crate::scene::Scene::MainMenu;
             *level_number = FIRST_LEVEL;

@@ -29,7 +29,6 @@ impl<'a> MusicHandler<'a> {
                 .next()
                 .unwrap()
                 .to_string();
-
             let sound = rl_audio.new_sound(file.path().to_str().unwrap()).unwrap();
             sounds.insert(name, sound);
         }
@@ -46,14 +45,14 @@ impl<'a> MusicHandler<'a> {
         self.music.play_stream();
     }
 
-    pub fn music_update(&self) {
+    pub fn music_update(&self){
         self.music.update_stream();
     }
 
     pub fn music_pause(&self) {
-        self.music.pause_stream();
+            self.music.pause_stream();
     }
-
+    
     pub fn music_resume(&self) {
         self.music.resume_stream();
     }
