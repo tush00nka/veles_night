@@ -53,7 +53,7 @@ impl OrderHandler {
             hotkey_handler.clear_last();
         }
 
-        if rl.is_key_pressed(KeyboardKey::KEY_ESCAPE) {
+        if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_RIGHT) {
             self.spirit = None;
             return;
         }

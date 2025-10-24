@@ -79,7 +79,7 @@ impl UIHandler {
 
             let keyboard_last = hotkey_h.get_last_key();
 
-            if rl.is_key_pressed(KeyboardKey::KEY_ESCAPE) {
+            if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_RIGHT) {
                 button.selected = false;
                 continue;
             }
@@ -95,6 +95,14 @@ impl UIHandler {
             }
 
             if button.selected && level.get_wood() > 0 {
+                let pos = rl.get_mouse_position() / (Vector2::one() * TILE_SIZE as f32);
+                let (x, y) = (pos.x as usize, pos.y as usize);
+
+                if level.tiles[x][y] != TileType::Air {
+                    button.selected = false;
+                    continue;
+                }
+
                 let tile = match title.as_str() {
                     "fire_td" => TileType::FireTD { active: false },
                     "fire_lr" => TileType::FireLR { active: false },
@@ -103,9 +111,6 @@ impl UIHandler {
                         panic!("wait how")
                     }
                 };
-
-                let pos = rl.get_mouse_position() / (Vector2::one() * TILE_SIZE as f32);
-                let (x, y) = (pos.x as usize, pos.y as usize);
 
                 level.tiles[x][y] = tile;
                 level.remove_wood();
@@ -119,7 +124,7 @@ impl UIHandler {
         hotkey_h: &mut HotkeyHandler,
         scene_h: &mut SceneHandler,
         rl: &mut RaylibHandle,
-    ) -> bool{
+    ) -> bool {
         if hotkey_h.check_pressed(rl, HotkeyCategory::Exit) {
             self.quitting = !self.quitting;
         }
@@ -129,7 +134,7 @@ impl UIHandler {
         }
 
         if unsafe { CheckCollisionPointRec(rl.get_mouse_position().into(), QUIT_BUTTON.into()) }
-        && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+            && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
         {
             scene_h.set(Scene::MainMenu);
             self.quitting = false;
