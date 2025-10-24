@@ -51,7 +51,8 @@ fn main() {
         .title("Велесова Ночь")
         .build();
 
-    rl.set_target_fps(60);
+
+    rl.set_target_fps(get_monitor_refresh_rate(get_current_monitor() as i32) as u32);
 
     rl.set_exit_key(None);
     
