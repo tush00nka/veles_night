@@ -8,7 +8,7 @@ use crate::{
     texture_handler::TextureHandler,
 };
 
-pub const TILE_SCALE: i32 = 6;
+pub const TILE_SCALE: i32 = 4;
 
 pub const LEVEL_WIDTH_TILES: usize = 16;
 pub const LEVEL_HEIGHT_TILES: usize = 9;

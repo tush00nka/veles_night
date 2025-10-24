@@ -1,7 +1,7 @@
 use raylib::prelude::*;
 
 use crate::{
-    HotkeyHandler,
+    HotkeyHandler, SCREEN_HEIGHT, SCREEN_WIDTH,
     hotkey_handler::HotkeyCategory,
     map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, Level, TILE_SIZE, TileType},
     spirit::SpiritState,
@@ -30,7 +30,11 @@ impl OrderHandler {
     ) {
         let if_mouse = rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT);
         if if_mouse || hotkey_handler.check_pressed(rl, HotkeyCategory::PickNearest) {
-            let mouse_pos = rl.get_mouse_position();
+            let mouse_pos = rl.get_mouse_position()
+                - Vector2::new(
+                    rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                    rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                );
 
             let mut key_nearest = usize::MAX;
             let mut nearest_dist = f32::MAX;
@@ -69,7 +73,11 @@ impl OrderHandler {
             return;
         }
 
-        let mouse_pos = rl.get_mouse_position();
+        let mouse_pos = rl.get_mouse_position()
+            - Vector2::new(
+                rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+            );
         let tile_pos = mouse_pos / TILE_SIZE as f32;
         let (mut tile_x, mut tile_y) = (tile_pos.x.floor() as usize, tile_pos.y.floor() as usize);
 
@@ -114,7 +122,11 @@ impl OrderHandler {
         rl: &RaylibHandle,
         hotkey_handler: &mut HotkeyHandler,
     ) {
-        let mouse_pos = rl.get_mouse_position();
+        let mouse_pos = rl.get_mouse_position()
+            - Vector2::new(
+                rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+            );
         let tile_pos = mouse_pos / TILE_SIZE as f32;
         let (mut tile_x, mut tile_y) = (tile_pos.x.floor() as usize, tile_pos.y.floor() as usize);
 

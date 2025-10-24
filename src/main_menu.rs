@@ -80,7 +80,7 @@ impl MainMenuHandler {
         enemies_handler: &mut EnemiesHandler,
     ) {
         for (key, button) in self.buttons.iter() {
-            if unsafe { CheckCollisionPointRec(rl.get_mouse_position().into(), button.rect.into()) }
+            if unsafe { CheckCollisionPointRec((rl.get_mouse_position()-Vector2::new(rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2., rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.)).into(), button.rect.into()) }
                 && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
             {
                 match key {
@@ -145,7 +145,7 @@ impl MainMenuHandler {
             }
 
             let color;
-            if unsafe { CheckCollisionPointRec(rl.get_mouse_position().into(), button.rect.into()) }
+            if unsafe { CheckCollisionPointRec((rl.get_mouse_position()-Vector2::new(rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2., rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.)).into(), button.rect.into()) }
             {
                 color = Color::WHITE;
 

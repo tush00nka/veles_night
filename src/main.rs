@@ -40,7 +40,7 @@ mod swamp;
 mod texture_handler;
 mod ui;
 
-pub const FIRST_LEVEL: u8 = 0; 
+pub const FIRST_LEVEL: u8 = 0;
 
 const SCREEN_WIDTH: i32 = 16 * 16 * TILE_SCALE;
 const SCREEN_HEIGHT: i32 = 9 * 16 * TILE_SCALE;
@@ -48,14 +48,14 @@ const SCREEN_HEIGHT: i32 = 9 * 16 * TILE_SCALE;
 fn main() {
     let (mut rl, thread) = raylib::init()
         .size(SCREEN_WIDTH, SCREEN_HEIGHT)
-        // .resizable()
+        .resizable()
         .title("Велесова Ночь")
         .build();
 
     rl.set_target_fps(get_monitor_refresh_rate(get_current_monitor() as i32) as u32);
 
     rl.set_exit_key(None);
-    
+
     let rl_audio = RaylibAudio::init_audio_device().unwrap();
     let music_handler = MusicHandler::new(&rl_audio);
     music_handler.music_play();
@@ -116,12 +116,19 @@ fn main() {
 
     let mut shader = rl.load_shader(&thread, None, Some("static/shaders/bloom.fs"));
 
+    let mut target = rl
+        .load_render_texture(&thread, SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32)
+        .expect("Couldn't load render texture");
+
     let mut save_handler = SaveHandler::new();
 
     while !rl.window_should_close() && !should_close {
 
-        music_handler.music_update();
+        if rl.is_key_pressed(KeyboardKey::KEY_F) {
+            rl.toggle_fullscreen();
+        }
 
+        music_handler.music_update();
         save_handler.check_saves();
 
         if save_handler.should_save {
@@ -166,13 +173,13 @@ fn main() {
             scene_handler.set(scene);
         }
 
-        if hotkey_handler.check_down(&rl, HotkeyCategory::VolumeUp){
+        if hotkey_handler.check_down(&rl, HotkeyCategory::VolumeUp) {
             rl_audio.set_master_volume(rl_audio.get_master_volume() + 0.01);
         }
-        
-        if hotkey_handler.check_down(&rl, HotkeyCategory::VolumeDown){
-            rl_audio.set_master_volume(rl_audio.get_master_volume() - 0.01); 
-            if rl_audio.get_master_volume() >= 1.{
+
+        if hotkey_handler.check_down(&rl, HotkeyCategory::VolumeDown) {
+            rl_audio.set_master_volume(rl_audio.get_master_volume() - 0.01);
+            if rl_audio.get_master_volume() >= 1. {
                 rl_audio.set_master_volume(1.0);
             }
         }
@@ -285,85 +292,106 @@ fn main() {
                 &mut ui_handler,
             ),
         }
-        // draw stuff
-        let mut d = rl.begin_drawing(&thread);
-
-        {
-            let mut s = d.begin_shader_mode(&mut shader);
-            match scene_handler.get_current() {
-                Scene::Level => draw_level(
-                    &mut level,
-                    &texture_handler,
-                    &mut spirits_handler,
-                    &mut enemies_handler,
-                    &mut order_handler,
-                    &mut s,
-                ),
-                _ => {}
-            }
-
-            for particle in particles.iter_mut() {
-                particle.draw(&mut s);
-            }
-        }
 
         match scene_handler.get_current() {
-            Scene::MainMenu => {
-                main_menu.draw(&font, &save_handler, &texture_handler, &mut d);
-            }
-            Scene::GameEnd => gameend_handler.draw_gameover(&font, &mut d),
-            Scene::GameOver => gameover_handler.draw_gameover(&font, &mut d),
-            Scene::Level => {
-                draw_level_ui(&mut level, &texture_handler, &mut ui_handler, &font, &mut d)
-            }
             Scene::Transition => {
-                level_transition.draw(&texture_handler, &font, &mut d);
+                preparation_to_save(
+                    &mut (level_number + 1),
+                    &mut metadata_handler,
+                    &mut level,
+                    &mut spirits_handler,
+                    &mut rl,
+                );
+
+                save_handler.create_save_file(
+                    &mut metadata_handler,
+                    &mut level,
+                    &mut spirits_handler,
+                    &mut level_number,
+                );
             }
+            Scene::GameEnd => {
+                preparation_to_save(
+                    &mut level_number,
+                    &mut metadata_handler,
+                    &mut level,
+                    &mut spirits_handler,
+                    &mut rl,
+                );
+
+                save_handler.create_save_file(
+                    &mut metadata_handler,
+                    &mut level,
+                    &mut spirits_handler,
+                    &mut level_number,
+                );
+            }
+            Scene::Level => save_handler.create_save_file(
+                &mut metadata_handler,
+                &mut level,
+                &mut spirits_handler,
+                &mut level_number,
+            ),
+            _ => (),
+        };
+        // draw stuff
+        let mut d = rl.begin_drawing(&thread);
+        d.clear_background(Color::BLACK);
+
+        // we draw to the texture
+        {
+            let mut t = d.begin_texture_mode(&thread, &mut target);
+
+            t.draw_shader_mode(&mut shader, |mut s| {
+                match scene_handler.get_current() {
+                    Scene::Level => draw_level(
+                        &mut level,
+                        &texture_handler,
+                        &mut spirits_handler,
+                        &mut enemies_handler,
+                        &mut order_handler,
+                        &mut s,
+                    ),
+                    _ => {}
+                }
+
+                for particle in particles.iter_mut() {
+                    particle.draw(&mut s);
+                }
+            });
+
+            match scene_handler.get_current() {
+                Scene::MainMenu => {
+                    main_menu.draw(&font, &save_handler, &texture_handler, &mut t);
+                }
+                Scene::GameEnd => gameend_handler.draw_gameover(&font, &mut t),
+                Scene::GameOver => gameover_handler.draw_gameover(&font, &mut t),
+                Scene::Level => {
+                    draw_level_ui(&mut level, &texture_handler, &mut ui_handler, &font, &mut t)
+                }
+                Scene::Transition => {
+                    level_transition.draw(&texture_handler, &font, &mut t);
+                }
+            }
+
+            scene_handler.draw(&mut t);
         }
 
-        scene_handler.draw(&mut d);
+        // we draw the texture in the middle of the screen
+        d.draw_texture_pro(
+            &target,
+            Rectangle::new(0., 0., SCREEN_WIDTH as f32, -SCREEN_HEIGHT as f32),
+            Rectangle::new(
+                d.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                d.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                SCREEN_WIDTH as f32,
+                SCREEN_HEIGHT as f32,
+            ),
+            Vector2::zero(),
+            0.0,
+            Color::WHITE,
+        );
     }
-    match scene_handler.get_current() {
-        Scene::Transition => {
-            preparation_to_save(
-                &mut (level_number + 1),
-                &mut metadata_handler,
-                &mut level,
-                &mut spirits_handler,
-                &mut rl,
-            );
-
-            save_handler.create_save_file(
-                &mut metadata_handler,
-                &mut level,
-                &mut spirits_handler,
-                &mut level_number,
-            );
-        }
-        Scene::GameEnd => {
-            preparation_to_save(
-                &mut level_number,
-                &mut metadata_handler,
-                &mut level,
-                &mut spirits_handler,
-                &mut rl,
-            );
-
-            save_handler.create_save_file(
-                &mut metadata_handler,
-                &mut level,
-                &mut spirits_handler,
-                &mut level_number,
-            );
-        }
-        Scene::Level => save_handler.create_save_file(
-            &mut metadata_handler,
-            &mut level,
-            &mut spirits_handler,
-            &mut level_number,
-        ),
-        _ => (),
-    };
 }
 
 fn preparation_to_save(
@@ -490,7 +518,7 @@ fn update_transition(
     }
 
     *level_number += 1;
-    if *level_number >= level_transition.max_level{
+    if *level_number >= level_transition.max_level {
         scene_handler.set(Scene::GameEnd);
         return;
     }
