@@ -105,17 +105,6 @@ impl OrderHandler {
             }
         }
 
-        match level.tiles[tile_x][tile_y] {
-            TileType::Tree(_) => {
-                if let Some(key) = self.spirit {
-                    if let Some(spirit) = spirits_handler.spirits.get_mut(&key) {
-                        spirit.set_state(SpiritState::ChopTree(tile_x, tile_y));
-                    }
-                }
-            }
-            _ => {}
-        }
-
         self.spirit = None;
     }
 
@@ -141,7 +130,11 @@ impl OrderHandler {
             || hotkey_handler.check_down(rl, HotkeyCategory::PickNearest)
         {
             match level.tiles[tile_x][tile_y] {
-                TileType::Air => {}
+                TileType::Air
+                | TileType::Swamp {
+                    teleport_position: _,
+                }
+                | TileType::Exit(_) => {}
                 _ => {
                     self.line_end = Some(
                         Vector2::new(tile_x as f32, tile_y as f32) * TILE_SIZE as f32
@@ -150,13 +143,7 @@ impl OrderHandler {
                     return;
                 }
             }
-            // if level.tiles[tile_x][tile_y] == TileType::Tree {
-            //     self.line_end = Some(
-            //         Vector2::new(tile_x as f32, tile_y as f32) * TILE_SIZE as f32
-            //             + Vector2::one() * (TILE_SIZE / 2) as f32,
-            //     );
-            //     return;
-            // }
+
             self.line_end = Some(mouse_pos);
         } else {
             self.line_end = None;

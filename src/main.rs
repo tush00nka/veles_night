@@ -48,7 +48,7 @@ const SCREEN_HEIGHT: i32 = 9 * 16 * TILE_SCALE;
 fn main() {
     let (mut rl, thread) = raylib::init()
         .size(SCREEN_WIDTH, SCREEN_HEIGHT)
-        .resizable()
+        // .resizable()
         .title("Велесова Ночь")
         .build();
 
