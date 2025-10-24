@@ -40,17 +40,17 @@ mod swamp;
 mod texture_handler;
 mod ui;
 
-pub const FIRST_LEVEL: u8 = 0;
+pub const FIRST_LEVEL: u8 = 0; 
 
 const SCREEN_WIDTH: i32 = 16 * 16 * TILE_SCALE;
-const SCREEN_HEIGHT: i32 = 16 * 9 * TILE_SCALE;
+const SCREEN_HEIGHT: i32 = 9 * 16 * TILE_SCALE;
+
 fn main() {
     let (mut rl, thread) = raylib::init()
         .size(SCREEN_WIDTH, SCREEN_HEIGHT)
         .resizable()
         .title("Велесова Ночь")
         .build();
-
 
     rl.set_target_fps(get_monitor_refresh_rate(get_current_monitor() as i32) as u32);
 
@@ -59,11 +59,6 @@ fn main() {
     let rl_audio = RaylibAudio::init_audio_device().unwrap();
     let music_handler = MusicHandler::new(&rl_audio);
     music_handler.music_play();
-
-    //let audio = raylib::core::audio::RaylibAudio::init_audio_device().unwrap();
-
-    // let death_sound = audio.new_sound("static/audio/death.ogg").unwrap();
-    // death_sound.play();
 
     let font = rl
         .load_font_ex(

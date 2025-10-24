@@ -8,10 +8,11 @@ use crate::{
     texture_handler::TextureHandler,
 };
 
+pub const TILE_SCALE: i32 = 6;
+
 pub const LEVEL_WIDTH_TILES: usize = 16;
 pub const LEVEL_HEIGHT_TILES: usize = 9;
 pub const TILE_SIZE_PX: i32 = 16;
-pub const TILE_SCALE: i32 = 6;
 pub const TILE_SIZE: i32 = TILE_SIZE_PX * TILE_SCALE;
 
 #[derive(Clone, Copy, PartialEq)]
@@ -316,9 +317,16 @@ impl Level {
                     TileType::Swamp {
                         teleport_position: _,
                     } => {
+                        let source = Rectangle::new(
+                            ((rl.get_time() * 2.) % 2.).floor() as f32 * 16.,
+                            16.,
+                            16.,
+                            16.,
+                        );
+
                         rl.draw_texture_pro(
                             texture_handler.get_safe("swamp"),
-                            Rectangle::new(0., 0., 16., 16.),
+                            source,
                             Rectangle::new(
                                 (x as i32 * TILE_SIZE) as f32,
                                 (y as i32 * TILE_SIZE) as f32,
