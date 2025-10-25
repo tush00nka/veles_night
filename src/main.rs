@@ -301,7 +301,7 @@ fn main() {
                 &mut ui_handler,
             ),
         }
-
+ 
         // draw stuff
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::BLACK);
@@ -413,6 +413,7 @@ fn main() {
         ),
         _ => (),
     };
+
 }
 
 fn preparation_to_save(
