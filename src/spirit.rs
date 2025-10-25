@@ -51,7 +51,7 @@ impl Spirit {
     }
 
     #[allow(unused)]
-    pub fn get_direction(&self) -> Vector2{
+    pub fn get_direction(&self) -> Vector2 {
         self.direction
     }
 
@@ -60,7 +60,7 @@ impl Spirit {
     }
 
     #[allow(unused)]
-    pub fn get_teleported(&self) -> u8{
+    pub fn get_teleported(&self) -> u8 {
         self.teleported
     }
     pub fn get_draw_position(&self) -> Vector2 {
@@ -96,8 +96,8 @@ impl Spirit {
         }
     }
 
-    pub fn kill_spirit(&mut self){
-        self.dead = true;    
+    pub fn kill_spirit(&mut self) {
+        self.dead = true;
     }
     pub fn update_position_smoothly(&mut self, rl: &mut RaylibHandle) {
         self.draw_position = self
@@ -118,7 +118,7 @@ impl Spirit {
             (next.y / TILE_SIZE as f32).round() as usize,
         );
 
-        if self.teleported != 0{
+        if self.teleported != 0 {
             self.teleported -= 1;
         }
 
@@ -151,8 +151,9 @@ impl Spirit {
             }
             _ => {}
         }
-        
-        if self.teleported <= 1 && (next_x >= LEVEL_WIDTH_TILES
+
+        if self.teleported <= 1
+            && (next_x >= LEVEL_WIDTH_TILES
                 || next_y >= LEVEL_HEIGHT_TILES
                 || tile_x <= 0
                 || tile_y <= 0)
@@ -185,7 +186,14 @@ impl Spirit {
         self.position = next;
     }
 
-    fn light_fire(&mut self, x: usize, y: usize, level: &mut Level, music_handler: &MusicHandler, rl: &RaylibHandle) {
+    fn light_fire(
+        &mut self,
+        x: usize,
+        y: usize,
+        level: &mut Level,
+        music_handler: &MusicHandler,
+        rl: &RaylibHandle,
+    ) {
         match level.tiles[x][y] {
             TileType::FireTD { active }
             | TileType::FireLR { active }
@@ -224,7 +232,14 @@ impl Spirit {
         self.draw_position = self.position;
     }
 
-    fn chop_tree(&mut self, x: usize, y: usize, level: &mut Level, music_handler: &MusicHandler, rl: &RaylibHandle) {
+    fn chop_tree(
+        &mut self,
+        x: usize,
+        y: usize,
+        level: &mut Level,
+        music_handler: &MusicHandler,
+        rl: &RaylibHandle,
+    ) {
         match level.tiles[x][y] {
             TileType::Tree(_) => {}
             _ => {

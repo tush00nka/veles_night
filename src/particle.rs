@@ -8,7 +8,7 @@ pub struct Particle {
     amount: usize,
     radius: f32,
     speed: f32,
-    pub done: bool
+    pub done: bool,
 }
 
 impl Particle {
@@ -29,14 +29,14 @@ impl Particle {
             let position = self.positions.get_mut(i).unwrap();
 
             let angle = 2. * PI / self.amount as f32 * i as f32;
-            let destination = Vector2::new(
-                angle.cos() * self.radius,
-                angle.sin() * self.radius,
-            );
+            let destination = Vector2::new(angle.cos() * self.radius, angle.sin() * self.radius);
 
-            *position = position.lerp(self.start_position + destination, self.speed * rl.get_frame_time());
+            *position = position.lerp(
+                self.start_position + destination,
+                self.speed * rl.get_frame_time(),
+            );
             self.done = position.distance_to(self.start_position + destination) <= 1.;
-        }        
+        }
     }
 
     pub fn draw(&self, rl: &mut RaylibDrawHandle) {

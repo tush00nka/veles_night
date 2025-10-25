@@ -30,7 +30,7 @@ impl SceneHandler {
         }
     }
 
-    pub fn get_current(&self) -> Scene{
+    pub fn get_current(&self) -> Scene {
         self.current
     }
 
@@ -44,8 +44,8 @@ impl SceneHandler {
         self.next = Some(scene);
     }
 
-    pub fn get_next(&self) -> Scene{
-        match self.current{
+    pub fn get_next(&self) -> Scene {
+        match self.current {
             Scene::Level => Scene::Transition,
             Scene::Transition => Scene::Level,
             Scene::MainMenu => Scene::Level,
@@ -83,5 +83,5 @@ impl SceneHandler {
             Vector2::new(SCREEN_WIDTH as f32, SCREEN_HEIGHT as f32),
             Color::BLACK.alpha(self.progress),
         );
-    } 
+    }
 }

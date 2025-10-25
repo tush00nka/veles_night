@@ -47,7 +47,7 @@ impl SaveHandler {
             Err(_) => {
                 fs::create_dir(save_p).expect("Couldn't create a dir :(");
                 dir = fs::read_dir(save_p).unwrap();
-            },
+            }
         }
 
         self.is_there_saves = dir.next().is_some();

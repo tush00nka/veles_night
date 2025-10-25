@@ -39,7 +39,6 @@ mod save_handler;
 mod scene;
 mod spirit;
 mod spirits_handler;
-mod swamp;
 mod texture_handler;
 mod ui;
 
@@ -303,7 +302,7 @@ fn main() {
                 &mut ui_handler,
             ),
         }
- 
+
         // draw stuff
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::BLACK);
@@ -336,9 +335,14 @@ fn main() {
                 }
                 Scene::GameEnd => gameend_handler.draw_gameover(&font, &mut t),
                 Scene::GameOver => gameover_handler.draw_gameover(&font, &mut t),
-                Scene::Level => {
-                    draw_level_ui(&mut level, level_number, &texture_handler, &mut ui_handler, &font, &mut t)
-                }
+                Scene::Level => draw_level_ui(
+                    &mut level,
+                    level_number,
+                    &texture_handler,
+                    &mut ui_handler,
+                    &font,
+                    &mut t,
+                ),
                 Scene::Transition => {
                     level_transition.draw(&texture_handler, &font, &mut t);
                 }
@@ -415,7 +419,6 @@ fn main() {
         ),
         _ => (),
     };
-
 }
 
 fn preparation_to_save(
