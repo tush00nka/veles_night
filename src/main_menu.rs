@@ -11,7 +11,7 @@ use crate::{
     scene::{Scene, SceneHandler},
     spirits_handler::SpiritsHandler,
     texture_handler::TextureHandler,
-    ui::Button,
+    ui::{Button, UIHandler},
 };
 
 pub struct MainMenuHandler {
@@ -78,10 +78,20 @@ impl MainMenuHandler {
         level: &mut Level,
         spirits_handler: &mut SpiritsHandler,
         enemies_handler: &mut EnemiesHandler,
+        ui_handler: &mut UIHandler,
     ) {
         for (key, button) in self.buttons.iter() {
-            if unsafe { CheckCollisionPointRec((rl.get_mouse_position()-Vector2::new(rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2., rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.)).into(), button.rect.into()) }
-                && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+            if unsafe {
+                CheckCollisionPointRec(
+                    (rl.get_mouse_position()
+                        - Vector2::new(
+                            rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                            rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        ))
+                    .into(),
+                    button.rect.into(),
+                )
+            } && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
             {
                 match key {
                     0 => {
@@ -95,6 +105,7 @@ impl MainMenuHandler {
                         level.load(*level_number, metadata_handler, rl);
                         spirits_handler.spawn_spirits(metadata_handler);
                         enemies_handler.spawn_enemies(metadata_handler);
+                        *ui_handler = UIHandler::new(FIRST_LEVEL as usize);
                         scene_handler.set(Scene::Level);
                     }
                     2 => {
@@ -145,8 +156,17 @@ impl MainMenuHandler {
             }
 
             let color;
-            if unsafe { CheckCollisionPointRec((rl.get_mouse_position()-Vector2::new(rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2., rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.)).into(), button.rect.into()) }
-            {
+            if unsafe {
+                CheckCollisionPointRec(
+                    (rl.get_mouse_position()
+                        - Vector2::new(
+                            rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                            rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        ))
+                    .into(),
+                    button.rect.into(),
+                )
+            } {
                 color = Color::WHITE;
 
                 button_selected = *key;

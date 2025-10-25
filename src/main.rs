@@ -210,6 +210,7 @@ fn main() {
                     &mut level,
                     &mut spirits_handler,
                     &mut enemies_handler,
+                    &mut ui_handler,
                 );
             }
             Scene::GameEnd => {
