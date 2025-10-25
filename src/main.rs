@@ -301,49 +301,7 @@ fn main() {
                 &mut ui_handler,
             ),
         }
-
-        match scene_handler.get_current() {
-            Scene::Transition => {
-                preparation_to_save(
-                    &mut (level_number + 1),
-                    &mut metadata_handler,
-                    &mut level,
-                    &mut spirits_handler,
-                    &mut rl,
-                );
-
-                save_handler.create_save_file(
-                    &mut metadata_handler,
-                    &mut level,
-                    &mut spirits_handler,
-                    &mut level_number,
-                );
-            }
-            Scene::GameEnd => {
-                preparation_to_save(
-                    &mut level_number,
-                    &mut metadata_handler,
-                    &mut level,
-                    &mut spirits_handler,
-                    &mut rl,
-                );
-
-                save_handler.create_save_file(
-                    &mut metadata_handler,
-                    &mut level,
-                    &mut spirits_handler,
-                    &mut level_number,
-                );
-            }
-            Scene::Level => save_handler.create_save_file(
-                &mut metadata_handler,
-                &mut level,
-                &mut spirits_handler,
-                &mut level_number,
-            ),
-            _ => (),
-        };
-
+ 
         // draw stuff
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::BLACK);
@@ -413,6 +371,49 @@ fn main() {
             Color::WHITE,
         );
     }
+
+    match scene_handler.get_current() {
+        Scene::Transition => {
+            preparation_to_save(
+                &mut (level_number + 1),
+                &mut metadata_handler,
+                &mut level,
+                &mut spirits_handler,
+                &mut rl,
+            );
+
+            save_handler.create_save_file(
+                &mut metadata_handler,
+                &mut level,
+                &mut spirits_handler,
+                &mut level_number,
+            );
+        }
+        Scene::GameEnd => {
+            preparation_to_save(
+                &mut level_number,
+                &mut metadata_handler,
+                &mut level,
+                &mut spirits_handler,
+                &mut rl,
+            );
+
+            save_handler.create_save_file(
+                &mut metadata_handler,
+                &mut level,
+                &mut spirits_handler,
+                &mut level_number,
+            );
+        }
+        Scene::Level => save_handler.create_save_file(
+            &mut metadata_handler,
+            &mut level,
+            &mut spirits_handler,
+            &mut level_number,
+        ),
+        _ => (),
+    };
+
 }
 
 fn preparation_to_save(
