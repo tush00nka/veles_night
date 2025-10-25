@@ -129,7 +129,7 @@ fn main() {
     let monitor_height = unsafe { GetMonitorHeight(GetCurrentMonitor()) };
 
     while !rl.window_should_close() && !should_close {
-        // a bit broken, so don't use on journalists  
+        // a bit broken, so don't use on journalists
         if rl.is_key_pressed(KeyboardKey::KEY_F) {
             if rl.is_window_fullscreen() {
                 rl.set_window_size(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -302,48 +302,6 @@ fn main() {
             ),
         }
 
-        match scene_handler.get_current() {
-            Scene::Transition => {
-                preparation_to_save(
-                    &mut (level_number + 1),
-                    &mut metadata_handler,
-                    &mut level,
-                    &mut spirits_handler,
-                    &mut rl,
-                );
-
-                save_handler.create_save_file(
-                    &mut metadata_handler,
-                    &mut level,
-                    &mut spirits_handler,
-                    &mut level_number,
-                );
-            }
-            Scene::GameEnd => {
-                preparation_to_save(
-                    &mut level_number,
-                    &mut metadata_handler,
-                    &mut level,
-                    &mut spirits_handler,
-                    &mut rl,
-                );
-
-                save_handler.create_save_file(
-                    &mut metadata_handler,
-                    &mut level,
-                    &mut spirits_handler,
-                    &mut level_number,
-                );
-            }
-            Scene::Level => save_handler.create_save_file(
-                &mut metadata_handler,
-                &mut level,
-                &mut spirits_handler,
-                &mut level_number,
-            ),
-            _ => (),
-        };
-
         // draw stuff
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::BLACK);
@@ -377,7 +335,7 @@ fn main() {
                 Scene::GameEnd => gameend_handler.draw_gameover(&font, &mut t),
                 Scene::GameOver => gameover_handler.draw_gameover(&font, &mut t),
                 Scene::Level => {
-                    draw_level_ui(&mut level, &texture_handler, &mut ui_handler, &font, &mut t)
+                    draw_level_ui(&mut level, level_number, &texture_handler, &mut ui_handler, &font, &mut t)
                 }
                 Scene::Transition => {
                     level_transition.draw(&texture_handler, &font, &mut t);
@@ -413,6 +371,48 @@ fn main() {
             Color::WHITE,
         );
     }
+
+    match scene_handler.get_current() {
+        Scene::Transition => {
+            preparation_to_save(
+                &mut (level_number + 1),
+                &mut metadata_handler,
+                &mut level,
+                &mut spirits_handler,
+                &mut rl,
+            );
+
+            save_handler.create_save_file(
+                &mut metadata_handler,
+                &mut level,
+                &mut spirits_handler,
+                &mut level_number,
+            );
+        }
+        Scene::GameEnd => {
+            preparation_to_save(
+                &mut level_number,
+                &mut metadata_handler,
+                &mut level,
+                &mut spirits_handler,
+                &mut rl,
+            );
+
+            save_handler.create_save_file(
+                &mut metadata_handler,
+                &mut level,
+                &mut spirits_handler,
+                &mut level_number,
+            );
+        }
+        Scene::Level => save_handler.create_save_file(
+            &mut metadata_handler,
+            &mut level,
+            &mut spirits_handler,
+            &mut level_number,
+        ),
+        _ => (),
+    };
 }
 
 fn preparation_to_save(
@@ -512,12 +512,13 @@ fn draw_level(
 
 fn draw_level_ui(
     level: &mut Level,
+    level_number: u8,
     texture_handler: &TextureHandler,
     ui_handler: &mut UIHandler,
     font: &Font,
     rl: &mut RaylibDrawHandle,
 ) {
-    ui_handler.draw(texture_handler, level, font, rl);
+    ui_handler.draw(texture_handler, level, level_number.into(), font, rl);
 }
 
 fn update_transition(

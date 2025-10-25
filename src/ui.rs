@@ -70,7 +70,15 @@ impl UIHandler {
 
             if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
                 if unsafe {
-                    CheckCollisionPointRec((rl.get_mouse_position()-Vector2::new(rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2., rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.)).into(), button.rect.into())
+                    CheckCollisionPointRec(
+                        (rl.get_mouse_position()
+                            - Vector2::new(
+                                rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                                rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                            ))
+                        .into(),
+                        button.rect.into(),
+                    )
                 } {
                     button.selected = true;
                 }
@@ -95,7 +103,12 @@ impl UIHandler {
             }
 
             if button.selected && level.get_wood() > 0 {
-                let pos = (rl.get_mouse_position()-Vector2::new(rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2., rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.)) / (Vector2::one() * TILE_SIZE as f32);
+                let pos = (rl.get_mouse_position()
+                    - Vector2::new(
+                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                    ))
+                    / (Vector2::one() * TILE_SIZE as f32);
                 let (x, y) = (pos.x as usize, pos.y as usize);
 
                 if level.tiles[x][y] != TileType::Air {
@@ -133,8 +146,17 @@ impl UIHandler {
             return false;
         }
 
-        if unsafe { CheckCollisionPointRec((rl.get_mouse_position()-Vector2::new(rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2., rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.)).into(), QUIT_BUTTON.into()) }
-            && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+        if unsafe {
+            CheckCollisionPointRec(
+                (rl.get_mouse_position()
+                    - Vector2::new(
+                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                    ))
+                .into(),
+                QUIT_BUTTON.into(),
+            )
+        } && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
         {
             scene_h.set(Scene::MainMenu);
             self.quitting = false;
@@ -147,12 +169,21 @@ impl UIHandler {
         &self,
         texture_handler: &TextureHandler,
         level: &mut Level,
+        level_number: usize,
         font: &Font,
         rl: &mut RaylibDrawHandle,
     ) {
         for (tex_name, button) in self.build_buttons.iter() {
             let color = if unsafe {
-                CheckCollisionPointRec((rl.get_mouse_position()-Vector2::new(rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2., rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.)).into(), button.rect.into())
+                CheckCollisionPointRec(
+                    (rl.get_mouse_position()
+                        - Vector2::new(
+                            rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                            rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        ))
+                    .into(),
+                    button.rect.into(),
+                )
             } {
                 Color::WHITE
             } else {
@@ -185,8 +216,18 @@ impl UIHandler {
                         16.,
                     ),
                     Rectangle::new(
-                        (rl.get_mouse_position()-Vector2::new(rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2., rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.)).x - (TILE_SIZE / 2) as f32,
-                        (rl.get_mouse_position()-Vector2::new(rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2., rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.)).y - (TILE_SIZE / 2) as f32,
+                        (rl.get_mouse_position()
+                            - Vector2::new(
+                                rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                                rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                            ))
+                        .x - (TILE_SIZE / 2) as f32,
+                        (rl.get_mouse_position()
+                            - Vector2::new(
+                                rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                                rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                            ))
+                        .y - (TILE_SIZE / 2) as f32,
                         TILE_SIZE as f32,
                         TILE_SIZE as f32,
                     ),
@@ -214,10 +255,21 @@ impl UIHandler {
             Color::RAYWHITE,
         );
 
-        rl.draw_rectangle(SCREEN_WIDTH - 260, 5, 256, 40, Color::BLACK.alpha(0.5));
+        let hint_text = if level_number == 0 {
+            "Перетащите духа\nна дерево"
+        } else if level_number == 1 {
+            "Установите костёр,\nперетащив\nпиктограмму"
+        } else {
+            "R для перезапуска"
+        };
+
+        let height = hint_text.chars().filter(|&c| c == '\n').count();
+
+        rl.draw_rectangle(SCREEN_WIDTH - 260, 5, 256, 40 * (height + 1) as i32, Color::BLACK.alpha(0.5));
+
         rl.draw_text_ex(
             font,
-            "R для перезапуска",
+            hint_text,
             Vector2::new((SCREEN_WIDTH - 250) as f32, 10.),
             32.,
             1.0,
@@ -246,7 +298,15 @@ impl UIHandler {
             );
 
             let mouse_over = unsafe {
-                CheckCollisionPointRec((rl.get_mouse_position()-Vector2::new(rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2., rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.)).into(), QUIT_BUTTON.into())
+                CheckCollisionPointRec(
+                    (rl.get_mouse_position()
+                        - Vector2::new(
+                            rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                            rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        ))
+                    .into(),
+                    QUIT_BUTTON.into(),
+                )
             };
 
             rl.draw_rectangle_rec(
