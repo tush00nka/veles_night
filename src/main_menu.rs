@@ -63,7 +63,7 @@ impl MainMenuHandler {
             },
         );
 
-        let labels = vec!["Продолжить", "Начать", "Закончить"];
+        let labels = vec!["Продолжить", "Начать", "Выйти"];
 
         Self { buttons, labels }
     }
@@ -195,7 +195,7 @@ impl MainMenuHandler {
                 font,
                 self.labels[i],
                 Vector2::new(
-                    (SCREEN_WIDTH / 2) as f32 - 70.,
+                    (SCREEN_WIDTH / 2) as f32 - 8. * self.labels[i].chars().count() as f32,
                     (SCREEN_HEIGHT / 2) as f32 + 40. + (66. * i as f32),
                 ),
                 Vector2::zero(),

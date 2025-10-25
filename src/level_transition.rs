@@ -3,7 +3,12 @@ use std::fs;
 use raylib::prelude::*;
 use serde::Deserialize;
 
-use crate::{map::TILE_SIZE_PX, map_loader::MAP_PATH, texture_handler::TextureHandler, SCREEN_HEIGHT, SCREEN_WIDTH};
+use crate::{
+    SCREEN_HEIGHT, SCREEN_WIDTH,
+    map::{TILE_SCALE, TILE_SIZE_PX},
+    map_loader::MAP_PATH,
+    texture_handler::TextureHandler,
+};
 
 pub enum CardContentType {
     Image(String),
@@ -62,9 +67,9 @@ impl LevelTransition {
             ],
             max_level: 0,
         };
-        
+
         let filenames = fs::read_dir(MAP_PATH).unwrap();
-        for _ in filenames{
+        for _ in filenames {
             new_transition.max_level += 1;
         }
 
@@ -90,7 +95,7 @@ impl LevelTransition {
         );
     }
 
-    const CARD_SIZE: i32 = 256;
+    const CARD_SIZE: i32 = 64 * TILE_SCALE;
 
     pub fn draw(
         &mut self,
@@ -152,7 +157,14 @@ impl LevelTransition {
                         TILE_SIZE_PX as f32,
                         TILE_SIZE_PX as f32,
                     ),
-                    Rectangle::new(cards[i].x + 128. - 32., cards[i].y + 128. - 32., 64., 64.),
+                    Rectangle::new(
+                        cards[i].x + Self::CARD_SIZE as f32 / 2.
+                            - (TILE_SIZE_PX * TILE_SCALE / 2) as f32,
+                        cards[i].y + Self::CARD_SIZE as f32 / 2.
+                            - (TILE_SIZE_PX * TILE_SCALE / 2) as f32,
+                        (TILE_SIZE_PX * TILE_SCALE) as f32,
+                        (TILE_SIZE_PX * TILE_SCALE) as f32,
+                    ),
                     Vector2::zero(),
                     0.0,
                     Color::WHITE,
@@ -164,12 +176,13 @@ impl LevelTransition {
                         font,
                         text.as_str(),
                         Vector2::new(
-                            cards[i].x + 32.,
-                            cards[i].y + 128. - (line_count + 1.) * 14.,
+                            cards[i].x + 8. * TILE_SCALE as f32,
+                            cards[i].y + Self::CARD_SIZE as f32 / 2.
+                                - (line_count + 1.) * 3. * TILE_SCALE as f32,
                         ),
                         Vector2::zero(),
                         0.0,
-                        26.,
+                        6. * TILE_SCALE as f32,
                         0.0,
                         Color::BLACK,
                     )

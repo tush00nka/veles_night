@@ -5,7 +5,7 @@ use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 use crate::{
     SCREEN_HEIGHT, SCREEN_WIDTH,
     hotkey_handler::{HotkeyCategory, HotkeyHandler},
-    map::{Level, TILE_SIZE, TileType},
+    map::{Level, TILE_SCALE, TILE_SIZE, TileType},
     scene::{Scene, SceneHandler},
     texture_handler::TextureHandler,
 };
@@ -38,10 +38,11 @@ impl UIHandler {
                 labels[i].to_string(),
                 Button {
                     rect: Rectangle::new(
-                        i as f32 * 80. + (SCREEN_WIDTH / 2) as f32 - 40. * 3., // todo: pohui
-                        5.,
-                        64.,
-                        64.,
+                        i as f32 * 20. * TILE_SCALE as f32 + (SCREEN_WIDTH / 2) as f32
+                            - 10. * TILE_SCALE as f32 * min(labels.len(), level_number) as f32,
+                        SCREEN_HEIGHT as f32 - 10. - 16. * TILE_SCALE as f32,
+                        16. * TILE_SCALE as f32,
+                        16. * TILE_SCALE as f32,
                     ),
                     selected: false,
                 },
@@ -238,7 +239,13 @@ impl UIHandler {
             }
         }
 
-        rl.draw_rectangle(5, 5, 256, 74, Color::BLACK.alpha(0.5));
+        rl.draw_rectangle(
+            5,
+            5,
+            64 * TILE_SCALE,
+            18 * TILE_SCALE,
+            Color::BLACK.alpha(0.5),
+        );
 
         rl.draw_text_ex(
             font,
@@ -250,7 +257,7 @@ impl UIHandler {
             )
             .as_str(),
             Vector2::one() * 10.,
-            32.,
+            8. * TILE_SCALE as f32,
             1.0,
             Color::RAYWHITE,
         );
@@ -265,13 +272,19 @@ impl UIHandler {
 
         let height = hint_text.chars().filter(|&c| c == '\n').count();
 
-        rl.draw_rectangle(SCREEN_WIDTH - 260, 5, 256, 40 * (height + 1) as i32, Color::BLACK.alpha(0.5));
+        rl.draw_rectangle(
+            5,
+            20 * TILE_SCALE,
+            64 * TILE_SCALE,
+            9 * (height + 1) as i32 * TILE_SCALE,
+            Color::BLACK.alpha(0.5),
+        );
 
         rl.draw_text_ex(
             font,
             hint_text,
-            Vector2::new((SCREEN_WIDTH - 250) as f32, 10.),
-            32.,
+            Vector2::new(10., 18. * TILE_SCALE as f32 + 18.),
+            8. * TILE_SCALE as f32,
             1.0,
             Color::RAYWHITE,
         );
