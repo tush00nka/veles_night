@@ -169,7 +169,7 @@ impl LevelTransition {
                         ),
                         Vector2::zero(),
                         0.0,
-                        28.,
+                        26.,
                         0.0,
                         Color::BLACK,
                     )
