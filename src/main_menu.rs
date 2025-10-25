@@ -15,6 +15,8 @@ use crate::{
     ui::{Button, UIHandler},
 };
 
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 pub struct MainMenuHandler {
     buttons: HashMap<u8, Button>,
     labels: Vec<&'static str>,
@@ -205,5 +207,14 @@ impl MainMenuHandler {
                 color,
             );
         }
+
+        rl.draw_text_ex(
+            font,
+            format!("Версия {}", VERSION).as_str(),
+            Vector2::one() * 10.,
+            36.,
+            2.,
+            Color::RAYWHITE,
+        );
     }
 }
