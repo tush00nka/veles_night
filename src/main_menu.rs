@@ -5,6 +5,7 @@ use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 use crate::{
     FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH,
     enemy_spirit::EnemiesHandler,
+    level_transition::LevelTransition,
     map::{Level, TILE_SCALE},
     metadata_handler::MetadataHandler,
     save_handler::SaveHandler,
@@ -79,6 +80,7 @@ impl MainMenuHandler {
         spirits_handler: &mut SpiritsHandler,
         enemies_handler: &mut EnemiesHandler,
         ui_handler: &mut UIHandler,
+        level_transition: &mut LevelTransition,
     ) {
         for (key, button) in self.buttons.iter() {
             if unsafe {
@@ -106,6 +108,7 @@ impl MainMenuHandler {
                         spirits_handler.spawn_spirits(metadata_handler);
                         enemies_handler.spawn_enemies(metadata_handler);
                         *ui_handler = UIHandler::new(FIRST_LEVEL as usize);
+                        *level_transition = LevelTransition::new();
                         scene_handler.set(Scene::Level);
                     }
                     2 => {

@@ -1,7 +1,11 @@
 use std::collections::HashMap;
 
 use crate::{
-    hotkey_handler::{HotkeyCategory, HotkeyHandler}, music_handler::MusicHandler, scene::{Scene, SceneHandler}, ui::Button, FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH
+    FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH,
+    hotkey_handler::{HotkeyCategory, HotkeyHandler},
+    music_handler::MusicHandler,
+    scene::{Scene, SceneHandler},
+    ui::Button,
 };
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
@@ -17,9 +21,10 @@ const LABELS_ENDGAME: [&str; 2] = ["В МЕНЮ", "ВЫЙТИ"];
 const LEVEL_LOSE: [&str; 1] = [
     "Мы в canned meat studios хотим поблагодарить\nвас за игру в велесову ночь. Нам очень жаль,\nчто вы не добились успехов и надеемся,\nчто вы справитесь лучше в следующий раз.\nудачи!",
 ];
-const GAME_END_TEXT: [&str; 1] = ["Спасибо за игру в велесову ночь!\nБлагодаря Вам души предков обрели покой."];
+const GAME_END_TEXT: [&str; 1] =
+    ["Спасибо за игру в велесову ночь!\nБлагодаря Вам души предков обрели покой."];
 
-#[derive(Clone,PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum GameOverHandlerType {
     Level,
     Game,
@@ -68,7 +73,15 @@ impl GameOverHandler {
         rl.clear_background(Color::from_hex("0b8a8f").unwrap());
         for (name, button) in self.restart_buttons.iter() {
             let color = if unsafe {
-                CheckCollisionPointRec((rl.get_mouse_position()-Vector2::new(rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2., rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.)).into(), button.rect.into())
+                CheckCollisionPointRec(
+                    (rl.get_mouse_position()
+                        - Vector2::new(
+                            rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                            rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        ))
+                    .into(),
+                    button.rect.into(),
+                )
             } {
                 Color::WHITE
             } else {
@@ -124,7 +137,7 @@ impl GameOverHandler {
         let mut scene = crate::scene::Scene::Level;
         let mut check = false;
 
-        if self.gameover_type == GameOverHandlerType::Level{
+        if self.gameover_type == GameOverHandlerType::Level {
             music_handler.music_pause();
         }
 
@@ -135,7 +148,7 @@ impl GameOverHandler {
         }
 
         if hotkeys.check_pressed(rl, HotkeyCategory::Continue) {
-            if self.gameover_type == GameOverHandlerType::Game{
+            if self.gameover_type == GameOverHandlerType::Game {
                 scene = Scene::MainMenu;
             }
             check = true;
@@ -150,7 +163,15 @@ impl GameOverHandler {
         for (title, button) in self.restart_buttons.iter_mut() {
             if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
                 if unsafe {
-                    CheckCollisionPointRec((rl.get_mouse_position()-Vector2::new(rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2., rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.)).into(), button.rect.into())
+                    CheckCollisionPointRec(
+                        (rl.get_mouse_position()
+                            - Vector2::new(
+                                rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                                rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                            ))
+                        .into(),
+                        button.rect.into(),
+                    )
                 } {
                     button.selected = true;
                 }
