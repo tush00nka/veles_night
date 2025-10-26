@@ -189,5 +189,18 @@ impl LevelTransition {
                 }
             }
         }
+
+        let text = "Нажмите для продолжения";
+        rl.draw_text_ex(
+            &font,
+            text,
+            Vector2::new(
+                (SCREEN_WIDTH / 2 - text.chars().count() as i32 * 3 / 2 *  TILE_SCALE) as f32,
+                (SCREEN_HEIGHT - 24 * TILE_SCALE) as f32,
+            ),
+            8. * TILE_SCALE as f32,
+            0.,
+            Color::RAYWHITE.alpha((rl.get_time() * 2.).sin().abs() as f32),
+        );
     }
 }
