@@ -1,7 +1,7 @@
 use raylib::prelude::*;
 
 use crate::{
-    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, Level, TILE_SIZE, TileType},
+    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, Level, TILE_SCALE, TILE_SIZE, TileType},
     music_handler::MusicHandler,
     texture_handler::TextureHandler,
 };
@@ -64,7 +64,10 @@ impl Spirit {
         self.teleported
     }
     pub fn get_draw_position(&self) -> Vector2 {
-        self.draw_position
+        let x = (self.draw_position.x / TILE_SCALE as f32).floor() * TILE_SCALE as f32;
+        let y = (self.draw_position.y / TILE_SCALE as f32).floor() * TILE_SCALE as f32;
+
+        Vector2::new(x, y)
     }
 
     pub fn get_dead(&self) -> bool {
@@ -99,6 +102,7 @@ impl Spirit {
     pub fn kill_spirit(&mut self) {
         self.dead = true;
     }
+
     pub fn update_position_smoothly(&mut self, rl: &mut RaylibHandle) {
         self.draw_position = self
             .draw_position
@@ -124,13 +128,13 @@ impl Spirit {
 
         // step on tile to activate
         match level.tiles[tile_x][tile_y] {
-            TileType::FireTD { active } => {
+            TileType::FireTD { active, selected: _ } => {
                 if active && self.direction.y == 0. {
                     self.direction = Vector2::new(0., 1.);
                     return;
                 }
             }
-            TileType::FireLR { active } => {
+            TileType::FireLR { active, selected: _ } => {
                 if active && self.direction.x == 0. {
                     self.direction = Vector2::new(1., 0.);
                     return;
@@ -165,11 +169,17 @@ impl Spirit {
         if self.teleported <= 1 {
             // activate before tile
             match level.tiles[next_x][next_y] {
-                TileType::Tree(_) => {
+                TileType::Tree {
+                    chance: _,
+                    selected: _,
+                } => {
                     self.direction *= -1.;
                     return;
                 }
-                TileType::FireStop { active } => {
+                TileType::FireStop {
+                    active,
+                    selected: _,
+                } => {
                     if active {
                         self.direction *= -1.;
                         return;
@@ -195,9 +205,9 @@ impl Spirit {
         rl: &RaylibHandle,
     ) {
         match level.tiles[x][y] {
-            TileType::FireTD { active }
-            | TileType::FireLR { active }
-            | TileType::FireStop { active } => {
+            TileType::FireTD { active, selected: _ }
+            | TileType::FireLR { active, selected: _ }
+            | TileType::FireStop { active, selected: _ } => {
                 if active {
                     self.state = SpiritState::Patrol;
                     return;
@@ -214,9 +224,9 @@ impl Spirit {
         if self.position.distance_to(target) <= (TILE_SIZE / 10) as f32 {
             let tile = level.tiles.get_mut(x).unwrap().get_mut(y).unwrap();
             match tile {
-                TileType::FireTD { active }
-                | TileType::FireLR { active }
-                | TileType::FireStop { active } => *active = true,
+                TileType::FireTD { active, selected: _ }
+                | TileType::FireLR { active, selected: _ }
+                | TileType::FireStop { active, selected: _ } => *active = true,
                 _ => {
                     panic!("no such tile bruh")
                 }
@@ -241,7 +251,10 @@ impl Spirit {
         rl: &RaylibHandle,
     ) {
         match level.tiles[x][y] {
-            TileType::Tree(_) => {}
+            TileType::Tree {
+                chance: _,
+                selected: _,
+            } => {}
             _ => {
                 self.state = SpiritState::Patrol;
                 return;
@@ -265,12 +278,6 @@ impl Spirit {
     }
 
     pub fn draw(&self, rl: &mut RaylibDrawHandle, texture_handler: &TextureHandler) {
-        // rl.draw_circle_v(
-        //     self.position + Vector2::new(TILE_SIZE as f32 / 2., TILE_SIZE as f32 / 2.),
-        //     (TILE_SIZE / 2) as f32,
-        //     Color::LIGHTBLUE.alpha(0.75),
-        // );
-
         let source = Rectangle::new(
             ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,
             16.,
@@ -282,8 +289,8 @@ impl Spirit {
             texture_handler.get_safe("spirit"),
             source,
             Rectangle::new(
-                self.draw_position.x,
-                self.draw_position.y,
+                self.get_draw_position().x,
+                self.get_draw_position().y,
                 TILE_SIZE as f32,
                 TILE_SIZE as f32,
             ),

@@ -44,7 +44,10 @@ impl MapLoader {
             // print!("{tile}");
             match tile {
                 '#' => {
-                    level_map.tiles[x][y] = TileType::Tree(rl.get_random_value(0..100));
+                    level_map.tiles[x][y] = TileType::Tree {
+                        chance: rl.get_random_value(0..100),
+                        selected: false,
+                    };
                 }
                 '^' => {
                     level_map.tiles[x][y] = TileType::Exit('^');
@@ -60,13 +63,22 @@ impl MapLoader {
                 }
                 '.' => {}
                 '1' => {
-                    level_map.tiles[x][y] = TileType::FireTD { active: false };
+                    level_map.tiles[x][y] = TileType::FireTD {
+                        active: false,
+                        selected: false,
+                    };
                 }
                 '2' => {
-                    level_map.tiles[x][y] = TileType::FireLR { active: false };
+                    level_map.tiles[x][y] = TileType::FireLR {
+                        active: false,
+                        selected: false,
+                    };
                 }
                 '3' => {
-                    level_map.tiles[x][y] = TileType::FireStop { active: false };
+                    level_map.tiles[x][y] = TileType::FireStop {
+                        active: false,
+                        selected: false,
+                    };
                 }
                 's' => {
                     level_map.tiles[x][y] = TileType::Swamp {
@@ -99,16 +111,28 @@ impl MapLoader {
             for x in 0..LEVEL_WIDTH_TILES {
                 match level_map.tiles[x][y] {
                     TileType::Air => map += ".",
-                    TileType::Tree(_) => map += "#",
-                    TileType::FireTD { active } => {
+                    TileType::Tree {
+                        chance: _,
+                        selected: _,
+                    } => map += "#",
+                    TileType::FireTD {
+                        active,
+                        selected: _,
+                    } => {
                         fire_td.insert([x as u8, y as u8], active);
                         map += "1";
                     }
-                    TileType::FireLR { active } => {
+                    TileType::FireLR {
+                        active,
+                        selected: _,
+                    } => {
                         fire_lr.insert([x as u8, y as u8], active);
                         map += "2";
                     }
-                    TileType::FireStop { active } => {
+                    TileType::FireStop {
+                        active,
+                        selected: _,
+                    } => {
                         fire_stop.insert([x as u8, y as u8], active);
                         map += "3";
                     }

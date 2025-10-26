@@ -118,9 +118,9 @@ impl UIHandler {
                 }
 
                 let tile = match title.as_str() {
-                    "fire_td" => TileType::FireTD { active: false },
-                    "fire_lr" => TileType::FireLR { active: false },
-                    "fire_stop" => TileType::FireStop { active: false },
+                    "fire_td" => TileType::FireTD { active: false, selected: false },
+                    "fire_lr" => TileType::FireLR { active: false, selected: false },
+                    "fire_stop" => TileType::FireStop { active: false, selected: false },
                     _ => {
                         panic!("wait how")
                     }

@@ -18,10 +18,10 @@ pub const TILE_SIZE: i32 = TILE_SIZE_PX * TILE_SCALE;
 #[derive(Clone, Copy, PartialEq)]
 pub enum TileType {
     Air,
-    FireTD { active: bool },
-    FireLR { active: bool },
-    FireStop { active: bool },
-    Tree(i32),
+    FireTD { active: bool, selected: bool },
+    FireLR { active: bool, selected: bool },
+    FireStop { active: bool, selected: bool },
+    Tree { chance: i32, selected: bool },
     Swamp { teleport_position: Vector2 },
     Exit(char),
 }
@@ -119,22 +119,34 @@ impl Level {
     pub fn light_bonfires(&mut self, metadata_handler: &mut MetadataHandler) {
         for bonfire in metadata_handler.bonfires.iter_mut() {
             match self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize] {
-                TileType::FireLR { active: _ } => {
+                TileType::FireLR {
+                    active: _,
+                    selected: _,
+                } => {
                     self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize] =
                         TileType::FireLR {
                             active: bonfire.active,
+                            selected: false,
                         };
                 }
-                TileType::FireTD { active: _ } => {
+                TileType::FireTD {
+                    active: _,
+                    selected: _,
+                } => {
                     self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize] =
                         TileType::FireTD {
                             active: bonfire.active,
+                            selected: false,
                         };
                 }
-                TileType::FireStop { active: _ } => {
+                TileType::FireStop {
+                    active: _,
+                    selected: _,
+                } => {
                     self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize] =
                         TileType::FireStop {
                             active: bonfire.active,
+                            selected: false,
                         };
                 }
                 _ => panic!(
@@ -179,7 +191,7 @@ impl Level {
                 );
 
                 match self.tiles[x][y] {
-                    TileType::FireStop { active } => {
+                    TileType::FireStop { active, selected } => {
                         let source = if active {
                             Rectangle::new(
                                 ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,
@@ -187,6 +199,8 @@ impl Level {
                                 16.,
                                 16.,
                             )
+                        } else if selected {
+                            Rectangle::new(16., 0., 16., 16.)
                         } else {
                             Rectangle::new(0., 0., 16., 16.)
                         };
@@ -205,7 +219,7 @@ impl Level {
                             Color::WHITE,
                         );
                     }
-                    TileType::Tree(chance) => {
+                    TileType::Tree { chance, selected } => {
                         let offset = if chance >= 50 {
                             0
                         } else if chance >= 25 {
@@ -214,7 +228,21 @@ impl Level {
                             2
                         };
 
-                        let source = Rectangle::new(offset as f32 * 16., 0., 16., 16.);
+                        let source = if selected {
+                            Rectangle::new(
+                                offset as f32 * TILE_SIZE_PX as f32,
+                                TILE_SIZE_PX as f32,
+                                TILE_SIZE_PX as f32,
+                                TILE_SIZE_PX as f32,
+                            )
+                        } else {
+                            Rectangle::new(
+                                offset as f32 * TILE_SIZE_PX as f32,
+                                0.,
+                                TILE_SIZE_PX as f32,
+                                TILE_SIZE_PX as f32,
+                            )
+                        };
 
                         rl.draw_texture_pro(
                             texture_handler.get_safe("trees"),
@@ -230,7 +258,7 @@ impl Level {
                             Color::WHITE,
                         );
                     }
-                    TileType::FireTD { active } => {
+                    TileType::FireTD { active, selected } => {
                         let source = if active {
                             Rectangle::new(
                                 ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,
@@ -238,6 +266,8 @@ impl Level {
                                 16.,
                                 16.,
                             )
+                        } else if selected {
+                            Rectangle::new(16., 0., 16., 16.)
                         } else {
                             Rectangle::new(0., 0., 16., 16.)
                         };
@@ -256,7 +286,7 @@ impl Level {
                             Color::WHITE,
                         );
                     }
-                    TileType::FireLR { active } => {
+                    TileType::FireLR { active, selected } => {
                         let source = if active {
                             Rectangle::new(
                                 ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,
@@ -264,6 +294,8 @@ impl Level {
                                 16.,
                                 16.,
                             )
+                        } else if selected {
+                            Rectangle::new(16., 0., 16., 16.)
                         } else {
                             Rectangle::new(0., 0., 16., 16.)
                         };

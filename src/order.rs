@@ -25,7 +25,7 @@ impl OrderHandler {
     pub fn select_spirit(
         &mut self,
         spirits_handler: &mut SpiritsHandler,
-        level: &Level,
+        level: &mut Level,
         rl: &RaylibHandle,
         hotkey_handler: &mut HotkeyHandler,
     ) {
@@ -67,6 +67,74 @@ impl OrderHandler {
         if !rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT)
             && keyboard_last == KeyboardKey::KEY_NUM_LOCK
         {
+            for y in 0..LEVEL_HEIGHT_TILES {
+                for x in 0..LEVEL_WIDTH_TILES {
+                    match &mut level.tiles[x][y] {
+                        TileType::FireTD {
+                            active: _,
+                            selected,
+                        }
+                        | TileType::FireLR {
+                            active: _,
+                            selected,
+                        }
+                        | TileType::FireStop {
+                            active: _,
+                            selected,
+                        }
+                        | TileType::Tree {
+                            chance: _,
+                            selected,
+                        } => *selected = false,
+                        _ => {}
+                    }
+                }
+            }
+
+            if self.spirit.is_none() {
+                return;
+            }
+
+            let mouse_pos = rl.get_mouse_position()
+                - Vector2::new(
+                    rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                    rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                );
+
+            let tile_pos = mouse_pos / TILE_SIZE as f32;
+            let (mut tile_x, mut tile_y) =
+                (tile_pos.x.floor() as usize, tile_pos.y.floor() as usize);
+
+            if tile_x >= LEVEL_WIDTH_TILES {
+                tile_x = LEVEL_WIDTH_TILES - 1;
+            }
+
+            if tile_y >= LEVEL_HEIGHT_TILES {
+                tile_y = LEVEL_HEIGHT_TILES - 1;
+            }
+
+            match &mut level.tiles[tile_x][tile_y] {
+                TileType::FireTD {
+                    active: _,
+                    selected,
+                }
+                | TileType::FireLR {
+                    active: _,
+                    selected,
+                }
+                | TileType::FireStop {
+                    active: _,
+                    selected,
+                }
+                | TileType::Tree {
+                    chance: _,
+                    selected,
+                } => {
+                    *selected = true;
+                }
+                _ => {}
+            }
+
             return;
         }
 
@@ -90,21 +158,32 @@ impl OrderHandler {
             tile_y = LEVEL_HEIGHT_TILES - 1;
         }
 
-        match level.tiles[tile_x][tile_y] {
-            TileType::FireTD { active }
-            | TileType::FireLR { active }
-            | TileType::FireStop { active } => {
-                if !active {
+        match level
+            .tiles
+            .get_mut(tile_x)
+            .unwrap()
+            .get_mut(tile_y)
+            .unwrap()
+        {
+            TileType::FireTD { active, selected }
+            | TileType::FireLR { active, selected }
+            | TileType::FireStop { active, selected } => {
+                if !*active {
                     if let Some(key) = self.spirit {
                         if let Some(spirit) = spirits_handler.spirits.get_mut(&key) {
+                            *selected = false;
                             spirit.set_state(SpiritState::LightFire(tile_x, tile_y));
                         }
                     }
                 }
             }
-            TileType::Tree(_) => {
+            TileType::Tree {
+                chance: _,
+                selected,
+            } => {
                 if let Some(key) = self.spirit {
                     if let Some(spirit) = spirits_handler.spirits.get_mut(&key) {
+                        *selected = false;
                         spirit.set_state(SpiritState::ChopTree(tile_x, tile_y));
                     }
                 }
