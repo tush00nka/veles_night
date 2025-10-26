@@ -3,9 +3,10 @@ use raylib::prelude::*;
 use crate::{
     HotkeyHandler, SCREEN_HEIGHT, SCREEN_WIDTH,
     hotkey_handler::HotkeyCategory,
-    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, Level, TILE_SIZE, TileType},
+    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, Level, TILE_SCALE, TILE_SIZE, TileType},
     spirit::SpiritState,
     spirits_handler::SpiritsHandler,
+    texture_handler::TextureHandler,
 };
 
 pub struct OrderHandler {
@@ -148,21 +149,24 @@ impl OrderHandler {
                 }
                 | TileType::Exit(_) => {}
                 _ => {
-                    self.line_end = Some(
-                        Vector2::new(tile_x as f32, tile_y as f32) * TILE_SIZE as f32
-                            + Vector2::one() * (TILE_SIZE / 2) as f32,
-                    );
+                    self.line_end =
+                        Some(Vector2::new(tile_x as f32, tile_y as f32) * TILE_SIZE as f32);
                     return;
                 }
             }
 
-            self.line_end = Some(mouse_pos);
+            self.line_end = Some(mouse_pos - Vector2::one() * TILE_SIZE as f32 / 2.);
         } else {
             self.line_end = None;
         }
     }
 
-    pub fn draw(&self, spirits_handler: &SpiritsHandler, rl: &mut RaylibDrawHandle) {
+    pub fn draw(
+        &self,
+        spirits_handler: &SpiritsHandler,
+        texture_handler: &TextureHandler,
+        rl: &mut RaylibDrawHandle,
+    ) {
         let Some(key) = self.spirit else {
             return;
         };
@@ -175,17 +179,26 @@ impl OrderHandler {
             return;
         };
 
-        rl.draw_line_ex(
-            spirit.get_draw_position() + Vector2::one() * (TILE_SIZE / 2) as f32,
-            line_end,
-            16.,
-            Color::LIGHTBLUE,
-        );
-        rl.draw_circle_v(
-            spirit.get_draw_position() + Vector2::one() * (TILE_SIZE / 2) as f32,
-            8.,
-            Color::LIGHTBLUE,
-        );
-        rl.draw_circle_v(line_end, 8., Color::LIGHTBLUE);
+        let direction = line_end - spirit.get_draw_position();
+
+        let length = (direction.length() / TILE_SIZE as f32).floor() * 2. + 1.;
+
+        for i in 0..=length as usize {
+            let position = spirit.get_draw_position() + direction / length * i as f32;
+
+            // pixel-perfect effect (may be a bit extra)
+            let position = Vector2::new(
+                (position.x / TILE_SCALE as f32).floor() * TILE_SCALE as f32,
+                (position.y / TILE_SCALE as f32).floor() * TILE_SCALE as f32,
+            );
+
+            rl.draw_texture_ex(
+                texture_handler.get_safe("dot"),
+                position,
+                0.0,
+                TILE_SCALE as f32,
+                Color::RAYWHITE,
+            );
+        }
     }
 }

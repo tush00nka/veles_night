@@ -513,7 +513,7 @@ fn draw_level(
         enemy.draw(rl, texture_handler);
     }
 
-    order_handler.draw(spirits_handler, rl);
+    order_handler.draw(spirits_handler, texture_handler, rl);
 }
 
 fn draw_level_ui(
