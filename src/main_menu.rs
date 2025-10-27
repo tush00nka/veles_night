@@ -31,10 +31,10 @@ impl MainMenuHandler {
             Button {
                 selected: false,
                 rect: Rectangle::new(
-                    (SCREEN_WIDTH / 2) as f32 - 98.,
-                    (SCREEN_HEIGHT / 2) as f32 + 32.,
-                    216.,
-                    64.,
+                    (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE as f32,
+                    (SCREEN_HEIGHT / 2) as f32,
+                    64. * TILE_SCALE as f32,
+                    16. * TILE_SCALE as f32,
                 ),
             },
         );
@@ -44,10 +44,10 @@ impl MainMenuHandler {
             Button {
                 selected: false,
                 rect: Rectangle::new(
-                    (SCREEN_WIDTH / 2) as f32 - 98.,
-                    (SCREEN_HEIGHT / 2) as f32 + 100.,
-                    216.,
-                    64.,
+                    (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE as f32,
+                    (SCREEN_HEIGHT / 2) as f32 + 16. * TILE_SCALE as f32,
+                    64. * TILE_SCALE as f32,
+                    16. * TILE_SCALE as f32,
                 ),
             },
         );
@@ -57,10 +57,10 @@ impl MainMenuHandler {
             Button {
                 selected: false,
                 rect: Rectangle::new(
-                    (SCREEN_WIDTH / 2) as f32 - 98.,
-                    (SCREEN_HEIGHT / 2) as f32 + 168.,
-                    216.,
-                    64.,
+                    (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE as f32,
+                    (SCREEN_HEIGHT / 2) as f32 + 32. * TILE_SCALE as f32,
+                    64. * TILE_SCALE as f32,
+                    16. * TILE_SCALE as f32,
                 ),
             },
         );
@@ -153,15 +153,12 @@ impl MainMenuHandler {
             Color::WHITE,
         );
 
-        let mut button_selected = 128;
-
         for (key, button) in self.buttons.iter_mut() {
             if *key == 0 && !save_handler.is_there_saves {
                 continue;
             }
 
-            let color;
-            if unsafe {
+            let texture_offset = if unsafe {
                 CheckCollisionPointRec(
                     (rl.get_mouse_position()
                         - Vector2::new(
@@ -172,14 +169,19 @@ impl MainMenuHandler {
                     button.rect.into(),
                 )
             } {
-                color = Color::WHITE;
-
-                button_selected = *key;
+                0.
             } else {
-                color = Color::BLACK.alpha(0.5);
+                16.
             };
 
-            rl.draw_rectangle_rec(button.rect, color);
+            rl.draw_texture_pro(
+                texture_handler.get_safe("main_menu_buttons"),
+                Rectangle::new(0., texture_offset, 64., 16.),
+                button.rect,
+                Vector2::zero(),
+                0.0,
+                Color::WHITE,
+            );
         }
 
         for i in 0..self.labels.len() {
@@ -187,24 +189,13 @@ impl MainMenuHandler {
                 continue;
             }
 
-            let color;
-            if i == button_selected as usize {
-                color = Color::BLACK;
-            } else {
-                color = Color::RAYWHITE;
-            }
-            rl.draw_text_pro(
-                font,
-                self.labels[i],
-                Vector2::new(
-                    (SCREEN_WIDTH / 2) as f32 - 8. * self.labels[i].chars().count() as f32,
-                    (SCREEN_HEIGHT / 2) as f32 + 40. + (66. * i as f32),
-                ),
+            rl.draw_texture_pro(
+                texture_handler.get_safe("main_menu_buttons"),
+                Rectangle::new(64., 16. * i as f32, 64., 16.),
+                self.buttons.get(&(i as u8)).unwrap().rect,
                 Vector2::zero(),
                 0.0,
-                48.,
-                2.0,
-                color,
+                Color::WHITE,
             );
         }
 
