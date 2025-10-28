@@ -4,22 +4,7 @@ use raylib::{
 };
 
 use crate::{
-    enemy_spirit::EnemiesHandler,
-    gameover_handler::GameOverHandler,
-    hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct},
-    level_transition::LevelTransition,
-    main_menu::MainMenuHandler,
-    map::{Level, TILE_SCALE, TILE_SIZE},
-    metadata_handler::MetadataHandler,
-    music_handler::MusicHandler,
-    order::OrderHandler,
-    particle::Particle,
-    save_handler::SaveHandler,
-    scene::{Scene, SceneHandler},
-    spirit::Spirit,
-    spirits_handler::SpiritsHandler,
-    texture_handler::TextureHandler,
-    ui::UIHandler,
+    enemy_spirit::EnemiesHandler, gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, level_selection::LevelSelector, level_transition::LevelTransition, main_menu::MainMenuHandler, map::{Level, TILE_SCALE, TILE_SIZE}, metadata_handler::MetadataHandler, music_handler::MusicHandler, order::OrderHandler, particle::Particle, save_handler::SaveHandler, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
 };
 
 // mod light;
@@ -27,6 +12,7 @@ use crate::{
 mod enemy_spirit;
 mod gameover_handler;
 mod hotkey_handler;
+mod level_selection;
 mod level_transition;
 mod main_menu;
 mod map;
@@ -111,6 +97,7 @@ fn main() {
     let mut gameover_handler = GameOverHandler::new(gameover_handler::GameOverHandlerType::Level);
     let mut gameend_handler = GameOverHandler::new(gameover_handler::GameOverHandlerType::Game);
     let mut level_transition = LevelTransition::new();
+    let mut level_selector = LevelSelector::new();
 
     let mut should_close = false;
 
@@ -199,6 +186,9 @@ fn main() {
         match scene_handler.get_current() {
             Scene::MainMenu => {
                 rl.set_window_title(&thread, "Велесова Ночь");
+                if rl.is_key_pressed(KeyboardKey::KEY_L) {
+                    scene_handler.set(Scene::LevelSelection);
+                }
                 main_menu.update(
                     &mut scene_handler,
                     &mut should_close,
@@ -301,6 +291,9 @@ fn main() {
                 &mut hotkey_handler,
                 &mut ui_handler,
             ),
+            Scene::LevelSelection => {
+                // update selection screen of smth
+            }
         }
 
         // draw stuff
@@ -345,6 +338,9 @@ fn main() {
                 ),
                 Scene::Transition => {
                     level_transition.draw(&texture_handler, &font, &mut t);
+                },
+                Scene::LevelSelection => {
+                    level_selector.draw(&mut t);
                 }
             }
 
