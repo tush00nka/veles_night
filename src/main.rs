@@ -4,7 +4,23 @@ use raylib::{
 };
 
 use crate::{
-    enemy_spirit::EnemiesHandler, gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, level_selection::LevelSelector, level_transition::LevelTransition, main_menu::MainMenuHandler, map::{Level, TILE_SCALE, TILE_SIZE}, metadata_handler::MetadataHandler, music_handler::MusicHandler, order::OrderHandler, particle::Particle, save_handler::SaveHandler, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
+    enemy_spirit::EnemiesHandler,
+    gameover_handler::GameOverHandler,
+    hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct},
+    level_selection::LevelSelector,
+    level_transition::LevelTransition,
+    main_menu::MainMenuHandler,
+    map::{Level, TILE_SCALE, TILE_SIZE},
+    metadata_handler::MetadataHandler,
+    music_handler::MusicHandler,
+    order::OrderHandler,
+    particle::Particle,
+    save_handler::SaveHandler,
+    scene::{Scene, SceneHandler},
+    spirit::Spirit,
+    spirits_handler::SpiritsHandler,
+    texture_handler::TextureHandler,
+    ui::UIHandler,
 };
 
 // mod light;
@@ -292,7 +308,17 @@ fn main() {
                 &mut ui_handler,
             ),
             Scene::LevelSelection => {
-                // update selection screen of smth
+                level_selector.update(
+                    &mut level_number,
+                    &mut metadata_handler,
+                    &mut level,
+                    &mut spirits_handler,
+                    &mut enemies_handler,
+                    &mut ui_handler,
+                    &mut level_transition,
+                    &mut scene_handler,
+                    &mut rl,
+                );
             }
         }
 
@@ -338,9 +364,9 @@ fn main() {
                 ),
                 Scene::Transition => {
                     level_transition.draw(&texture_handler, &font, &mut t);
-                },
+                }
                 Scene::LevelSelection => {
-                    level_selector.draw(&mut t);
+                    level_selector.draw(&font, &mut t);
                 }
             }
 

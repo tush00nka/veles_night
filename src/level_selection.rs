@@ -2,7 +2,16 @@ use std::fs;
 
 use raylib::prelude::*;
 
-use crate::{SCREEN_HEIGHT, SCREEN_WIDTH, map::TILE_SCALE};
+use crate::{
+    SCREEN_HEIGHT, SCREEN_WIDTH,
+    enemy_spirit::EnemiesHandler,
+    level_transition::LevelTransition,
+    map::{Level, TILE_SCALE},
+    metadata_handler::MetadataHandler,
+    scene::{Scene, SceneHandler},
+    spirits_handler::SpiritsHandler,
+    ui::UIHandler,
+};
 
 const LEVEL_DIR: &str = "static/maps/";
 
@@ -48,17 +57,56 @@ impl LevelSelector {
         Self { buttons }
     }
 
-    pub fn draw(&mut self, rl: &mut RaylibDrawHandle) {
+    pub fn update(
+        &self,
+        level_number: &mut u8,
+        metadata_handler: &mut MetadataHandler,
+        level: &mut Level,
+        spirits_handler: &mut SpiritsHandler,
+        enemies_handler: &mut EnemiesHandler,
+        ui_handler: &mut UIHandler,
+        level_transition: &mut LevelTransition,
+        scene_handler: &mut SceneHandler,
+        rl: &mut RaylibHandle,
+    ) {
+        let mouse_pos = rl.get_mouse_position()
+            - Vector2::new(
+                rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+            );
+
+        for i in 0..self.buttons.len() {
+            if self.buttons[i].rec.check_collision_point_rec(mouse_pos) {
+                if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
+                    *level_number = i as u8;
+                    metadata_handler.load(*level_number);
+                    level.load(*level_number, metadata_handler, rl);
+                    spirits_handler.spawn_spirits(metadata_handler);
+                    enemies_handler.spawn_enemies(metadata_handler);
+                    *ui_handler = UIHandler::new(i);
+                    *level_transition = LevelTransition::new();
+                    scene_handler.set(Scene::Level);
+                }
+            }
+        }
+    }
+
+    pub fn draw(&mut self, font: &Font, rl: &mut RaylibDrawHandle) {
         rl.clear_background(Color::from_hex("0eaf9b").unwrap());
 
-        for button in self.buttons.iter_mut() {
+        let mouse_pos = rl.get_mouse_position()
+            - Vector2::new(
+                rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+            );
+
+        for i in 0..self.buttons.len() {
             let offset;
 
-            if button
-                .rec
-                .check_collision_point_rec(rl.get_mouse_position())
-            {
-                offset = 10.;
+            let button = &mut self.buttons[i];
+
+            if button.rec.check_collision_point_rec(mouse_pos) {
+                offset = 16.;
             } else {
                 offset = 0.;
             }
@@ -71,6 +119,8 @@ impl LevelSelector {
 
             rl.draw_rectangle_rec(button.rec, Color::from_hex("0b8a8f").unwrap());
 
+            // let pp =
+            // ((button.rec.y - button.offset) / TILE_SCALE as f32).floor() * TILE_SCALE as f32;
             rl.draw_rectangle_rec(
                 Rectangle::new(
                     button.rec.x,
@@ -79,6 +129,17 @@ impl LevelSelector {
                     button.rec.height,
                 ),
                 Color::from_hex("30e1b9").unwrap(),
+            );
+
+            rl.draw_text_pro(
+                font,
+                format!("{}", i+1).as_str(),
+                Vector2::new(button.rec.x + 6. * TILE_SCALE as f32, button.rec.y - button.offset + 3. * TILE_SCALE as f32),
+                Vector2::zero(),
+                0.0,
+                12. * TILE_SCALE as f32,
+                0.0,
+                Color::RAYWHITE,
             );
         }
     }
