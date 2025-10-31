@@ -352,7 +352,7 @@ checksum = "f63a545481291138910575129486daeaf8ac54aee4387fe7906919f7830c7d9d"
 
 [[package]]
 name = "veles_night"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "raylib",
  "serde",

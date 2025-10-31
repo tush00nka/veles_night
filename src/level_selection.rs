@@ -8,14 +8,22 @@ use crate::{
     level_transition::LevelTransition,
     map::{Level, TILE_SCALE},
     metadata_handler::MetadataHandler,
+    save_handler::SaveHandler,
     scene::{Scene, SceneHandler},
     spirits_handler::SpiritsHandler,
+    texture_handler::TextureHandler,
     ui::UIHandler,
 };
 
 const LEVEL_DIR: &str = "static/maps/";
-
 const BUTTON_SIZE: f32 = 16.;
+
+const BACK_BUTTON_REC: Rectangle = Rectangle::new(
+    (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE as f32,
+    (SCREEN_HEIGHT) as f32 - 32. * TILE_SCALE as f32,
+    64. * TILE_SCALE as f32,
+    16. * TILE_SCALE as f32,
+);
 
 struct Button {
     rec: Rectangle,
@@ -75,7 +83,17 @@ impl LevelSelector {
                 rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
             );
 
+        if BACK_BUTTON_REC.check_collision_point_rec(mouse_pos)
+            && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+        {
+            scene_handler.set(Scene::MainMenu);
+        }
+
         for i in 0..self.buttons.len() {
+            if i > SaveHandler::get_level_number().into() {
+                return;
+            }
+
             if self.buttons[i].rec.check_collision_point_rec(mouse_pos) {
                 if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
                     *level_number = i as u8;
@@ -91,8 +109,27 @@ impl LevelSelector {
         }
     }
 
-    pub fn draw(&mut self, font: &Font, rl: &mut RaylibDrawHandle) {
-        rl.clear_background(Color::from_hex("0eaf9b").unwrap());
+    pub fn draw(
+        &mut self,
+        font: &Font,
+        texture_handler: &TextureHandler,
+        rl: &mut RaylibDrawHandle,
+    ) {
+        rl.clear_background(Color::from_hex("0b5e65").unwrap());
+
+        rl.draw_text_pro(
+            font,
+            "Выбор уровня",
+            Vector2::new(
+                SCREEN_WIDTH as f32 / 2. - 24. * TILE_SCALE as f32,
+                20. * TILE_SCALE as f32,
+            ),
+            Vector2::zero(),
+            0.0,
+            12. * TILE_SCALE as f32,
+            2.,
+            Color::RAYWHITE,
+        );
 
         let mouse_pos = rl.get_mouse_position()
             - Vector2::new(
@@ -105,7 +142,9 @@ impl LevelSelector {
 
             let button = &mut self.buttons[i];
 
-            if button.rec.check_collision_point_rec(mouse_pos) {
+            if button.rec.check_collision_point_rec(mouse_pos)
+                && i <= SaveHandler::get_level_number().into()
+            {
                 offset = 16.;
             } else {
                 offset = 0.;
@@ -121,6 +160,13 @@ impl LevelSelector {
 
             // let pp =
             // ((button.rec.y - button.offset) / TILE_SCALE as f32).floor() * TILE_SCALE as f32;
+
+            let color = if i <= SaveHandler::get_level_number().into() {
+                Color::from_hex("30e1b9").unwrap()
+            } else {
+                Color::from_hex("0b8a8f").unwrap()
+            };
+
             rl.draw_rectangle_rec(
                 Rectangle::new(
                     button.rec.x,
@@ -128,19 +174,46 @@ impl LevelSelector {
                     button.rec.width,
                     button.rec.height,
                 ),
-                Color::from_hex("30e1b9").unwrap(),
+                color,
             );
 
             rl.draw_text_pro(
                 font,
-                format!("{}", i+1).as_str(),
-                Vector2::new(button.rec.x + 6. * TILE_SCALE as f32, button.rec.y - button.offset + 3. * TILE_SCALE as f32),
+                format!("{}", i + 1).as_str(),
+                Vector2::new(
+                    button.rec.x + 6. * TILE_SCALE as f32,
+                    button.rec.y - button.offset + 3. * TILE_SCALE as f32,
+                ),
                 Vector2::zero(),
                 0.0,
                 12. * TILE_SCALE as f32,
                 0.0,
-                Color::RAYWHITE,
+                Color::WHITE,
             );
         }
+
+        let offset = if BACK_BUTTON_REC.check_collision_point_rec(mouse_pos) {
+            0.
+        } else {
+            16.
+        };
+
+        rl.draw_texture_pro(
+            texture_handler.get("main_menu_buttons"),
+            Rectangle::new(0.0, offset, 64., 16.),
+            BACK_BUTTON_REC,
+            Vector2::zero(),
+            0.0,
+            Color::WHITE,
+        );
+
+        rl.draw_texture_pro(
+            texture_handler.get("main_menu_buttons"),
+            Rectangle::new(64., 64., 64., 16.),
+            BACK_BUTTON_REC,
+            Vector2::zero(),
+            0.0,
+            Color::WHITE,
+        );
     }
 }

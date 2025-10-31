@@ -53,7 +53,7 @@ impl SaveHandler {
         self.is_there_saves = dir.next().is_some();
     }
 
-    fn get_level_number() -> u8 {
+    pub fn get_level_number() -> u8 {
         let filenames = fs::read_dir(SAVE_PATH).unwrap();
 
         for filename in filenames {

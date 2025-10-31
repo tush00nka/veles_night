@@ -366,7 +366,7 @@ fn main() {
                     level_transition.draw(&texture_handler, &font, &mut t);
                 }
                 Scene::LevelSelection => {
-                    level_selector.draw(&font, &mut t);
+                    level_selector.draw(&font, &texture_handler, &mut t);
                 }
             }
 

@@ -104,6 +104,10 @@ impl MainMenuHandler {
                         }
                     }
                     1 => {
+                        if save_handler.is_there_saves {
+                            scene_handler.set(Scene::LevelSelection);
+                            return;
+                        }
                         *level_number = FIRST_LEVEL;
                         metadata_handler.load(*level_number);
                         level.load(*level_number, metadata_handler, rl);
@@ -186,6 +190,18 @@ impl MainMenuHandler {
 
         for i in 0..self.labels.len() {
             if i == 0 && !save_handler.is_there_saves {
+                continue;
+            }
+
+            if i == 1 && save_handler.is_there_saves {
+                rl.draw_texture_pro(
+                    texture_handler.get_safe("main_menu_buttons"),
+                    Rectangle::new(64., 48., 64., 16.),
+                    self.buttons.get(&(i as u8)).unwrap().rect,
+                    Vector2::zero(),
+                    0.0,
+                    Color::WHITE,
+                );
                 continue;
             }
 
