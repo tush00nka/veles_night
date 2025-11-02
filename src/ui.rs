@@ -1,4 +1,4 @@
-use std::{cmp::min, collections::HashMap};
+use std::{cmp::min, collections::HashMap, str::Chars};
 
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
@@ -22,12 +22,15 @@ const QUIT_BUTTON: Rectangle = Rectangle::new(
     100.,
 );
 
-pub struct UIHandler {
+pub struct UIHandler<'a> {
     build_buttons: HashMap<String, Button>,
     quitting: bool,
+    dialogue_accumulator: String,
+    dialogure_iterator: Option<Chars<'a>>,
+    current_dialogue: usize,
 }
 
-impl UIHandler {
+impl<'a> UIHandler<'a> {
     pub fn new(level_number: usize) -> Self {
         let mut buttons = HashMap::new();
 
@@ -52,6 +55,9 @@ impl UIHandler {
         Self {
             build_buttons: buttons,
             quitting: false,
+            dialogue_accumulator: String::new(),
+            dialogure_iterator: Some(Self::DIALOGUE[0].chars()),
+            current_dialogue: 0,
         }
     }
 
@@ -118,9 +124,18 @@ impl UIHandler {
                 }
 
                 let tile = match title.as_str() {
-                    "fire_td" => TileType::FireTD { active: false, selected: false },
-                    "fire_lr" => TileType::FireLR { active: false, selected: false },
-                    "fire_stop" => TileType::FireStop { active: false, selected: false },
+                    "fire_td" => TileType::FireTD {
+                        active: false,
+                        selected: false,
+                    },
+                    "fire_lr" => TileType::FireLR {
+                        active: false,
+                        selected: false,
+                    },
+                    "fire_stop" => TileType::FireStop {
+                        active: false,
+                        selected: false,
+                    },
                     _ => {
                         panic!("wait how")
                     }
@@ -141,6 +156,12 @@ impl UIHandler {
     ) -> bool {
         if hotkey_h.check_pressed(rl, HotkeyCategory::Exit) {
             self.quitting = !self.quitting;
+        }
+
+        if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) && self.current_dialogue + 1 < Self::DIALOGUE.len() {
+            self.current_dialogue += 1;
+            self.dialogure_iterator = Some(Self::DIALOGUE[self.current_dialogue].chars());
+            self.dialogue_accumulator = String::new();
         }
 
         if !self.quitting {
@@ -166,8 +187,14 @@ impl UIHandler {
         return false;
     }
 
+    const DIALOGUE: [&'a str; 3] = [
+        "Приветствую тебя, путник! Никак заблудился в этом лесу, да ещё и накануне ночи,\nчто в честь меня кличут?",
+        "Ты либо храбрец, либо глупец, а может, и то и другое...\nНаказываю тебе помочь этим духам, что, как и ты, заблудились в лесу.",
+        "Помоги им вернуться в мир нави, а я, так уж и быть, выведу тебя из леса.",
+    ];
+
     pub fn draw(
-        &self,
+        &mut self,
         texture_handler: &TextureHandler,
         level: &mut Level,
         level_number: usize,
@@ -289,63 +316,100 @@ impl UIHandler {
             Color::RAYWHITE,
         );
 
-        if self.quitting {
+        if level_number <= 0 {
+            rl.draw_texture_ex(
+                texture_handler.get_safe("veles"),
+                Vector2::new(0., SCREEN_HEIGHT as f32 - 48. * TILE_SCALE as f32),
+                0.0,
+                TILE_SCALE as f32,
+                Color::WHITE,
+            );
+
             rl.draw_rectangle(
-                SCREEN_WIDTH / 3,
-                SCREEN_HEIGHT / 3,
-                SCREEN_WIDTH / 3,
-                SCREEN_HEIGHT / 3,
+                32 * TILE_SCALE + 16,
+                SCREEN_HEIGHT - 3 * 8 * TILE_SCALE - 20,
+                SCREEN_WIDTH - 32 * TILE_SCALE - 32,
+                3 * 8 * TILE_SCALE + 10,
                 Color::BLACK.alpha(0.5),
             );
 
+            if let Some(it) = &mut self.dialogure_iterator {
+                if let Some(ch) = it.next() {
+                    self.dialogue_accumulator += &ch.to_string();
+                }
+            }
             rl.draw_text_ex(
                 font,
-                "Выйти в меню?",
+                &self.dialogue_accumulator,
                 Vector2::new(
-                    SCREEN_WIDTH as f32 / 3. + 8. * 13.,
-                    SCREEN_HEIGHT as f32 / 3. + 10.,
+                    32. * TILE_SCALE as f32 + 32.,
+                    SCREEN_HEIGHT as f32 - 3. * 8. * TILE_SCALE as f32 - 20.,
                 ),
-                64.,
-                2.,
+                8. * TILE_SCALE as f32,
+                0.,
                 Color::RAYWHITE,
             );
-
-            let mouse_over = unsafe {
-                CheckCollisionPointRec(
-                    (rl.get_mouse_position()
-                        - Vector2::new(
-                            rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                            rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
-                        ))
-                    .into(),
-                    QUIT_BUTTON.into(),
-                )
-            };
-
-            rl.draw_rectangle_rec(
-                QUIT_BUTTON,
-                if mouse_over {
-                    Color::RAYWHITE
-                } else {
-                    Color::BLACK.alpha(0.5)
-                },
-            );
-
-            rl.draw_text_ex(
-                font,
-                "Да",
-                Vector2::new(
-                    QUIT_BUTTON.x + QUIT_BUTTON.width / 2. - 32.,
-                    QUIT_BUTTON.y + 16.,
-                ),
-                64.,
-                2.,
-                if mouse_over {
-                    Color::BLACK
-                } else {
-                    Color::RAYWHITE
-                },
-            );
         }
+
+        if !self.quitting {
+            return;
+        }
+
+        rl.draw_rectangle(
+            SCREEN_WIDTH / 3,
+            SCREEN_HEIGHT / 3,
+            SCREEN_WIDTH / 3,
+            SCREEN_HEIGHT / 3,
+            Color::BLACK.alpha(0.5),
+        );
+
+        rl.draw_text_ex(
+            font,
+            "Выйти в меню?",
+            Vector2::new(
+                SCREEN_WIDTH as f32 / 3. + 8. * 13.,
+                SCREEN_HEIGHT as f32 / 3. + 10.,
+            ),
+            64.,
+            2.,
+            Color::RAYWHITE,
+        );
+
+        let mouse_over = unsafe {
+            CheckCollisionPointRec(
+                (rl.get_mouse_position()
+                    - Vector2::new(
+                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                    ))
+                .into(),
+                QUIT_BUTTON.into(),
+            )
+        };
+
+        rl.draw_rectangle_rec(
+            QUIT_BUTTON,
+            if mouse_over {
+                Color::RAYWHITE
+            } else {
+                Color::BLACK.alpha(0.5)
+            },
+        );
+
+        rl.draw_text_ex(
+            font,
+            "Да",
+            Vector2::new(
+                QUIT_BUTTON.x + QUIT_BUTTON.width / 2. - 32.,
+                QUIT_BUTTON.y + 16.,
+            ),
+            64.,
+            2.,
+            if mouse_over {
+                Color::BLACK
+            } else {
+                Color::RAYWHITE
+            },
+        );
     }
 }
