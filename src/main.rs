@@ -1,5 +1,5 @@
 use raylib::{
-    ffi::{DrawText, GetCurrentMonitor, GetMonitorHeight, GetMonitorWidth, TextSubtext},
+    ffi::{GetCurrentMonitor, GetMonitorHeight, GetMonitorWidth},
     prelude::*,
 };
 

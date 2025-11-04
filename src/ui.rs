@@ -158,10 +158,14 @@ impl<'a> UIHandler<'a> {
             self.quitting = !self.quitting;
         }
 
-        if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) && self.current_dialogue + 1 < Self::DIALOGUE.len() {
-            self.current_dialogue += 1;
-            self.dialogure_iterator = Some(Self::DIALOGUE[self.current_dialogue].chars());
-            self.dialogue_accumulator = String::new();
+        if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
+            if self.current_dialogue + 1 < Self::DIALOGUE.len() {
+                self.current_dialogue += 1;
+                self.dialogure_iterator = Some(Self::DIALOGUE[self.current_dialogue].chars());
+                self.dialogue_accumulator = String::new();
+            } else if self.current_dialogue == Self::DIALOGUE.len() - 1 {
+                self.current_dialogue += 1;
+            }
         }
 
         if !self.quitting {
@@ -316,7 +320,7 @@ impl<'a> UIHandler<'a> {
             Color::RAYWHITE,
         );
 
-        if level_number <= 0 {
+        if level_number <= 0 && self.current_dialogue < Self::DIALOGUE.len() {
             rl.draw_texture_ex(
                 texture_handler.get_safe("veles"),
                 Vector2::new(0., SCREEN_HEIGHT as f32 - 48. * TILE_SCALE as f32),
@@ -338,6 +342,7 @@ impl<'a> UIHandler<'a> {
                     self.dialogue_accumulator += &ch.to_string();
                 }
             }
+
             rl.draw_text_ex(
                 font,
                 &self.dialogue_accumulator,
@@ -349,6 +354,22 @@ impl<'a> UIHandler<'a> {
                 0.,
                 Color::RAYWHITE,
             );
+
+            if self.dialogue_accumulator.chars().count()
+                >= Self::DIALOGUE[self.current_dialogue].chars().count()
+            {
+                rl.draw_text_ex(
+                    font,
+                    "Далее...",
+                    Vector2::new(
+                        SCREEN_WIDTH as f32 - 32. * TILE_SCALE as f32,
+                        SCREEN_HEIGHT as f32 - 12. * TILE_SCALE as f32,
+                    ),
+                    8. * TILE_SCALE as f32,
+                    0.,
+                    Color::RAYWHITE.alpha((rl.get_time() * 2.).sin().abs() as f32),
+                )
+            }
         }
 
         if !self.quitting {
