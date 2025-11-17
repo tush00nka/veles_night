@@ -4,23 +4,7 @@ use raylib::{
 };
 
 use crate::{
-    enemy_spirit::EnemiesHandler,
-    gameover_handler::GameOverHandler,
-    hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct},
-    level_selection::LevelSelector,
-    level_transition::LevelTransition,
-    main_menu::MainMenuHandler,
-    map::{Level, TILE_SCALE, TILE_SIZE},
-    metadata_handler::MetadataHandler,
-    music_handler::MusicHandler,
-    order::OrderHandler,
-    particle::Particle,
-    save_handler::SaveHandler,
-    scene::{Scene, SceneHandler},
-    spirit::Spirit,
-    spirits_handler::SpiritsHandler,
-    texture_handler::TextureHandler,
-    ui::UIHandler,
+    dialogue::DialogueHandler, enemy_spirit::EnemiesHandler, gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, level_selection::LevelSelector, level_transition::LevelTransition, main_menu::MainMenuHandler, map::{Level, TILE_SCALE, TILE_SIZE}, metadata_handler::MetadataHandler, music_handler::MusicHandler, order::OrderHandler, particle::Particle, save_handler::SaveHandler, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
 };
 
 // mod light;
@@ -43,6 +27,7 @@ mod spirit;
 mod spirits_handler;
 mod texture_handler;
 mod ui;
+mod dialogue;
 
 pub const FIRST_LEVEL: u8 = 0;
 
@@ -129,6 +114,9 @@ fn main() {
 
     let monitor_width = unsafe { GetMonitorWidth(GetCurrentMonitor()) };
     let monitor_height = unsafe { GetMonitorHeight(GetCurrentMonitor()) };
+
+	let mut dialogue_handler = DialogueHandler::new();
+	dialogue_handler.load_dialogue("level_1");
 
     while !rl.window_should_close() && !should_close {
         // a bit broken, so don't use on journalists
