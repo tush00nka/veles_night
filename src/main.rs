@@ -296,6 +296,7 @@ fn main() {
                 &mut rl,
                 &mut hotkey_handler,
                 &mut ui_handler,
+				&mut dialogue_handler,
             ),
             Scene::LevelSelection => {
                 level_selector.update(
@@ -307,6 +308,7 @@ fn main() {
                     &mut ui_handler,
                     &mut level_transition,
                     &mut scene_handler,
+					&mut dialogue_handler,
                     &mut rl,
                 );
             }
@@ -553,6 +555,7 @@ fn update_transition(
     rl: &mut RaylibHandle,
     hotkey_handler: &mut HotkeyHandler,
     ui_handler: &mut UIHandler,
+	dialogue_handler: &mut DialogueHandler,
 ) {
     if !hotkey_handler.check_pressed(rl, HotkeyCategory::Continue)
         && !rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
@@ -572,6 +575,7 @@ fn update_transition(
     spirits_handler.spawn_spirits(metadata_handler);
     enemies_handler.spawn_enemies(metadata_handler);
     scene_handler.set(Scene::Level);
+	dialogue_handler.load_dialogue(&format!("level_{}", *level_number+1));
     *ui_handler = UIHandler::new(level_number.clone() as usize);
 }
 

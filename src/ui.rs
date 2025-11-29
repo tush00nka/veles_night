@@ -149,7 +149,7 @@ impl UIHandler {
         }
     }
 
-    pub fn update<'a>(
+    pub fn update(
         &mut self,
         hotkey_h: &mut HotkeyHandler,
         scene_h: &mut SceneHandler,
@@ -199,7 +199,7 @@ impl UIHandler {
     //     "Помоги им вернуться в мир нави, а я, так уж и быть, выведу тебя из леса.",
     // ];
 
-    pub fn draw<'a>(
+    pub fn draw(
         &mut self,
         texture_handler: &TextureHandler,
         dialogue_h: &mut DialogueHandler,
@@ -323,7 +323,7 @@ impl UIHandler {
             Color::RAYWHITE,
         );
 
-        if level_number <= 0 && dialogue_h.current_phrase < dialogue_h.dialogue.len() {
+        if dialogue_h.current_phrase < dialogue_h.dialogue.len() {
             rl.draw_texture_ex(
                 texture_handler.get_safe("veles"),
                 Vector2::new(0., SCREEN_HEIGHT as f32 - 48. * TILE_SCALE as f32),

@@ -4,6 +4,7 @@ use raylib::prelude::*;
 
 use crate::{
     SCREEN_HEIGHT, SCREEN_WIDTH,
+    dialogue::DialogueHandler,
     enemy_spirit::EnemiesHandler,
     level_transition::LevelTransition,
     map::{Level, TILE_SCALE},
@@ -75,6 +76,7 @@ impl LevelSelector {
         ui_handler: &mut UIHandler,
         level_transition: &mut LevelTransition,
         scene_handler: &mut SceneHandler,
+        dialogue_handler: &mut DialogueHandler,
         rl: &mut RaylibHandle,
     ) {
         let mouse_pos = rl.get_mouse_position()
@@ -104,6 +106,7 @@ impl LevelSelector {
                     *ui_handler = UIHandler::new(i);
                     *level_transition = LevelTransition::new();
                     scene_handler.set(Scene::Level);
+                    dialogue_handler.load_dialogue(&format!("level_{}", *level_number+1));
                 }
             }
         }
