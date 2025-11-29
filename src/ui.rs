@@ -16,6 +16,8 @@ pub struct Button {
     pub selected: bool,
 }
 
+const TEXT_COLOR: Color = Color::new(46, 34, 47, 255);
+
 const QUIT_BUTTON: Rectangle = Rectangle::new(
     SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6. - 100.,
     SCREEN_HEIGHT as f32 / 3. + 150.,
@@ -67,15 +69,15 @@ impl UIHandler {
         level: &mut Level,
         rl: &mut RaylibHandle,
         hotkey_h: &mut HotkeyHandler,
-		dialogue_h: &mut DialogueHandler,
+        dialogue_h: &mut DialogueHandler,
     ) {
         let dialoging = dialogue_h.current_phrase < dialogue_h.dialogue.len();
 
         let mut intent: HotkeyCategory;
         for (title, button) in self.build_buttons.iter_mut() {
-			if dialoging {
-				break;
-			}
+            if dialoging {
+                break;
+            }
 
             intent = HotkeyCategory::from_bonfire(title);
 
@@ -279,55 +281,84 @@ impl UIHandler {
             }
         }
 
-        rl.draw_rectangle(
-            5,
-            5,
-            64 * TILE_SCALE,
-            18 * TILE_SCALE,
-            Color::BLACK.alpha(0.5),
+        // rl.draw_rectangle(
+        //     5,
+        //     5,
+        //     64 * TILE_SCALE,
+        //     18 * TILE_SCALE,
+        //     Color::BLACK.alpha(0.5),
+        // );
+
+        rl.draw_texture_ex(
+            texture_handler.get("stat_bar"),
+            Vector2::one() * TILE_SCALE as f32,
+            0.0,
+            TILE_SCALE as f32,
+            Color::WHITE,
+        );
+
+        let bar_offset = Vector2::new(6. * TILE_SCALE as f32, 5. * TILE_SCALE as f32);
+
+        rl.draw_texture_ex(
+            texture_handler.get("spirit_icon"),
+            bar_offset,
+            0.0,
+            TILE_SCALE as f32,
+            Color::WHITE,
         );
 
         rl.draw_text_ex(
             font,
-            format!(
-                "Духов проведено: {}/{}\nДревесина: {}",
-                level.survived,
-                level.survive,
-                level.get_wood()
-            )
-            .as_str(),
-            Vector2::one() * 10.,
+            format!("{}/{}", level.survived, level.survive).as_str(),
+            bar_offset + Vector2::new(16. * TILE_SCALE as f32, 10.),
             8. * TILE_SCALE as f32,
             1.0,
-            Color::RAYWHITE,
+            TEXT_COLOR,
         );
 
-        let hint_text = if level_number == 0 {
-            "Перетащите духа\nна дерево"
-        } else if level_number == 1 {
-            "Установите костёр,\nперетащив\nпиктограмму"
-        } else {
-            "R для перезапуска"
-        };
-
-        let height = hint_text.chars().filter(|&c| c == '\n').count();
-
-        rl.draw_rectangle(
-            5,
-            20 * TILE_SCALE,
-            64 * TILE_SCALE,
-            9 * (height + 1) as i32 * TILE_SCALE,
-            Color::BLACK.alpha(0.5),
+        rl.draw_texture_ex(
+            texture_handler.get("wood_icon"),
+            bar_offset + Vector2::new(0., 12. * TILE_SCALE as f32),
+            0.0,
+            TILE_SCALE as f32,
+            Color::WHITE,
         );
 
         rl.draw_text_ex(
             font,
-            hint_text,
-            Vector2::new(10., 18. * TILE_SCALE as f32 + 18.),
+            format!("{}", level.get_wood()).as_str(),
+            bar_offset + Vector2::new(16. * TILE_SCALE as f32, 10. + 12. * TILE_SCALE as f32),
             8. * TILE_SCALE as f32,
             1.0,
-            Color::RAYWHITE,
+            TEXT_COLOR,
         );
+
+        // let hint_text = if level_number == 0 {
+        //     "Перетащите духа\nна дерево"
+        // } else if level_number == 1 {
+        //     "Установите костёр,\nперетащив\nпиктограмму"
+        // } else {
+        //     "R для перезапуска"
+        // };
+
+        // let height = hint_text.chars().filter(|&c| c == '\n').count();
+
+        // rl.draw_rectangle(
+        //     5,
+        //     30 * TILE_SCALE,
+        //     64 * TILE_SCALE,
+        //     9 * (height + 1) as i32 * TILE_SCALE,
+        //     Color::BLACK.alpha(0.5),
+        // );
+
+        // rl.draw_text_ex(
+        //     font,
+        //     hint_text,
+        //     Vector2::new(10., 28. * TILE_SCALE as f32 + 18.),
+        //     8. * TILE_SCALE as f32,
+        //     1.0,
+        //     Color::RAYWHITE,
+        // );
 
         if dialoging {
             rl.draw_texture_ex(
@@ -338,12 +369,15 @@ impl UIHandler {
                 Color::WHITE,
             );
 
-            rl.draw_rectangle(
-                32 * TILE_SCALE + 16,
-                SCREEN_HEIGHT - 3 * 8 * TILE_SCALE - 20,
-                SCREEN_WIDTH - 32 * TILE_SCALE - 32,
-                3 * 8 * TILE_SCALE + 10,
-                Color::BLACK.alpha(0.5),
+            rl.draw_texture_ex(
+                texture_handler.get("dialogue_box"),
+                Vector2::new(
+                    32. * TILE_SCALE as f32,
+                    SCREEN_HEIGHT as f32 - 48. * TILE_SCALE as f32,
+                ),
+                0.0,
+                TILE_SCALE as f32,
+                Color::WHITE,
             );
 
             if dialogue_h.dialogue_counter
@@ -371,12 +405,12 @@ impl UIHandler {
                 font,
                 &line.rev().collect::<String>(),
                 Vector2::new(
-                    32. * TILE_SCALE as f32 + 32.,
+                    32. * TILE_SCALE as f32 + 64.,
                     SCREEN_HEIGHT as f32 - 3. * 8. * TILE_SCALE as f32 - 20.,
                 ),
                 8. * TILE_SCALE as f32,
                 0.,
-                Color::RAYWHITE,
+                TEXT_COLOR,
             );
 
             if dialogue_h.dialogue_accumulator.chars().count()

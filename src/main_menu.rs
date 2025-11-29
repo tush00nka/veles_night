@@ -162,17 +162,13 @@ impl MainMenuHandler {
                 continue;
             }
 
-            let texture_offset = if unsafe {
-                CheckCollisionPointRec(
-                    (rl.get_mouse_position()
-                        - Vector2::new(
-                            rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                            rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
-                        ))
-                    .into(),
-                    button.rect.into(),
-                )
-            } {
+            let texture_offset = if button.rect.check_collision_point_rec(
+                rl.get_mouse_position()
+                    - Vector2::new(
+                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                    ),
+            ) {
                 0.
             } else {
                 16.
@@ -193,26 +189,63 @@ impl MainMenuHandler {
                 continue;
             }
 
+            let button = self.buttons.get(&(i as u8)).unwrap();
+
+            let text_offset_y = if button.rect.check_collision_point_rec(
+                rl.get_mouse_position()
+                    - Vector2::new(
+                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                    ),
+            ) {
+                TILE_SCALE as f32
+            } else {
+                0.
+            };
+
             if i == 1 && save_handler.is_there_saves {
-                rl.draw_texture_pro(
-                    texture_handler.get_safe("main_menu_buttons"),
-                    Rectangle::new(64., 48., 64., 16.),
-                    self.buttons.get(&(i as u8)).unwrap().rect,
+                rl.draw_text_pro(
+                    font,
+                    "Уровни",
+                    Vector2::new(
+                        button.rect.x + button.rect.width / 2. - 6. * 2. * TILE_SCALE as f32,
+                        button.rect.y + button.rect.height / 2. - 6. * TILE_SCALE as f32
+                            - text_offset_y,
+                    ),
                     Vector2::zero(),
                     0.0,
-                    Color::WHITE,
+                    12. * TILE_SCALE as f32,
+                    2.,
+                    Color::RAYWHITE,
                 );
+
                 continue;
             }
 
-            rl.draw_texture_pro(
-                texture_handler.get_safe("main_menu_buttons"),
-                Rectangle::new(64., 16. * i as f32, 64., 16.),
-                self.buttons.get(&(i as u8)).unwrap().rect,
+            rl.draw_text_pro(
+                font,
+                self.labels[i],
+                Vector2::new(
+                    button.rect.x + button.rect.width / 2.
+                        - 6. * (self.labels[i].chars().count() as f32 / 3.) * TILE_SCALE as f32,
+                    button.rect.y + button.rect.height / 2. - 6. * TILE_SCALE as f32
+                        - text_offset_y,
+                ),
                 Vector2::zero(),
                 0.0,
-                Color::WHITE,
+                12. * TILE_SCALE as f32,
+                2.,
+                Color::RAYWHITE,
             );
+
+            // rl.draw_texture_pro(
+            //     texture_handler.get_safe("main_menu_buttons"),
+            //     Rectangle::new(64., 16. * i as f32, 64., 16.),
+            //     self.buttons.get(&(i as u8)).unwrap().rect,
+            //     Vector2::zero(),
+            //     0.0,
+            //     Color::WHITE,
+            // );
         }
 
         rl.draw_text_ex(

@@ -106,7 +106,7 @@ impl LevelSelector {
                     *ui_handler = UIHandler::new(i);
                     *level_transition = LevelTransition::new();
                     scene_handler.set(Scene::Level);
-                    dialogue_handler.load_dialogue(&format!("level_{}", *level_number+1));
+                    dialogue_handler.load_dialogue(&format!("level_{}", *level_number + 1));
                 }
             }
         }
@@ -195,11 +195,15 @@ impl LevelSelector {
             );
         }
 
-        let offset = if BACK_BUTTON_REC.check_collision_point_rec(mouse_pos) {
-            0.
-        } else {
-            16.
-        };
+        let offset;
+        let text_offset;
+        if BACK_BUTTON_REC.check_collision_point_rec(mouse_pos) {
+            offset = 0.;
+            text_offset = TILE_SCALE as f32;
+		} else {
+            offset = 16.;
+            text_offset = 0.;
+		};
 
         rl.draw_texture_pro(
             texture_handler.get("main_menu_buttons"),
@@ -210,13 +214,18 @@ impl LevelSelector {
             Color::WHITE,
         );
 
-        rl.draw_texture_pro(
-            texture_handler.get("main_menu_buttons"),
-            Rectangle::new(64., 64., 64., 16.),
-            BACK_BUTTON_REC,
+        rl.draw_text_pro(
+            font,
+            "Назад",
+            Vector2::new(
+                BACK_BUTTON_REC.x + BACK_BUTTON_REC.width / 2. - 6. * 2. * TILE_SCALE as f32,
+                BACK_BUTTON_REC.y + BACK_BUTTON_REC.height / 2. - 6. * TILE_SCALE as f32 - text_offset,
+            ),
             Vector2::zero(),
             0.0,
-            Color::WHITE,
+            12. * TILE_SCALE as f32,
+            2.,
+            Color::RAYWHITE,
         );
     }
 }
