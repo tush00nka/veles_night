@@ -1,9 +1,10 @@
-use std::{cmp::min, collections::HashMap, str::Chars};
+use std::{cmp::min, collections::HashMap};
 
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
 use crate::{
     SCREEN_HEIGHT, SCREEN_WIDTH,
+    dialogue::DialogueHandler,
     hotkey_handler::{HotkeyCategory, HotkeyHandler},
     map::{Level, TILE_SCALE, TILE_SIZE, TileType},
     scene::{Scene, SceneHandler},
@@ -22,15 +23,15 @@ const QUIT_BUTTON: Rectangle = Rectangle::new(
     100.,
 );
 
-pub struct UIHandler<'a> {
+pub struct UIHandler {
     build_buttons: HashMap<String, Button>,
     quitting: bool,
-    dialogue_accumulator: String,
-    dialogure_iterator: Option<Chars<'a>>,
-    current_dialogue: usize,
+    // dialogue_accumulator: String,
+    // dialogure_iterator: Option<Chars<'a>>,
+    // current_dialogue: usize,
 }
 
-impl<'a> UIHandler<'a> {
+impl UIHandler {
     pub fn new(level_number: usize) -> Self {
         let mut buttons = HashMap::new();
 
@@ -55,9 +56,9 @@ impl<'a> UIHandler<'a> {
         Self {
             build_buttons: buttons,
             quitting: false,
-            dialogue_accumulator: String::new(),
-            dialogure_iterator: Some(Self::DIALOGUE[0].chars()),
-            current_dialogue: 0,
+            // dialogue_accumulator: String::new(),
+            // dialogure_iterator: Some(Self::DIALOGUE[0].chars()),
+            // current_dialogue: 0,
         }
     }
 
@@ -148,10 +149,11 @@ impl<'a> UIHandler<'a> {
         }
     }
 
-    pub fn update(
+    pub fn update<'a>(
         &mut self,
         hotkey_h: &mut HotkeyHandler,
         scene_h: &mut SceneHandler,
+        dialogue_h: &mut DialogueHandler,
         rl: &mut RaylibHandle,
     ) -> bool {
         if hotkey_h.check_pressed(rl, HotkeyCategory::Exit) {
@@ -159,13 +161,13 @@ impl<'a> UIHandler<'a> {
         }
 
         if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
-            if self.current_dialogue + 1 < Self::DIALOGUE.len() {
-                self.current_dialogue += 1;
-                self.dialogure_iterator = Some(Self::DIALOGUE[self.current_dialogue].chars());
-                self.dialogue_accumulator = String::new();
-            } else if self.current_dialogue == Self::DIALOGUE.len() - 1 {
-                self.current_dialogue += 1;
-            }
+            if dialogue_h.current_phrase + 1 < dialogue_h.dialogue.len() {
+                dialogue_h.current_phrase += 1;
+                dialogue_h.dialogue_accumulator = String::new();
+                dialogue_h.dialogue_counter = 0;
+			} else if dialogue_h.current_phrase == dialogue_h.dialogue.len() - 1 {
+                dialogue_h.current_phrase += 1;
+			}
         }
 
         if !self.quitting {
@@ -191,15 +193,16 @@ impl<'a> UIHandler<'a> {
         return false;
     }
 
-    const DIALOGUE: [&'a str; 3] = [
-        "Приветствую тебя, путник! Никак заблудился в этом лесу, да ещё и накануне ночи,\nчто в честь меня кличут?",
-        "Ты либо храбрец, либо глупец, а может, и то и другое...\nНаказываю тебе помочь этим духам, что, как и ты, заблудились в лесу.",
-        "Помоги им вернуться в мир нави, а я, так уж и быть, выведу тебя из леса.",
-    ];
+    // const DIALOGUE: [&'a str; 3] = [
+    //     "Приветствую тебя, путник! Никак заблудился в этом лесу, да ещё и накануне ночи,\nчто в честь меня кличут?",
+    //     "Ты либо храбрец, либо глупец, а может, и то и другое...\nНаказываю тебе помочь этим духам, что, как и ты, заблудились в лесу.",
+    //     "Помоги им вернуться в мир нави, а я, так уж и быть, выведу тебя из леса.",
+    // ];
 
-    pub fn draw(
+    pub fn draw<'a>(
         &mut self,
         texture_handler: &TextureHandler,
+        dialogue_h: &mut DialogueHandler,
         level: &mut Level,
         level_number: usize,
         font: &Font,
@@ -320,7 +323,7 @@ impl<'a> UIHandler<'a> {
             Color::RAYWHITE,
         );
 
-        if level_number <= 0 && self.current_dialogue < Self::DIALOGUE.len() {
+        if level_number <= 0 && dialogue_h.current_phrase < dialogue_h.dialogue.len() {
             rl.draw_texture_ex(
                 texture_handler.get_safe("veles"),
                 Vector2::new(0., SCREEN_HEIGHT as f32 - 48. * TILE_SCALE as f32),
@@ -337,15 +340,24 @@ impl<'a> UIHandler<'a> {
                 Color::BLACK.alpha(0.5),
             );
 
-            if let Some(it) = &mut self.dialogure_iterator {
-                if let Some(ch) = it.next() {
-                    self.dialogue_accumulator += &ch.to_string();
-                }
-            }
+            if dialogue_h.dialogue_counter
+                < dialogue_h.dialogue[dialogue_h.current_phrase]
+                    .1
+                    .chars()
+                    .count()
+            {
+                dialogue_h.dialogue_counter += 1;
+			}
+
+			let line = &mut dialogue_h.dialogue[dialogue_h.current_phrase].1.chars().rev();
+			let line_len = dialogue_h.dialogue[dialogue_h.current_phrase].1.chars().count();
+			for _ in 0..line_len-dialogue_h.dialogue_counter {
+				line.next();
+			}
 
             rl.draw_text_ex(
                 font,
-                &self.dialogue_accumulator,
+                &line.rev().collect::<String>(),
                 Vector2::new(
                     32. * TILE_SCALE as f32 + 32.,
                     SCREEN_HEIGHT as f32 - 3. * 8. * TILE_SCALE as f32 - 20.,
@@ -355,8 +367,11 @@ impl<'a> UIHandler<'a> {
                 Color::RAYWHITE,
             );
 
-            if self.dialogue_accumulator.chars().count()
-                >= Self::DIALOGUE[self.current_dialogue].chars().count()
+            if dialogue_h.dialogue_accumulator.chars().count()
+                >= dialogue_h.dialogue[dialogue_h.current_phrase]
+                    .1
+                    .chars()
+                    .count()
             {
                 rl.draw_text_ex(
                     font,

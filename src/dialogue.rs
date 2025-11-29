@@ -1,17 +1,15 @@
-use std::str::Chars;
-
-pub struct DialogueHandler<'a> {
-    dialogue_accumulator: String,
-    dialogue_iterator: Option<Chars<'a>>,
-    dialogue: Vec<(String, String)>,
-    current_phrase: usize,
+pub struct DialogueHandler {
+    pub dialogue_accumulator: String,
+    pub dialogue_counter: usize,
+    pub dialogue: Vec<(String, String)>, // (name, phrase)
+    pub current_phrase: usize,
 }
 
-impl<'a> DialogueHandler<'a> {
+impl DialogueHandler {
     pub fn new() -> Self {
         Self {
             dialogue_accumulator: String::new(),
-            dialogue_iterator: None,
+            dialogue_counter: 0,
             dialogue: vec![],
             current_phrase: 0,
         }
@@ -26,7 +24,7 @@ impl<'a> DialogueHandler<'a> {
         }
 
 		self.dialogue_accumulator = String::new();
-		self.dialogue_iterator = None;
+		self.dialogue_counter = 0;
 		self.dialogue.clear();
 		self.current_phrase = 0;
 
@@ -50,8 +48,8 @@ impl<'a> DialogueHandler<'a> {
                 let speaker = split_by_brackets[1];
                 let phrase = split_by_brackets[2].replace("\\", "\n");
                 self.dialogue
-                    .push((speaker.to_string(), phrase.to_string()));
+                    .push((speaker.to_string(), phrase.trim_start().to_string()));
             }
         }
-    }
+	}
 }

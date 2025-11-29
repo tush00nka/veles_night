@@ -260,6 +260,7 @@ fn main() {
                         format!("Велесова Ночь - Уровень {}", level_number + 1).as_str(),
                     );
                 }
+
                 if update_level(
                     &mut spirits_handler,
                     &mut particles,
@@ -272,6 +273,7 @@ fn main() {
                     &mut hotkey_handler,
                     &mut enemies_handler,
                     &mut save_handler,
+					&mut dialogue_handler,
                 ) {
                     reload_procedure(
                         level_number,
@@ -347,6 +349,7 @@ fn main() {
                     level_number,
                     &texture_handler,
                     &mut ui_handler,
+					&mut dialogue_handler,
                     &font,
                     &mut t,
                 ),
@@ -443,7 +446,7 @@ fn preparation_to_save(
     spirits_handler.spawn_spirits(metadata_handler);
 }
 
-fn update_level(
+fn update_level<'a>(
     spirits_handler: &mut SpiritsHandler,
     particles: &mut Vec<Particle>,
     level: &mut Level,
@@ -455,6 +458,7 @@ fn update_level(
     hotkey_handler: &mut HotkeyHandler,
     enemies_handler: &mut EnemiesHandler,
     save_handler: &mut SaveHandler,
+	dialogue_handler: &mut DialogueHandler,
 ) -> bool {
     for spirit in spirits_handler.spirits.values() {
         if spirit.get_dead() {
@@ -488,7 +492,7 @@ fn update_level(
     order_handler.update_line(level, rl, hotkey_handler);
 
     ui_handler.build(level, rl, hotkey_handler);
-    if ui_handler.update(hotkey_handler, scene_handler, rl) {
+    if ui_handler.update(hotkey_handler, scene_handler, dialogue_handler, rl) {
         save_handler.set_to_save();
     };
 
@@ -526,15 +530,16 @@ fn draw_level(
     order_handler.draw(spirits_handler, texture_handler, rl);
 }
 
-fn draw_level_ui(
+fn draw_level_ui<'a>(
     level: &mut Level,
     level_number: u8,
     texture_handler: &TextureHandler,
     ui_handler: &mut UIHandler,
+	dialogue_handler: &mut DialogueHandler,
     font: &Font,
     rl: &mut RaylibDrawHandle,
 ) {
-    ui_handler.draw(texture_handler, level, level_number.into(), font, rl);
+    ui_handler.draw(texture_handler, dialogue_handler, level, level_number.into(), font, rl);
 }
 
 fn update_transition(

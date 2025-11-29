@@ -1,7 +1,7 @@
 use raylib::prelude::*;
 
 use crate::{
-    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, Level, TILE_SCALE, TILE_SIZE, TileType},
+    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, Level, TILE_SIZE, TileType},
     music_handler::MusicHandler,
     texture_handler::TextureHandler,
 };
@@ -64,10 +64,11 @@ impl Spirit {
         self.teleported
     }
     pub fn get_draw_position(&self) -> Vector2 {
-        let x = (self.draw_position.x / TILE_SCALE as f32).floor() * TILE_SCALE as f32;
-        let y = (self.draw_position.y / TILE_SCALE as f32).floor() * TILE_SCALE as f32;
+        // let x = (self.draw_position.x / TILE_SCALE as f32).floor() * TILE_SCALE as f32;
+        // let y = (self.draw_position.y / TILE_SCALE as f32).floor() * TILE_SCALE as f32;
 
-        Vector2::new(x, y)
+        // Vector2::new(x, y)
+        self.draw_position
     }
 
     pub fn get_dead(&self) -> bool {
@@ -128,13 +129,19 @@ impl Spirit {
 
         // step on tile to activate
         match level.tiles[tile_x][tile_y] {
-            TileType::FireTD { active, selected: _ } => {
+            TileType::FireTD {
+                active,
+                selected: _,
+            } => {
                 if active && self.direction.y == 0. {
                     self.direction = Vector2::new(0., 1.);
                     return;
                 }
             }
-            TileType::FireLR { active, selected: _ } => {
+            TileType::FireLR {
+                active,
+                selected: _,
+            } => {
                 if active && self.direction.x == 0. {
                     self.direction = Vector2::new(1., 0.);
                     return;
@@ -205,9 +212,18 @@ impl Spirit {
         rl: &RaylibHandle,
     ) {
         match level.tiles[x][y] {
-            TileType::FireTD { active, selected: _ }
-            | TileType::FireLR { active, selected: _ }
-            | TileType::FireStop { active, selected: _ } => {
+            TileType::FireTD {
+                active,
+                selected: _,
+            }
+            | TileType::FireLR {
+                active,
+                selected: _,
+            }
+            | TileType::FireStop {
+                active,
+                selected: _,
+            } => {
                 if active {
                     self.state = SpiritState::Patrol;
                     return;
@@ -224,9 +240,18 @@ impl Spirit {
         if self.position.distance_to(target) <= (TILE_SIZE / 10) as f32 {
             let tile = level.tiles.get_mut(x).unwrap().get_mut(y).unwrap();
             match tile {
-                TileType::FireTD { active, selected: _ }
-                | TileType::FireLR { active, selected: _ }
-                | TileType::FireStop { active, selected: _ } => *active = true,
+                TileType::FireTD {
+                    active,
+                    selected: _,
+                }
+                | TileType::FireLR {
+                    active,
+                    selected: _,
+                }
+                | TileType::FireStop {
+                    active,
+                    selected: _,
+                } => *active = true,
                 _ => {
                     panic!("no such tile bruh")
                 }
