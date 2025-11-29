@@ -493,7 +493,7 @@ fn update_level<'a>(
     order_handler.select_spirit(spirits_handler, level, rl, hotkey_handler);
     order_handler.update_line(level, rl, hotkey_handler);
 
-    ui_handler.build(level, rl, hotkey_handler);
+    ui_handler.build(level, rl, hotkey_handler, dialogue_handler);
     if ui_handler.update(hotkey_handler, scene_handler, dialogue_handler, rl) {
         save_handler.set_to_save();
     };

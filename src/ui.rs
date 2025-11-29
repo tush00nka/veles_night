@@ -67,9 +67,16 @@ impl UIHandler {
         level: &mut Level,
         rl: &mut RaylibHandle,
         hotkey_h: &mut HotkeyHandler,
+		dialogue_h: &mut DialogueHandler,
     ) {
+        let dialoging = dialogue_h.current_phrase < dialogue_h.dialogue.len();
+
         let mut intent: HotkeyCategory;
         for (title, button) in self.build_buttons.iter_mut() {
+			if dialoging {
+				break;
+			}
+
             intent = HotkeyCategory::from_bonfire(title);
 
             if hotkey_h.check_pressed(rl, intent) {
@@ -161,43 +168,36 @@ impl UIHandler {
         }
 
         if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
-            if dialogue_h.current_phrase + 1 < dialogue_h.dialogue.len() {
+            if dialogue_h.dialogue.len() <= 0 {
+                dialogue_h.current_phrase += 1;
+            } else if dialogue_h.current_phrase + 1 < dialogue_h.dialogue.len() {
                 dialogue_h.current_phrase += 1;
                 dialogue_h.dialogue_accumulator = String::new();
                 dialogue_h.dialogue_counter = 0;
-			} else if dialogue_h.current_phrase == dialogue_h.dialogue.len() - 1 {
+            } else if dialogue_h.current_phrase == dialogue_h.dialogue.len() - 1 {
                 dialogue_h.current_phrase += 1;
-			}
+            }
         }
 
         if !self.quitting {
             return false;
         }
 
-        if unsafe {
-            CheckCollisionPointRec(
-                (rl.get_mouse_position()
-                    - Vector2::new(
-                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
-                    ))
-                .into(),
-                QUIT_BUTTON.into(),
-            )
-        } && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+        if QUIT_BUTTON.check_collision_point_rec(
+            rl.get_mouse_position()
+                - Vector2::new(
+                    rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                    rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                ),
+        ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
         {
             scene_h.set(Scene::MainMenu);
             self.quitting = false;
             return true;
         };
+
         return false;
     }
-
-    // const DIALOGUE: [&'a str; 3] = [
-    //     "Приветствую тебя, путник! Никак заблудился в этом лесу, да ещё и накануне ночи,\nчто в честь меня кличут?",
-    //     "Ты либо храбрец, либо глупец, а может, и то и другое...\nНаказываю тебе помочь этим духам, что, как и ты, заблудились в лесу.",
-    //     "Помоги им вернуться в мир нави, а я, так уж и быть, выведу тебя из леса.",
-    // ];
 
     pub fn draw(
         &mut self,
@@ -208,7 +208,13 @@ impl UIHandler {
         font: &Font,
         rl: &mut RaylibDrawHandle,
     ) {
+        let dialoging = dialogue_h.current_phrase < dialogue_h.dialogue.len();
+
         for (tex_name, button) in self.build_buttons.iter() {
+            if dialoging {
+                break;
+            }
+
             let color = if unsafe {
                 CheckCollisionPointRec(
                     (rl.get_mouse_position()
@@ -323,7 +329,7 @@ impl UIHandler {
             Color::RAYWHITE,
         );
 
-        if dialogue_h.current_phrase < dialogue_h.dialogue.len() {
+        if dialoging {
             rl.draw_texture_ex(
                 texture_handler.get_safe("veles"),
                 Vector2::new(0., SCREEN_HEIGHT as f32 - 48. * TILE_SCALE as f32),
@@ -347,13 +353,19 @@ impl UIHandler {
                     .count()
             {
                 dialogue_h.dialogue_counter += 1;
-			}
+            }
 
-			let line = &mut dialogue_h.dialogue[dialogue_h.current_phrase].1.chars().rev();
-			let line_len = dialogue_h.dialogue[dialogue_h.current_phrase].1.chars().count();
-			for _ in 0..line_len-dialogue_h.dialogue_counter {
-				line.next();
-			}
+            let line = &mut dialogue_h.dialogue[dialogue_h.current_phrase]
+                .1
+                .chars()
+                .rev();
+            let line_len = dialogue_h.dialogue[dialogue_h.current_phrase]
+                .1
+                .chars()
+                .count();
+            for _ in 0..line_len - dialogue_h.dialogue_counter {
+                line.next();
+            }
 
             rl.draw_text_ex(
                 font,
