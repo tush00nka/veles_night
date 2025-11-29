@@ -39,7 +39,7 @@ impl DialogueHandler {
                 if cmp_tag == tag {
                     got_the_dialog = true;
                 }
-            } else {
+            } else if got_the_dialog {
                 if !line.contains(&['[', ']'][..]) {
                     continue;
                 }
