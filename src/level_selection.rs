@@ -48,14 +48,15 @@ impl LevelSelector {
         let mut buttons = vec![];
 
         let button_size_with_gap = BUTTON_SIZE + BUTTON_SIZE / 4.;
-        let offset = SCREEN_WIDTH as f32 / 2.
-            - button_size_with_gap / 2. * TILE_SCALE as f32 * level_count as f32;
+        let offset = SCREEN_WIDTH as f32 / 2. - button_size_with_gap / 2. * TILE_SCALE as f32 * 10.;
 
         for i in 0..level_count {
             buttons.push(Button {
                 rec: Rectangle::new(
-                    i as f32 * button_size_with_gap * TILE_SCALE as f32 + offset,
-                    SCREEN_HEIGHT as f32 / 2. - BUTTON_SIZE * TILE_SCALE as f32 / 2.,
+                    (i % 10) as f32 * button_size_with_gap * TILE_SCALE as f32 + offset,
+                    SCREEN_HEIGHT as f32 / 2.
+                        + (i / 10) as f32 * BUTTON_SIZE * TILE_SCALE as f32 * 1.25
+                        - BUTTON_SIZE * TILE_SCALE as f32,
                     BUTTON_SIZE * TILE_SCALE as f32,
                     BUTTON_SIZE * TILE_SCALE as f32,
                 ),
@@ -159,13 +160,33 @@ impl LevelSelector {
 
             button.offset = lerp(button.offset, offset, 10. * rl.get_frame_time());
 
-            rl.draw_rectangle_rec(button.rec, Color::from_hex("0b8a8f").unwrap());
+            let color = if i < 10 {
+                Color::from_hex("0b8a8f").unwrap()
+            } else {
+                Color::from_hex("b33831").unwrap()
+            };
+
+            rl.draw_rectangle_rec(button.rec, color);
 
             // let pp =
             // ((button.rec.y - button.offset) / TILE_SCALE as f32).floor() * TILE_SCALE as f32;
 
-            let color = if i <= SaveHandler::get_level_number().into() {
-                Color::from_hex("30e1b9").unwrap()
+            let color = if i < 10 {
+                let c = if i <= SaveHandler::get_level_number().into() {
+                    Color::from_hex("30e1b9").unwrap()
+                } else {
+                    Color::from_hex("0b8a8f").unwrap()
+                };
+
+                c
+            } else if i < 20 {
+                let c = if i <= SaveHandler::get_level_number().into() {
+                    Color::from_hex("f57d4a").unwrap()
+                } else {
+                    Color::from_hex("b33831").unwrap()
+                };
+
+                c
             } else {
                 Color::from_hex("0b8a8f").unwrap()
             };
