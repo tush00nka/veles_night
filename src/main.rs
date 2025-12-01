@@ -116,7 +116,7 @@ fn main() {
     let monitor_height = unsafe { GetMonitorHeight(GetCurrentMonitor()) };
 
 	let mut dialogue_handler = DialogueHandler::new();
-	dialogue_handler.load_dialogue("level_1");
+	dialogue_handler.load_dialogue(&format!("level_{level_number}"));
 
     while !rl.window_should_close() && !should_close {
         // a bit broken, so don't use on journalists
@@ -150,6 +150,7 @@ fn main() {
                 &mut level_transition,
                 &mut rl,
                 &mut scene_handler,
+				&mut dialogue_handler,
             );
         }
         // update stuff

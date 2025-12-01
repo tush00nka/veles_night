@@ -195,7 +195,7 @@ impl LevelTransition {
             &font,
             text,
             Vector2::new(
-                (SCREEN_WIDTH / 2 - text.chars().count() as i32 * 3 / 2 *  TILE_SCALE) as f32,
+                (SCREEN_WIDTH / 2 - text.chars().count() as i32 * 3 / 2 * TILE_SCALE) as f32,
                 (SCREEN_HEIGHT - 24 * TILE_SCALE) as f32,
             ),
             8. * TILE_SCALE as f32,

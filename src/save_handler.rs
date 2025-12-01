@@ -3,14 +3,7 @@ use std::fs;
 use raylib::prelude::*;
 
 use crate::{
-    enemy_spirit::EnemiesHandler,
-    level_transition::LevelTransition,
-    map::Level,
-    map_loader::MapLoader,
-    metadata_handler::MetadataHandler,
-    scene::{Scene, SceneHandler},
-    spirits_handler::SpiritsHandler,
-    ui::UIHandler,
+    dialogue::DialogueHandler, enemy_spirit::EnemiesHandler, level_transition::LevelTransition, map::Level, map_loader::MapLoader, metadata_handler::MetadataHandler, scene::{Scene, SceneHandler}, spirits_handler::SpiritsHandler, ui::UIHandler
 };
 
 pub const SAVE_PATH: &str = "dynamic/save/";
@@ -87,6 +80,7 @@ impl SaveHandler {
         level_transition: &mut LevelTransition,
         rl: &mut RaylibHandle,
         scene_handler: &mut SceneHandler,
+		dialogue_handler: &mut DialogueHandler,
     ) {
         metadata_handler.load_save();
 
@@ -97,6 +91,7 @@ impl SaveHandler {
         enemies_handler.spawn_enemies(metadata_handler);
         scene_handler.set(Scene::Level);
         *ui_handler = UIHandler::new(level_number.clone() as usize);
+		dialogue_handler.load_dialogue(&format!("level_{}", *level_number+1));
         self.should_load = false;
     }
 

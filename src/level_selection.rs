@@ -200,10 +200,10 @@ impl LevelSelector {
         if BACK_BUTTON_REC.check_collision_point_rec(mouse_pos) {
             offset = 0.;
             text_offset = TILE_SCALE as f32;
-		} else {
+        } else {
             offset = 16.;
             text_offset = 0.;
-		};
+        };
 
         rl.draw_texture_pro(
             texture_handler.get("main_menu_buttons"),
@@ -219,7 +219,9 @@ impl LevelSelector {
             "Назад",
             Vector2::new(
                 BACK_BUTTON_REC.x + BACK_BUTTON_REC.width / 2. - 6. * 2. * TILE_SCALE as f32,
-                BACK_BUTTON_REC.y + BACK_BUTTON_REC.height / 2. - 6. * TILE_SCALE as f32 - text_offset,
+                BACK_BUTTON_REC.y + BACK_BUTTON_REC.height / 2.
+                    - 6. * TILE_SCALE as f32
+                    - text_offset,
             ),
             Vector2::zero(),
             0.0,

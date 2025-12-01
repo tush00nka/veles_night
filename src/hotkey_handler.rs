@@ -34,7 +34,7 @@ pub enum KeyboardKeyString {
     KeyU,
     KeyI,
     KeyPlus,
-    KeyMinus
+    KeyMinus,
 }
 impl HotkeyCategory {
     pub fn from_bonfire(value: &str) -> HotkeyCategory {

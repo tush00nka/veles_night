@@ -3,9 +3,7 @@ use std::collections::HashMap;
 use raylib::prelude::*;
 
 use crate::{
-    map::TILE_SIZE,
-    metadata_handler::MetadataHandler,
-    spirits_handler::SpiritsHandler,
+    map::TILE_SIZE, metadata_handler::MetadataHandler, spirits_handler::SpiritsHandler,
     texture_handler::TextureHandler,
 };
 

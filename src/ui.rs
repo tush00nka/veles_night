@@ -206,7 +206,7 @@ impl UIHandler {
         texture_handler: &TextureHandler,
         dialogue_h: &mut DialogueHandler,
         level: &mut Level,
-        level_number: usize,
+        _level_number: usize,
         font: &Font,
         rl: &mut RaylibDrawHandle,
     ) {
@@ -362,7 +362,7 @@ impl UIHandler {
 
         if dialoging {
             rl.draw_texture_ex(
-                texture_handler.get_safe("veles"),
+                texture_handler.get_safe("yarilo"),
                 Vector2::new(0., SCREEN_HEIGHT as f32 - 48. * TILE_SCALE as f32),
                 0.0,
                 TILE_SCALE as f32,

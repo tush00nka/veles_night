@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use raylib::{ffi::CheckCollisionPointRec, prelude::*};
+use raylib::prelude::*;
 
 use crate::{
     FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH,
@@ -85,17 +85,13 @@ impl MainMenuHandler {
         level_transition: &mut LevelTransition,
     ) {
         for (key, button) in self.buttons.iter() {
-            if unsafe {
-                CheckCollisionPointRec(
-                    (rl.get_mouse_position()
-                        - Vector2::new(
-                            rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                            rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
-                        ))
-                    .into(),
-                    button.rect.into(),
-                )
-            } && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+            if button.rect.check_collision_point_rec(
+                rl.get_mouse_position()
+                    - Vector2::new(
+                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                    ),
+            ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
             {
                 match key {
                     0 => {
@@ -209,7 +205,8 @@ impl MainMenuHandler {
                     "Уровни",
                     Vector2::new(
                         button.rect.x + button.rect.width / 2. - 6. * 2. * TILE_SCALE as f32,
-                        button.rect.y + button.rect.height / 2. - 6. * TILE_SCALE as f32
+                        button.rect.y + button.rect.height / 2.
+                            - 6. * TILE_SCALE as f32
                             - text_offset_y,
                     ),
                     Vector2::zero(),
@@ -228,7 +225,8 @@ impl MainMenuHandler {
                 Vector2::new(
                     button.rect.x + button.rect.width / 2.
                         - 6. * (self.labels[i].chars().count() as f32 / 3.) * TILE_SCALE as f32,
-                    button.rect.y + button.rect.height / 2. - 6. * TILE_SCALE as f32
+                    button.rect.y + button.rect.height / 2.
+                        - 6. * TILE_SCALE as f32
                         - text_offset_y,
                 ),
                 Vector2::zero(),
