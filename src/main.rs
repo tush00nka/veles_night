@@ -4,7 +4,7 @@ use raylib::{
 };
 
 use crate::{
-    dialogue::DialogueHandler, enemy_spirit::EnemiesHandler, gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, level_selection::LevelSelector, level_transition::LevelTransition, main_menu::MainMenuHandler, map::{Level, TILE_SCALE, TILE_SIZE}, metadata_handler::MetadataHandler, music_handler::MusicHandler, order::OrderHandler, particle::Particle, save_handler::SaveHandler, scene::{Scene, SceneHandler}, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
+    dialogue::DialogueHandler, enemy_spirit::EnemiesHandler, gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, level_selection::LevelSelector, level_transition::LevelTransition, main_menu::MainMenuHandler, map::{Level, TILE_SCALE, TILE_SIZE}, metadata_handler::MetadataHandler, music_handler::MusicHandler, order::OrderHandler, particle::Particle, save_handler::SaveHandler, scene::{Scene, SceneHandler}, settings::SettingsHandler, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
 };
 
 // mod light;
@@ -28,6 +28,7 @@ mod spirits_handler;
 mod texture_handler;
 mod ui;
 mod dialogue;
+mod settings;
 
 pub const FIRST_LEVEL: u8 = 0;
 
@@ -117,6 +118,9 @@ fn main() {
 
 	let mut dialogue_handler = DialogueHandler::new();
 	dialogue_handler.load_dialogue(&format!("level_{level_number}"));
+
+	let mut settings_handler = SettingsHandler::new();
+	settings_handler.save();
 
     while !rl.window_should_close() && !should_close {
         // a bit broken, so don't use on journalists
