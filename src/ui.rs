@@ -18,6 +18,13 @@ pub struct Button {
 
 const TEXT_COLOR: Color = Color::new(46, 34, 47, 255);
 
+const RESTART_BUTTON: Rectangle = Rectangle::new(
+    SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6. - 100.,
+    SCREEN_HEIGHT as f32 / 3. + 30.,
+    200.,
+    100.,
+);
+
 const QUIT_BUTTON: Rectangle = Rectangle::new(
     SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6. - 100.,
     SCREEN_HEIGHT as f32 / 3. + 150.,
@@ -164,7 +171,7 @@ impl UIHandler {
         scene_h: &mut SceneHandler,
         dialogue_h: &mut DialogueHandler,
         rl: &mut RaylibHandle,
-    ) -> bool {
+    ) -> (bool, bool) {
         if hotkey_h.check_pressed(rl, HotkeyCategory::Exit) {
             self.quitting = !self.quitting;
         }
@@ -182,7 +189,7 @@ impl UIHandler {
         }
 
         if !self.quitting {
-            return false;
+            return (false, false);
         }
 
         if QUIT_BUTTON.check_collision_point_rec(
@@ -195,10 +202,22 @@ impl UIHandler {
         {
             scene_h.set(Scene::MainMenu);
             self.quitting = false;
-            return true;
+            return (true, false);
         };
 
-        return false;
+        if RESTART_BUTTON.check_collision_point_rec(
+            rl.get_mouse_position()
+                - Vector2::new(
+                    rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                    rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                ),
+        ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+        {
+            self.quitting = false;
+            return (false, true);
+        };
+
+        return (false, false);
     }
 
     pub fn draw(
@@ -437,37 +456,67 @@ impl UIHandler {
             return;
         }
 
+		let screen_width = rl.get_screen_width();
+		let screen_height = rl.get_screen_height();
+
+        // panel
         rl.draw_rectangle(
-            SCREEN_WIDTH / 3,
-            SCREEN_HEIGHT / 3,
-            SCREEN_WIDTH / 3,
-            SCREEN_HEIGHT / 3,
+            screen_width / 3,
+            screen_height / 4,
+            screen_width / 3,
+            screen_height / 2,
             Color::BLACK.alpha(0.5),
         );
 
         rl.draw_text_ex(
             font,
-            "Выйти в меню?",
+            "Меню",
             Vector2::new(
-                SCREEN_WIDTH as f32 / 3. + 8. * 13.,
-                SCREEN_HEIGHT as f32 / 3. + 10.,
+                screen_width as f32 / 2. - 50.,
+                screen_height as f32 / 3. - 50.,
             ),
             64.,
             2.,
             Color::RAYWHITE,
         );
 
-        let mouse_over = unsafe {
-            CheckCollisionPointRec(
-                (rl.get_mouse_position()
-                    - Vector2::new(
-                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
-                    ))
-                .into(),
-                QUIT_BUTTON.into(),
-            )
-        };
+        let mouse_over = RESTART_BUTTON.check_collision_point_rec(
+            rl.get_mouse_position()
+                - Vector2::new(
+                    rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                    rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                ),
+        );
+
+        rl.draw_rectangle_rec(
+            RESTART_BUTTON,
+            if mouse_over {
+                Color::RAYWHITE
+            } else {
+                Color::BLACK.alpha(0.5)
+            },
+        );
+
+        rl.draw_text_ex(
+            font,
+            "Заново",
+            Vector2::new(RESTART_BUTTON.x + 16., RESTART_BUTTON.y + 16.),
+            64.,
+            2.,
+            if mouse_over {
+                Color::BLACK
+            } else {
+                Color::RAYWHITE
+            },
+        );
+
+        let mouse_over = QUIT_BUTTON.check_collision_point_rec(
+            rl.get_mouse_position()
+                - Vector2::new(
+                    rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                    rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                ),
+        );
 
         rl.draw_rectangle_rec(
             QUIT_BUTTON,
@@ -480,11 +529,8 @@ impl UIHandler {
 
         rl.draw_text_ex(
             font,
-            "Да",
-            Vector2::new(
-                QUIT_BUTTON.x + QUIT_BUTTON.width / 2. - 32.,
-                QUIT_BUTTON.y + 16.,
-            ),
+            "Выйти",
+            Vector2::new(QUIT_BUTTON.x + 16., QUIT_BUTTON.y + 16.),
             64.,
             2.,
             if mouse_over {

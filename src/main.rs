@@ -4,11 +4,30 @@ use raylib::{
 };
 
 use crate::{
-    dialogue::DialogueHandler, enemy_spirit::EnemiesHandler, gameover_handler::GameOverHandler, hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct}, level_selection::LevelSelector, level_transition::LevelTransition, main_menu::MainMenuHandler, map::{Level, TILE_SCALE, TILE_SIZE}, metadata_handler::MetadataHandler, music_handler::MusicHandler, order::OrderHandler, particle::Particle, save_handler::SaveHandler, scene::{Scene, SceneHandler}, settings::SettingsHandler, spirit::Spirit, spirits_handler::SpiritsHandler, texture_handler::TextureHandler, ui::UIHandler
+    dialogue::DialogueHandler,
+    enemy_spirit::EnemiesHandler,
+    gameover_handler::GameOverHandler,
+    hotkey_handler::{HotkeyCategory, HotkeyHandler, HotkeyLoaderStruct},
+    level_selection::LevelSelector,
+    level_transition::LevelTransition,
+    main_menu::MainMenuHandler,
+    map::{Level, TILE_SCALE, TILE_SIZE},
+    metadata_handler::MetadataHandler,
+    music_handler::MusicHandler,
+    order::OrderHandler,
+    particle::Particle,
+    save_handler::SaveHandler,
+    scene::{Scene, SceneHandler},
+    settings::SettingsHandler,
+    spirit::Spirit,
+    spirits_handler::SpiritsHandler,
+    texture_handler::TextureHandler,
+    ui::UIHandler,
 };
 
 // mod light;
 
+mod dialogue;
 mod enemy_spirit;
 mod gameover_handler;
 mod hotkey_handler;
@@ -23,17 +42,16 @@ mod order;
 mod particle;
 mod save_handler;
 mod scene;
+mod settings;
 mod spirit;
 mod spirits_handler;
 mod texture_handler;
 mod ui;
-mod dialogue;
-mod settings;
 
 pub const FIRST_LEVEL: u8 = 0;
 
-const SCREEN_WIDTH: i32 = 16 * 16 * TILE_SCALE;
-const SCREEN_HEIGHT: i32 = 9 * 16 * TILE_SCALE;
+const SCREEN_WIDTH: i32 = 256 * TILE_SCALE; // 320
+const SCREEN_HEIGHT: i32 = 144 * TILE_SCALE; // 180
 
 fn main() {
     let (mut rl, thread) = raylib::init()
@@ -116,11 +134,11 @@ fn main() {
     let monitor_width = unsafe { GetMonitorWidth(GetCurrentMonitor()) };
     let monitor_height = unsafe { GetMonitorHeight(GetCurrentMonitor()) };
 
-	let mut dialogue_handler = DialogueHandler::new();
-	dialogue_handler.load_dialogue(&format!("level_{level_number}"));
+    let mut dialogue_handler = DialogueHandler::new();
+    dialogue_handler.load_dialogue(&format!("level_{level_number}"));
 
-	let mut settings_handler = SettingsHandler::new();
-	settings_handler.save();
+    let mut settings_handler = SettingsHandler::new();
+    settings_handler.save();
 
     while !rl.window_should_close() && !should_close {
         // a bit broken, so don't use on journalists
@@ -154,7 +172,7 @@ fn main() {
                 &mut level_transition,
                 &mut rl,
                 &mut scene_handler,
-				&mut dialogue_handler,
+                &mut dialogue_handler,
             );
         }
         // update stuff
@@ -278,7 +296,7 @@ fn main() {
                     &mut hotkey_handler,
                     &mut enemies_handler,
                     &mut save_handler,
-					&mut dialogue_handler,
+                    &mut dialogue_handler,
                 ) {
                     reload_procedure(
                         level_number,
@@ -301,7 +319,7 @@ fn main() {
                 &mut rl,
                 &mut hotkey_handler,
                 &mut ui_handler,
-				&mut dialogue_handler,
+                &mut dialogue_handler,
             ),
             Scene::LevelSelection => {
                 level_selector.update(
@@ -313,7 +331,7 @@ fn main() {
                     &mut ui_handler,
                     &mut level_transition,
                     &mut scene_handler,
-					&mut dialogue_handler,
+                    &mut dialogue_handler,
                     &mut rl,
                 );
             }
@@ -356,7 +374,7 @@ fn main() {
                     level_number,
                     &texture_handler,
                     &mut ui_handler,
-					&mut dialogue_handler,
+                    &mut dialogue_handler,
                     &font,
                     &mut t,
                 ),
@@ -465,7 +483,7 @@ fn update_level<'a>(
     hotkey_handler: &mut HotkeyHandler,
     enemies_handler: &mut EnemiesHandler,
     save_handler: &mut SaveHandler,
-	dialogue_handler: &mut DialogueHandler,
+    dialogue_handler: &mut DialogueHandler,
 ) -> bool {
     for spirit in spirits_handler.spirits.values() {
         if spirit.get_dead() {
@@ -499,7 +517,10 @@ fn update_level<'a>(
     order_handler.update_line(level, rl, hotkey_handler);
 
     ui_handler.build(level, rl, hotkey_handler, dialogue_handler);
-    if ui_handler.update(hotkey_handler, scene_handler, dialogue_handler, rl) {
+    
+	let (level_quit, level_restart) = ui_handler.update(hotkey_handler, scene_handler, dialogue_handler, rl);
+
+	if level_quit {
         save_handler.set_to_save();
     };
 
@@ -509,7 +530,7 @@ fn update_level<'a>(
         music_handler,
     );
 
-    if hotkey_handler.check_pressed(rl, HotkeyCategory::Reset) {
+    if hotkey_handler.check_pressed(rl, HotkeyCategory::Reset) || level_restart {
         return true;
     }
 
@@ -542,11 +563,18 @@ fn draw_level_ui<'a>(
     level_number: u8,
     texture_handler: &TextureHandler,
     ui_handler: &mut UIHandler,
-	dialogue_handler: &mut DialogueHandler,
+    dialogue_handler: &mut DialogueHandler,
     font: &Font,
     rl: &mut RaylibDrawHandle,
 ) {
-    ui_handler.draw(texture_handler, dialogue_handler, level, level_number.into(), font, rl);
+    ui_handler.draw(
+        texture_handler,
+        dialogue_handler,
+        level,
+        level_number.into(),
+        font,
+        rl,
+    );
 }
 
 fn update_transition(
@@ -560,7 +588,7 @@ fn update_transition(
     rl: &mut RaylibHandle,
     hotkey_handler: &mut HotkeyHandler,
     ui_handler: &mut UIHandler,
-	dialogue_handler: &mut DialogueHandler,
+    dialogue_handler: &mut DialogueHandler,
 ) {
     if !hotkey_handler.check_pressed(rl, HotkeyCategory::Continue)
         && !rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
@@ -580,7 +608,7 @@ fn update_transition(
     spirits_handler.spawn_spirits(metadata_handler);
     enemies_handler.spawn_enemies(metadata_handler);
     scene_handler.set(Scene::Level);
-	dialogue_handler.load_dialogue(&format!("level_{}", *level_number+1));
+    dialogue_handler.load_dialogue(&format!("level_{}", *level_number + 1));
     *ui_handler = UIHandler::new(level_number.clone() as usize);
 }
 
