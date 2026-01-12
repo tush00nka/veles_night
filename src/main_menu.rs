@@ -1,12 +1,12 @@
-use std::collections::HashMap;
-
+use raylib::core::text::RaylibFont;
 use raylib::prelude::*;
+use std::collections::HashMap;
 
 use crate::{
     FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH,
     enemy_spirit::EnemiesHandler,
     level_transition::LevelTransition,
-    map::{Level, TILE_SCALE},
+    map::{Level, TILE_SCALE_DEFAULT},
     metadata_handler::MetadataHandler,
     save_handler::SaveHandler,
     scene::{Scene, SceneHandler},
@@ -20,6 +20,7 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 pub struct MainMenuHandler {
     buttons: HashMap<u8, Button>,
     labels: Vec<&'static str>,
+    labels_offsets: Vec<f32>,
 }
 
 impl MainMenuHandler {
@@ -31,10 +32,10 @@ impl MainMenuHandler {
             Button {
                 selected: false,
                 rect: Rectangle::new(
-                    (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE as f32,
+                    (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE_DEFAULT as f32,
                     (SCREEN_HEIGHT / 2) as f32,
-                    64. * TILE_SCALE as f32,
-                    16. * TILE_SCALE as f32,
+                    64. * TILE_SCALE_DEFAULT as f32,
+                    16. * TILE_SCALE_DEFAULT as f32,
                 ),
 				offset: 0.,
             },
@@ -45,10 +46,10 @@ impl MainMenuHandler {
             Button {
                 selected: false,
                 rect: Rectangle::new(
-                    (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE as f32,
-                    (SCREEN_HEIGHT / 2) as f32 + 16. * TILE_SCALE as f32,
-                    64. * TILE_SCALE as f32,
-                    16. * TILE_SCALE as f32,
+                    (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE_DEFAULT as f32,
+                    (SCREEN_HEIGHT / 2) as f32 + 16. * TILE_SCALE_DEFAULT as f32,
+                    64. * TILE_SCALE_DEFAULT as f32,
+                    16. * TILE_SCALE_DEFAULT as f32,
                 ),
 				offset: 0.,
             },
@@ -59,18 +60,22 @@ impl MainMenuHandler {
             Button {
                 selected: false,
                 rect: Rectangle::new(
-                    (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE as f32,
-                    (SCREEN_HEIGHT / 2) as f32 + 32. * TILE_SCALE as f32,
-                    64. * TILE_SCALE as f32,
-                    16. * TILE_SCALE as f32,
+                    (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE_DEFAULT as f32,
+                    (SCREEN_HEIGHT / 2) as f32 + 32. * TILE_SCALE_DEFAULT as f32,
+                    64. * TILE_SCALE_DEFAULT as f32,
+                    16. * TILE_SCALE_DEFAULT as f32,
                 ),
 				offset: 0.,
             },
         );
 
-        let labels = vec!["Продолжить", "Начать", "Выйти"];
-
-        Self { buttons, labels }
+        let labels = vec!["Продолжить", "Начать", "Выйти", "Уровни"];
+        let labels_offsets = vec![0., 4.25, 3.5, 4.];
+        Self {
+            buttons,
+            labels,
+            labels_offsets,
+        }
     }
 
     pub fn update(
@@ -134,14 +139,22 @@ impl MainMenuHandler {
     ) {
         rl.clear_background(Color::from_hex("0b8a8f").unwrap());
 
-        const LOGO_WIDTH: f32 = 96. * TILE_SCALE as f32;
-        const LOGO_HEIGHT: f32 = 64. * TILE_SCALE as f32;
+        let mut maxlen: usize = 0;
+
+        for text in self.labels.iter() {
+            if text.len() > maxlen {
+                maxlen = text.len();
+            }
+        }
+
+        const LOGO_WIDTH: f32 = 96. * TILE_SCALE_DEFAULT as f32;
+        const LOGO_HEIGHT: f32 = 64. * TILE_SCALE_DEFAULT as f32;
 
         rl.draw_texture_ex(
             texture_handler.get_safe("main_menu_bg"),
             Vector2::zero(),
             0.0,
-            TILE_SCALE as f32,
+            TILE_SCALE_DEFAULT as f32,
             Color::WHITE,
         );
 
@@ -152,7 +165,7 @@ impl MainMenuHandler {
                 (SCREEN_HEIGHT / 4) as f32 - LOGO_HEIGHT / 2.,
             ),
             0.0,
-            TILE_SCALE as f32,
+            TILE_SCALE_DEFAULT as f32,
             Color::WHITE,
         );
 
@@ -183,11 +196,12 @@ impl MainMenuHandler {
             );
         }
 
-        for i in 0..self.labels.len() {
+        for i in 0..self.labels.len() - 1 {
             if i == 0 && !save_handler.is_there_saves {
                 continue;
             }
 
+            let mut label_num = i;
             let button = self.buttons.get(&(i as u8)).unwrap();
 
             let text_offset_y = if button.rect.check_collision_point_rec(
@@ -197,45 +211,30 @@ impl MainMenuHandler {
                         rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
                     ),
             ) {
-                TILE_SCALE as f32
+                TILE_SCALE_DEFAULT as f32
             } else {
                 0.
             };
 
             if i == 1 && save_handler.is_there_saves {
-                rl.draw_text_pro(
-                    font,
-                    "Уровни",
-                    Vector2::new(
-                        button.rect.x + button.rect.width / 2. - 6. * 2. * TILE_SCALE as f32,
-                        button.rect.y + button.rect.height / 2.
-                            - 6. * TILE_SCALE as f32
-                            - text_offset_y,
-                    ),
-                    Vector2::zero(),
-                    0.0,
-                    12. * TILE_SCALE as f32,
-                    2.,
-                    Color::RAYWHITE,
-                );
-
-                continue;
+                label_num = self.labels.len() - 1;
             }
 
             rl.draw_text_pro(
                 font,
-                self.labels[i],
+                self.labels[label_num],
                 Vector2::new(
-                    button.rect.x + button.rect.width / 2.
-                        - 6. * (self.labels[i].chars().count() as f32 / 3.) * TILE_SCALE as f32,
-                    button.rect.y + button.rect.height / 2.
-                        - 6. * TILE_SCALE as f32
-                        - text_offset_y,
+                    button.rect.x
+                        + 5.5 * TILE_SCALE_DEFAULT as f32
+                        + ((maxlen - self.labels[label_num].len()) * TILE_SCALE_DEFAULT as usize)
+                            as f32
+                        + self.labels_offsets[label_num] * TILE_SCALE_DEFAULT as f32,
+                    button.rect.y - text_offset_y + 1.5 * TILE_SCALE_DEFAULT as f32,
                 ),
                 Vector2::zero(),
                 0.0,
-                12. * TILE_SCALE as f32,
-                2.,
+                12. * TILE_SCALE_DEFAULT as f32,
+                1.25 * TILE_SCALE_DEFAULT as f32,
                 Color::RAYWHITE,
             );
 
@@ -252,8 +251,8 @@ impl MainMenuHandler {
         rl.draw_text_ex(
             font,
             format!("Версия {}", VERSION).as_str(),
-            Vector2::one() * 10.,
-            36.,
+            Vector2::one() * TILE_SCALE_DEFAULT as f32,
+            12. * TILE_SCALE_DEFAULT as f32,
             2.,
             Color::RAYWHITE,
         );

@@ -7,7 +7,7 @@ use crate::{
     dialogue::DialogueHandler,
     enemy_spirit::EnemiesHandler,
     level_transition::LevelTransition,
-    map::{Level, TILE_SCALE},
+    map::{Level, TILE_SCALE_DEFAULT},
     metadata_handler::MetadataHandler,
     save_handler::SaveHandler,
     scene::{Scene, SceneHandler},
@@ -20,10 +20,10 @@ const LEVEL_DIR: &str = "static/maps/";
 const BUTTON_SIZE: f32 = 16.;
 
 const BACK_BUTTON_REC: Rectangle = Rectangle::new(
-    (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE as f32,
-    (SCREEN_HEIGHT) as f32 - 32. * TILE_SCALE as f32,
-    64. * TILE_SCALE as f32,
-    16. * TILE_SCALE as f32,
+    (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE_DEFAULT as f32,
+    (SCREEN_HEIGHT) as f32 - 32. * TILE_SCALE_DEFAULT as f32,
+    64. * TILE_SCALE_DEFAULT as f32,
+    16. * TILE_SCALE_DEFAULT as f32,
 );
 
 struct Button {
@@ -48,17 +48,18 @@ impl LevelSelector {
         let mut buttons = vec![];
 
         let button_size_with_gap = BUTTON_SIZE + BUTTON_SIZE / 4.;
-        let offset = SCREEN_WIDTH as f32 / 2. - button_size_with_gap / 2. * TILE_SCALE as f32 * 10.;
+        let offset =
+            SCREEN_WIDTH as f32 / 2. - button_size_with_gap / 2. * TILE_SCALE_DEFAULT as f32 * 10.;
 
         for i in 0..level_count {
             buttons.push(Button {
                 rec: Rectangle::new(
-                    (i % 10) as f32 * button_size_with_gap * TILE_SCALE as f32 + offset,
+                    (i % 10) as f32 * button_size_with_gap * TILE_SCALE_DEFAULT as f32 + offset,
                     SCREEN_HEIGHT as f32 / 2.
-                        + (i / 10) as f32 * BUTTON_SIZE * TILE_SCALE as f32 * 1.25
-                        - BUTTON_SIZE * TILE_SCALE as f32,
-                    BUTTON_SIZE * TILE_SCALE as f32,
-                    BUTTON_SIZE * TILE_SCALE as f32,
+                        + (i / 10) as f32 * BUTTON_SIZE * TILE_SCALE_DEFAULT as f32 * 1.25
+                        - BUTTON_SIZE * TILE_SCALE_DEFAULT as f32,
+                    BUTTON_SIZE * TILE_SCALE_DEFAULT as f32,
+                    BUTTON_SIZE * TILE_SCALE_DEFAULT as f32,
                 ),
                 offset: 0.0,
             });
@@ -125,12 +126,12 @@ impl LevelSelector {
             font,
             "Выбор уровня",
             Vector2::new(
-                SCREEN_WIDTH as f32 / 2. - 24. * TILE_SCALE as f32,
-                20. * TILE_SCALE as f32,
+                SCREEN_WIDTH as f32 / 2. - 24. * TILE_SCALE_DEFAULT as f32,
+                20. * TILE_SCALE_DEFAULT as f32,
             ),
             Vector2::zero(),
             0.0,
-            12. * TILE_SCALE as f32,
+            12. * TILE_SCALE_DEFAULT as f32,
             2.,
             Color::RAYWHITE,
         );
@@ -165,7 +166,7 @@ impl LevelSelector {
             rl.draw_rectangle_rec(button.rec, color);
 
             // let pp =
-            // ((button.rec.y - button.offset) / TILE_SCALE as f32).floor() * TILE_SCALE as f32;
+            // ((button.rec.y - button.offset) / TILE_SCALE_DEFAULT as f32).floor() * TILE_SCALE_DEFAULT as f32;
 
             let color = if i < 10 {
                 let c = if i <= SaveHandler::get_level_number().into() {
@@ -201,12 +202,12 @@ impl LevelSelector {
                 font,
                 format!("{}", i + 1).as_str(),
                 Vector2::new(
-                    button.rec.x + 6. * TILE_SCALE as f32,
-                    button.rec.y - button.offset + 3. * TILE_SCALE as f32,
+                    button.rec.x + 6. * TILE_SCALE_DEFAULT as f32,
+                    button.rec.y - button.offset + 3. * TILE_SCALE_DEFAULT as f32,
                 ),
                 Vector2::zero(),
                 0.0,
-                12. * TILE_SCALE as f32,
+                12. * TILE_SCALE_DEFAULT as f32,
                 0.0,
                 Color::WHITE,
             );
@@ -216,7 +217,7 @@ impl LevelSelector {
         let text_offset;
         if BACK_BUTTON_REC.check_collision_point_rec(mouse_pos) {
             offset = 0.;
-            text_offset = TILE_SCALE as f32;
+            text_offset = TILE_SCALE_DEFAULT as f32;
         } else {
             offset = 16.;
             text_offset = 0.;
@@ -235,14 +236,15 @@ impl LevelSelector {
             font,
             "Назад",
             Vector2::new(
-                BACK_BUTTON_REC.x + BACK_BUTTON_REC.width / 2. - 6. * 2. * TILE_SCALE as f32,
+                BACK_BUTTON_REC.x + BACK_BUTTON_REC.width / 2.
+                    - 6. * 2. * TILE_SCALE_DEFAULT as f32,
                 BACK_BUTTON_REC.y + BACK_BUTTON_REC.height / 2.
-                    - 6. * TILE_SCALE as f32
+                    - 6. * TILE_SCALE_DEFAULT as f32
                     - text_offset,
             ),
             Vector2::zero(),
             0.0,
-            12. * TILE_SCALE as f32,
+            12. * TILE_SCALE_DEFAULT as f32,
             2.,
             Color::RAYWHITE,
         );

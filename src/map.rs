@@ -8,12 +8,12 @@ use crate::{
     texture_handler::TextureHandler,
 };
 
-pub const TILE_SCALE: i32 = 6;
+pub const TILE_SCALE_DEFAULT: i32 = 3;
 
 pub const LEVEL_WIDTH_TILES: usize = 16;
 pub const LEVEL_HEIGHT_TILES: usize = 9;
 pub const TILE_SIZE_PX: i32 = 16;
-pub const TILE_SIZE: i32 = TILE_SIZE_PX * TILE_SCALE;
+pub const TILE_SIZE: i32 = TILE_SIZE_PX * TILE_SCALE_DEFAULT;
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum TileType {
@@ -182,9 +182,9 @@ impl Level {
                 let stage_offset = if level_number < 10 {
                     0.
                 } else if level_number < 20 {
-					TILE_SIZE_PX as f32
+                    TILE_SIZE_PX as f32
                 } else {
-                    TILE_SIZE_PX as f32 * 2. 
+                    TILE_SIZE_PX as f32 * 2.
                 };
 
                 // let source = Rectangle::new(((x + y) % 3) as f32 * 16., 0., 16., 16.);

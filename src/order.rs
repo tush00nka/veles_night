@@ -3,7 +3,7 @@ use raylib::prelude::*;
 use crate::{
     HotkeyHandler, SCREEN_HEIGHT, SCREEN_WIDTH,
     hotkey_handler::HotkeyCategory,
-    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, Level, TILE_SCALE, TILE_SIZE, TileType},
+    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, Level, TILE_SCALE_DEFAULT, TILE_SIZE, TileType},
     spirit::SpiritState,
     spirits_handler::SpiritsHandler,
     texture_handler::TextureHandler,
@@ -267,15 +267,15 @@ impl OrderHandler {
 
             // pixel-perfect effect (may be a bit extra)
             let position = Vector2::new(
-                (position.x / TILE_SCALE as f32).floor() * TILE_SCALE as f32,
-                (position.y / TILE_SCALE as f32).floor() * TILE_SCALE as f32,
+                (position.x / TILE_SCALE_DEFAULT as f32).floor() * TILE_SCALE_DEFAULT as f32,
+                (position.y / TILE_SCALE_DEFAULT as f32).floor() * TILE_SCALE_DEFAULT as f32,
             );
 
             rl.draw_texture_ex(
                 texture_handler.get_safe("dot"),
                 position,
                 0.0,
-                TILE_SCALE as f32,
+                TILE_SCALE_DEFAULT as f32,
                 Color::RAYWHITE,
             );
         }

@@ -5,7 +5,7 @@ use serde::Deserialize;
 
 use crate::{
     SCREEN_HEIGHT, SCREEN_WIDTH,
-    map::{TILE_SCALE, TILE_SIZE_PX},
+    map::{TILE_SCALE_DEFAULT, TILE_SIZE_PX},
     map_loader::MAP_PATH,
     texture_handler::TextureHandler,
 };
@@ -95,7 +95,7 @@ impl LevelTransition {
         );
     }
 
-    const CARD_SIZE: i32 = 64 * TILE_SCALE;
+    const CARD_SIZE: i32 = 64 * TILE_SCALE_DEFAULT;
 
     pub fn draw(
         &mut self,
@@ -159,11 +159,11 @@ impl LevelTransition {
                     ),
                     Rectangle::new(
                         cards[i].x + Self::CARD_SIZE as f32 / 2.
-                            - (TILE_SIZE_PX * TILE_SCALE / 2) as f32,
+                            - (TILE_SIZE_PX * TILE_SCALE_DEFAULT / 2) as f32,
                         cards[i].y + Self::CARD_SIZE as f32 / 2.
-                            - (TILE_SIZE_PX * TILE_SCALE / 2) as f32,
-                        (TILE_SIZE_PX * TILE_SCALE) as f32,
-                        (TILE_SIZE_PX * TILE_SCALE) as f32,
+                            - (TILE_SIZE_PX * TILE_SCALE_DEFAULT / 2) as f32,
+                        (TILE_SIZE_PX * TILE_SCALE_DEFAULT) as f32,
+                        (TILE_SIZE_PX * TILE_SCALE_DEFAULT) as f32,
                     ),
                     Vector2::zero(),
                     0.0,
@@ -176,13 +176,13 @@ impl LevelTransition {
                         font,
                         text.as_str(),
                         Vector2::new(
-                            cards[i].x + 8. * TILE_SCALE as f32,
+                            cards[i].x + 8. * TILE_SCALE_DEFAULT as f32,
                             cards[i].y + Self::CARD_SIZE as f32 / 2.
-                                - (line_count + 1.) * 3. * TILE_SCALE as f32,
+                                - (line_count + 1.) * 3. * TILE_SCALE_DEFAULT as f32,
                         ),
                         Vector2::zero(),
                         0.0,
-                        6. * TILE_SCALE as f32,
+                        6. * TILE_SCALE_DEFAULT as f32,
                         0.0,
                         Color::BLACK,
                     )
@@ -195,10 +195,11 @@ impl LevelTransition {
             &font,
             text,
             Vector2::new(
-                (SCREEN_WIDTH / 2 - text.chars().count() as i32 * 3 / 2 * TILE_SCALE) as f32,
-                (SCREEN_HEIGHT - 24 * TILE_SCALE) as f32,
+                (SCREEN_WIDTH / 2 - text.chars().count() as i32 * 3 / 2 * TILE_SCALE_DEFAULT)
+                    as f32,
+                (SCREEN_HEIGHT - 24 * TILE_SCALE_DEFAULT) as f32,
             ),
-            8. * TILE_SCALE as f32,
+            8. * TILE_SCALE_DEFAULT as f32,
             0.,
             Color::RAYWHITE.alpha((rl.get_time() * 2.).sin().abs() as f32),
         );

@@ -11,7 +11,7 @@ use crate::{
     level_selection::LevelSelector,
     level_transition::LevelTransition,
     main_menu::MainMenuHandler,
-    map::{Level, TILE_SCALE, TILE_SIZE},
+    map::{Level, TILE_SCALE_DEFAULT, TILE_SIZE},
     metadata_handler::MetadataHandler,
     music_handler::MusicHandler,
     order::OrderHandler,
@@ -47,12 +47,13 @@ mod spirit;
 mod spirits_handler;
 mod texture_handler;
 mod ui;
+
 mod color;
 
 pub const FIRST_LEVEL: u8 = 0;
 
-const SCREEN_WIDTH: i32 = 256 * TILE_SCALE; // 320
-const SCREEN_HEIGHT: i32 = 144 * TILE_SCALE; // 180
+const SCREEN_WIDTH: i32 = 16 * 16 * TILE_SCALE_DEFAULT;
+const SCREEN_HEIGHT: i32 = 9 * 16 * TILE_SCALE_DEFAULT;
 
 fn main() {
     let (mut rl, thread) = raylib::init()
@@ -350,7 +351,7 @@ fn main() {
                 match scene_handler.get_current() {
                     Scene::Level => draw_level(
                         &mut level,
-						level_number,
+                        level_number,
                         &texture_handler,
                         &mut spirits_handler,
                         &mut enemies_handler,
@@ -519,10 +520,11 @@ fn update_level<'a>(
     order_handler.update_line(level, rl, hotkey_handler);
 
     ui_handler.build(level, rl, hotkey_handler, dialogue_handler);
-    
-	let (level_quit, level_restart) = ui_handler.update(hotkey_handler, scene_handler, dialogue_handler, rl);
 
-	if level_quit {
+    let (level_quit, level_restart) =
+        ui_handler.update(hotkey_handler, scene_handler, dialogue_handler, rl);
+
+    if level_quit {
         save_handler.set_to_save();
     };
 
@@ -541,7 +543,7 @@ fn update_level<'a>(
 
 fn draw_level(
     level: &mut Level,
-	level_number: u8,
+    level_number: u8,
     texture_handler: &TextureHandler,
     spirits_handler: &mut SpiritsHandler,
     enemies_handler: &mut EnemiesHandler,
