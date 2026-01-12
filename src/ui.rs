@@ -465,7 +465,7 @@ impl UIHandler {
             screen_height / 4,
             screen_width / 3,
             screen_height / 2,
-            Color::BLACK.alpha(0.5),
+            Color::from_hex("0b5e65").unwrap(),
         );
 
         rl.draw_text_ex(
@@ -491,9 +491,9 @@ impl UIHandler {
         rl.draw_rectangle_rec(
             RESTART_BUTTON,
             if mouse_over {
-                Color::RAYWHITE
+                Color::from_hex("30e1b9").unwrap()
             } else {
-                Color::BLACK.alpha(0.5)
+				Color::from_hex("0b8a8f").unwrap()
             },
         );
 
@@ -503,11 +503,7 @@ impl UIHandler {
             Vector2::new(RESTART_BUTTON.x + 16., RESTART_BUTTON.y + 16.),
             64.,
             2.,
-            if mouse_over {
-                Color::BLACK
-            } else {
-                Color::RAYWHITE
-            },
+			Color::RAYWHITE
         );
 
         let mouse_over = QUIT_BUTTON.check_collision_point_rec(
@@ -521,9 +517,9 @@ impl UIHandler {
         rl.draw_rectangle_rec(
             QUIT_BUTTON,
             if mouse_over {
-                Color::RAYWHITE
+                Color::from_hex("30e1b9").unwrap()
             } else {
-                Color::BLACK.alpha(0.5)
+				Color::from_hex("0b8a8f").unwrap()
             },
         );
 
@@ -533,11 +529,7 @@ impl UIHandler {
             Vector2::new(QUIT_BUTTON.x + 16., QUIT_BUTTON.y + 16.),
             64.,
             2.,
-            if mouse_over {
-                Color::BLACK
-            } else {
-                Color::RAYWHITE
-            },
+			Color::RAYWHITE
         );
     }
 }
