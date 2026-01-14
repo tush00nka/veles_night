@@ -18,6 +18,7 @@ impl EnemiesHandler {
         }
     }
 
+    #[profiling::function]
     pub fn spawn_enemies(&mut self, metadata_handler: &mut MetadataHandler) {
         self.enemies = HashMap::new();
         for i in 0..metadata_handler.enemies.len() {
@@ -41,9 +42,12 @@ impl Enemy {
         Self { position }
     }
 
+    #[profiling::function]
     fn get_position(&self) -> Vector2 {
         return self.position;
     }
+
+    #[profiling::function]
     pub fn collide_check(&mut self, spirits: &mut SpiritsHandler) {
         let near_spirits = spirits
             .spirits
@@ -54,6 +58,8 @@ impl Enemy {
             spirit.1.kill_spirit();
         }
     }
+
+    #[profiling::function]
     pub fn draw(&self, rl: &mut RaylibDrawHandle, texture_handler: &TextureHandler) {
         let source = Rectangle::new(
             ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,

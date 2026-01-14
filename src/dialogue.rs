@@ -15,6 +15,7 @@ impl DialogueHandler {
         }
     }
 
+    #[profiling::function]
     pub fn load_dialogue(&mut self, tag: &str) {
         let result = std::fs::read_to_string("static/dialogues.dg");
         let dialog_string;
@@ -23,10 +24,10 @@ impl DialogueHandler {
             Err(e) => panic!("Error parsing dialogues.dg file: {}", e),
         }
 
-		self.dialogue_accumulator = String::new();
-		self.dialogue_counter = 0;
-		self.dialogue.clear();
-		self.current_phrase = 0;
+        self.dialogue_accumulator = String::new();
+        self.dialogue_counter = 0;
+        self.dialogue.clear();
+        self.current_phrase = 0;
 
         let mut got_the_dialog = false;
         for line in dialog_string.lines() {
@@ -51,5 +52,5 @@ impl DialogueHandler {
                     .push((speaker.to_string(), phrase.trim_start().to_string()));
             }
         }
-	}
+    }
 }

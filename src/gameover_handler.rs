@@ -70,6 +70,7 @@ impl GameOverHandler {
         }
     }
 
+    #[profiling::function]
     pub fn draw_gameover(&self, font: &Font, rl: &mut RaylibDrawHandle) {
         rl.clear_background(Color::from_hex("0b8a8f").unwrap());
         for (name, button) in self.restart_buttons.iter() {
@@ -126,6 +127,7 @@ impl GameOverHandler {
         }
     }
 
+    #[profiling::function]
     pub fn update_gameover(
         &mut self,
         level_number: &mut u8,

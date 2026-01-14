@@ -3,7 +3,15 @@ use std::fs;
 use raylib::prelude::*;
 
 use crate::{
-    dialogue::DialogueHandler, enemy_spirit::EnemiesHandler, level_transition::LevelTransition, map::Level, map_loader::MapLoader, metadata_handler::MetadataHandler, scene::{Scene, SceneHandler}, spirits_handler::SpiritsHandler, ui::UIHandler
+    dialogue::DialogueHandler,
+    enemy_spirit::EnemiesHandler,
+    level_transition::LevelTransition,
+    map::Level,
+    map_loader::MapLoader,
+    metadata_handler::MetadataHandler,
+    scene::{Scene, SceneHandler},
+    spirits_handler::SpiritsHandler,
+    ui::UIHandler,
 };
 
 pub const SAVE_PATH: &str = "dynamic/save/";
@@ -15,6 +23,7 @@ pub struct SaveHandler {
 }
 
 impl SaveHandler {
+    #[profiling::function]
     pub fn new() -> Self {
         Self {
             should_save: false,
@@ -23,14 +32,17 @@ impl SaveHandler {
         }
     }
 
+    #[profiling::function]
     pub fn set_to_save(&mut self) {
         self.should_save = true;
     }
 
+    #[profiling::function]
     pub fn set_to_load(&mut self) {
         self.should_load = true;
     }
 
+    #[profiling::function]
     pub fn check_saves(&mut self) {
         let save_p = &SAVE_PATH.to_string();
 
@@ -46,6 +58,7 @@ impl SaveHandler {
         self.is_there_saves = dir.next().is_some();
     }
 
+    #[profiling::function]
     pub fn get_level_number() -> u8 {
         let filenames = fs::read_dir(SAVE_PATH).unwrap();
 
@@ -69,6 +82,7 @@ impl SaveHandler {
         panic!("COULDN'T PARSE LEVEL_NUMBER");
     }
 
+    #[profiling::function]
     pub fn load_save(
         &mut self,
         metadata_handler: &mut MetadataHandler,
@@ -80,7 +94,7 @@ impl SaveHandler {
         level_transition: &mut LevelTransition,
         rl: &mut RaylibHandle,
         scene_handler: &mut SceneHandler,
-		dialogue_handler: &mut DialogueHandler,
+        dialogue_handler: &mut DialogueHandler,
     ) {
         metadata_handler.load_save();
 
@@ -91,10 +105,11 @@ impl SaveHandler {
         enemies_handler.spawn_enemies(metadata_handler);
         scene_handler.set(Scene::Level);
         *ui_handler = UIHandler::new(level_number.clone() as usize);
-		dialogue_handler.load_dialogue(&format!("level_{}", *level_number+1));
+        dialogue_handler.load_dialogue(&format!("level_{}", *level_number + 1));
         self.should_load = false;
     }
 
+    #[profiling::function]
     pub fn create_save_file(
         &mut self,
         metadata_handler: &mut MetadataHandler,

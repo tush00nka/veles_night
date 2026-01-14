@@ -7,11 +7,13 @@ pub struct SpiritsHandler {
 }
 
 impl SpiritsHandler {
+    #[profiling::function]
     pub fn new() -> Self {
         Self {
             spirits: HashMap::new(),
         }
     }
+    #[profiling::function]
     pub fn spawn_spirits(&mut self, metadata_handler: &mut MetadataHandler) {
         self.spirits = HashMap::new();
         for spirits_list in 0..metadata_handler.spirits.len() {

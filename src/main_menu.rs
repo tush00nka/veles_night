@@ -24,6 +24,7 @@ pub struct MainMenuHandler {
 }
 
 impl MainMenuHandler {
+    #[profiling::function]
     pub fn new() -> Self {
         let mut buttons = HashMap::new();
 
@@ -78,6 +79,7 @@ impl MainMenuHandler {
         }
     }
 
+    #[profiling::function]
     pub fn update(
         &self,
         scene_handler: &mut SceneHandler,
@@ -130,6 +132,7 @@ impl MainMenuHandler {
         }
     }
 
+    #[profiling::function]
     pub fn draw(
         &mut self,
         font: &Font,

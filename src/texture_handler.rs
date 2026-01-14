@@ -10,6 +10,7 @@ const TEXTURE_FOLDER: &str = "static/textures/";
 const DEFAULT_TEXTURE: &str = "static/textures/tree.png";
 
 impl TextureHandler {
+    #[profiling::function]
     pub fn new(rl: &mut RaylibHandle, thread: &RaylibThread) -> Self {
         let mut textures = HashMap::new();
 
@@ -44,15 +45,17 @@ impl TextureHandler {
         }
     }
 
+    #[profiling::function]
     pub fn get(&self, str: &str) -> &Texture2D {
         return self.textures.get(str).unwrap();
     }
 
+    #[profiling::function]
     pub fn get_safe(&self, str: &str) -> &Texture2D {
         let texture = match self.textures.get(str) {
             Some(f) => f,
             _ => {
-                println!("COULDN'T LOAD PROPER TEXTURE! USING DEFAULT - {DEFAULT_TEXTURE}");
+                //println!("COULDN'T LOAD PROPER TEXTURE! USING DEFAULT - {DEFAULT_TEXTURE}");
                 &self.default_texture
             }
         };

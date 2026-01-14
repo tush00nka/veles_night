@@ -14,6 +14,7 @@ use std::{
 pub struct MapLoader;
 
 impl MapLoader {
+    #[profiling::function]
     pub fn get_map_save(level_number: u8, level_map: &mut map::Level, rl: &mut RaylibHandle) {
         let level_path = SAVE_PATH.to_string() + &level_number.to_string();
         MapLoader::map_loading(level_path, level_map, rl);
@@ -96,6 +97,7 @@ impl MapLoader {
         }
     }
 
+    #[profiling::function]
     pub fn save_map(
         level_number: u8,
         level_map: &mut map::Level,
@@ -172,6 +174,7 @@ impl MapLoader {
         };
     }
 
+    #[profiling::function]
     pub fn get_map(level_number: u8, level_map: &mut map::Level, rl: &mut RaylibHandle) {
         let level_path = MAP_PATH.to_string() + &level_number.to_string();
         MapLoader::map_loading(level_path, level_map, rl);

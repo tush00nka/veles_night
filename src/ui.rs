@@ -28,6 +28,7 @@ pub struct UIHandler {
 }
 
 impl UIHandler {
+    #[profiling::function]
     pub fn new(level_number: usize) -> Self {
         let mut buttons = HashMap::new();
 
@@ -72,6 +73,7 @@ impl UIHandler {
         }
     }
 
+    #[profiling::function]
     pub fn build(
         &mut self,
         level: &mut Level,
@@ -166,6 +168,7 @@ impl UIHandler {
         }
     }
 
+    #[profiling::function]
     pub fn update(
         &mut self,
         hotkey_h: &mut HotkeyHandler,
@@ -221,6 +224,7 @@ impl UIHandler {
         return (false, false);
     }
 
+    #[profiling::function]
     pub fn draw(
         &mut self,
         texture_handler: &TextureHandler,

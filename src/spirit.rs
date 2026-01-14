@@ -26,6 +26,7 @@ pub struct Spirit {
 
 impl Spirit {
     #[allow(unused)]
+    #[profiling::function]
     pub fn default(pos: Vector2) -> Self {
         Self {
             position: pos,
@@ -38,6 +39,7 @@ impl Spirit {
         }
     }
 
+    #[profiling::function]
     pub fn new(pos: Vector2, dir: Vector2) -> Self {
         Self {
             position: pos,
@@ -51,18 +53,22 @@ impl Spirit {
     }
 
     #[allow(unused)]
+    #[profiling::function]
     pub fn get_direction(&self) -> Vector2 {
         self.direction
     }
 
+    #[profiling::function]
     pub fn get_position(&self) -> Vector2 {
-        self.position //+ Vector2::one() * (TILE_SIZE / 2) as f32
+        self.position // + Vector2::one() * (TILE_SIZE / 2) as f32
     }
 
     #[allow(unused)]
+    #[profiling::function]
     pub fn get_teleported(&self) -> u8 {
         self.teleported
     }
+    #[profiling::function]
     pub fn get_draw_position(&self) -> Vector2 {
         // let x = (self.draw_position.x / TILE_SCALE as f32).floor() * TILE_SCALE as f32;
         // let y = (self.draw_position.y / TILE_SCALE as f32).floor() * TILE_SCALE as f32;
@@ -71,14 +77,17 @@ impl Spirit {
         self.draw_position
     }
 
+    #[profiling::function]
     pub fn get_dead(&self) -> bool {
         self.dead
     }
 
+    #[profiling::function]
     pub fn set_state(&mut self, state: SpiritState) {
         self.state = state;
     }
 
+    #[profiling::function]
     pub fn update_behaviour(
         &mut self,
         level: &mut Level,
@@ -100,10 +109,12 @@ impl Spirit {
         }
     }
 
+    #[profiling::function]
     pub fn kill_spirit(&mut self) {
         self.dead = true;
     }
 
+    #[profiling::function]
     pub fn update_position_smoothly(&mut self, rl: &mut RaylibHandle) {
         self.draw_position = self
             .draw_position
@@ -302,6 +313,7 @@ impl Spirit {
         self.draw_position = self.position;
     }
 
+    #[profiling::function]
     pub fn draw(&self, rl: &mut RaylibDrawHandle, texture_handler: &TextureHandler) {
         let source = Rectangle::new(
             ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,

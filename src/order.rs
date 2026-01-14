@@ -15,6 +15,7 @@ pub struct OrderHandler {
 }
 
 impl OrderHandler {
+    #[profiling::function]
     pub fn new() -> Self {
         Self {
             spirit: None,
@@ -22,6 +23,7 @@ impl OrderHandler {
         }
     }
 
+    #[profiling::function]
     pub fn select_spirit(
         &mut self,
         spirits_handler: &mut SpiritsHandler,
@@ -41,10 +43,10 @@ impl OrderHandler {
             let mut nearest_dist = f32::MAX;
 
             for (key, spirit) in spirits_handler.spirits.iter() {
-                let dist = spirit.get_draw_position().distance_to(mouse_pos);
-                if spirit.get_draw_position().distance_to(mouse_pos) <= TILE_SIZE as f32
-                    && dist < nearest_dist
-                {
+                let dist = (spirit.get_draw_position()
+                    + Vector2::new((TILE_SIZE / 2) as f32, (TILE_SIZE / 2) as f32))
+                .distance_to(mouse_pos);
+                if dist <= TILE_SIZE as f32 * 1.1 && dist < nearest_dist {
                     key_nearest = *key;
                     nearest_dist = dist;
                 }
@@ -196,6 +198,7 @@ impl OrderHandler {
         self.spirit = None;
     }
 
+    #[profiling::function]
     pub fn update_line(
         &mut self,
         level: &Level,
@@ -240,6 +243,7 @@ impl OrderHandler {
         }
     }
 
+    #[profiling::function]
     pub fn draw(
         &self,
         spirits_handler: &SpiritsHandler,

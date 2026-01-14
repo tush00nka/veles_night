@@ -21,6 +21,7 @@ pub struct SceneHandler {
 }
 
 impl SceneHandler {
+    #[profiling::function]
     pub fn new() -> Self {
         Self {
             current: Scene::MainMenu,
@@ -31,10 +32,12 @@ impl SceneHandler {
         }
     }
 
+    #[profiling::function]
     pub fn get_current(&self) -> Scene {
         self.current
     }
 
+    #[profiling::function]
     pub fn set(&mut self, scene: Scene) {
         if self.initiated {
             return;
@@ -45,6 +48,7 @@ impl SceneHandler {
         self.next = Some(scene);
     }
 
+    #[profiling::function]
     pub fn get_next(&self) -> Scene {
         match self.current {
             Scene::Level => Scene::Transition,
@@ -57,6 +61,7 @@ impl SceneHandler {
 
     const FADE_SPEED: f32 = 4.;
 
+    #[profiling::function]
     pub fn update(&mut self, rl: &mut RaylibHandle) {
         if self.fade_in {
             if let Some(next) = self.next {
@@ -78,6 +83,7 @@ impl SceneHandler {
         }
     }
 
+    #[profiling::function]
     pub fn draw(&self, rl: &mut RaylibDrawHandle) {
         rl.draw_rectangle_v(
             Vector2::zero(),

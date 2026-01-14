@@ -36,6 +36,7 @@ pub struct LevelSelector {
 }
 
 impl LevelSelector {
+    #[profiling::function]
     pub fn new() -> Self {
         let dir = fs::read_dir(LEVEL_DIR);
 
@@ -68,6 +69,7 @@ impl LevelSelector {
         Self { buttons }
     }
 
+    #[profiling::function]
     pub fn update(
         &self,
         level_number: &mut u8,
@@ -114,6 +116,7 @@ impl LevelSelector {
         }
     }
 
+    #[profiling::function]
     pub fn draw(
         &mut self,
         font: &Font,

@@ -48,6 +48,7 @@ pub struct LevelTransition {
 }
 
 impl LevelTransition {
+    #[profiling::function]
     pub fn new() -> Self {
         let path = "static/unlocks.json";
         let Ok(string_json) = fs::read_to_string(path) else {
@@ -79,6 +80,7 @@ impl LevelTransition {
         new_transition
     }
 
+    #[profiling::function]
     pub fn set_cards(&mut self, level_completed: usize) {
         for card in self.cards.iter_mut() {
             card.stage = 0;
@@ -97,6 +99,7 @@ impl LevelTransition {
 
     const CARD_SIZE: i32 = 64 * TILE_SCALE_DEFAULT;
 
+    #[profiling::function]
     pub fn draw(
         &mut self,
         texture_handler: &TextureHandler,

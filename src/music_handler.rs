@@ -11,6 +11,7 @@ pub struct MusicHandler<'a> {
 
 #[allow(unused)]
 impl<'a> MusicHandler<'a> {
+    #[profiling::function]
     pub fn new(rl_audio: &'a RaylibAudio) -> Self {
         let mut sounds = HashMap::new();
         let filenames = fs::read_dir(MUSIC_PATH).unwrap();
@@ -41,22 +42,27 @@ impl<'a> MusicHandler<'a> {
         }
     }
 
+    #[profiling::function]
     pub fn music_play(&self) {
         self.music.play_stream();
     }
 
+    #[profiling::function]
     pub fn music_update(&self) {
         self.music.update_stream();
     }
 
+    #[profiling::function]
     pub fn music_pause(&self) {
         self.music.pause_stream();
     }
 
+    #[profiling::function]
     pub fn music_resume(&self) {
         self.music.resume_stream();
     }
 
+    #[profiling::function]
     pub fn play(&self, music_name: &str) {
         // for (i, sound) in self.sounds.iter(){
         //     println!("At least there's");
@@ -65,6 +71,7 @@ impl<'a> MusicHandler<'a> {
         self.sounds.get(music_name).unwrap().play();
     }
 
+    #[profiling::function]
     pub fn stop(&self, music_name: &str) {
         self.sounds.get(music_name).unwrap().stop();
     }

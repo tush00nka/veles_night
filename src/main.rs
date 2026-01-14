@@ -56,6 +56,7 @@ const SCREEN_WIDTH: i32 = 16 * 16 * TILE_SCALE_DEFAULT;
 const SCREEN_HEIGHT: i32 = 9 * 16 * TILE_SCALE_DEFAULT;
 
 fn main() {
+    profiling::scope!("Initialization");
     let (mut rl, thread) = raylib::init()
         .size(SCREEN_WIDTH, SCREEN_HEIGHT)
         .resizable()
@@ -141,9 +142,8 @@ fn main() {
 
     let mut settings_handler = SettingsHandler::new();
     settings_handler.save();
-
     while !rl.window_should_close() && !should_close {
-        // a bit broken, so don't use on journalists
+        profiling::scope!("Game frame");
         if rl.is_key_pressed(KeyboardKey::KEY_F) {
             if rl.is_window_fullscreen() {
                 rl.set_window_size(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -338,7 +338,7 @@ fn main() {
                 );
             }
         }
-
+        profiling::scope!("Drawing");
         // draw stuff
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::BLACK);
@@ -417,6 +417,7 @@ fn main() {
             0.0,
             Color::WHITE,
         );
+        profiling::finish_frame!();
     }
 
     match scene_handler.get_current() {

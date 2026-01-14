@@ -28,12 +28,15 @@ pub struct SettingsHandler {
 const SETTINGS_PATH: &str = "dynamic/settings.json";
 
 impl SettingsHandler {
+    #[profiling::function]
     pub fn new() -> Self {
         let path = SETTINGS_PATH.to_string();
 
-		if !std::fs::exists(&path).expect("COULDN'T CHECK IF SETTINGS FILE EXISTS") {
-			return Self {settings: Settings::default() };
-		}
+        if !std::fs::exists(&path).expect("COULDN'T CHECK IF SETTINGS FILE EXISTS") {
+            return Self {
+                settings: Settings::default(),
+            };
+        }
 
         let Ok(s) = std::fs::read_to_string(path) else {
             panic!("COULDN'T LOAD SETTINGS");
@@ -45,6 +48,7 @@ impl SettingsHandler {
         Self { settings }
     }
 
+    #[profiling::function]
     pub fn save(&self) {
         let Ok(s) = serde_json::to_string_pretty(&self.settings) else {
             panic!("COULDN'T SERIALIZE SETTINGS TO JSON");

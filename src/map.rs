@@ -8,7 +8,7 @@ use crate::{
     texture_handler::TextureHandler,
 };
 
-pub const TILE_SCALE_DEFAULT: i32 = 3;
+pub const TILE_SCALE_DEFAULT: i32 = 7;
 
 pub const LEVEL_WIDTH_TILES: usize = 16;
 pub const LEVEL_HEIGHT_TILES: usize = 9;
@@ -34,6 +34,7 @@ pub struct Level {
 }
 
 impl Level {
+    #[profiling::function]
     pub fn new() -> Self {
         Self {
             tiles: [[TileType::Air; LEVEL_HEIGHT_TILES]; LEVEL_WIDTH_TILES],
@@ -51,6 +52,7 @@ impl Level {
         self.light_bonfires(metadata_handler);
     }
 
+    #[profiling::function]
     pub fn load(
         &mut self,
         level_number: u8,
@@ -61,6 +63,7 @@ impl Level {
         self.set_load_data(metadata_handler);
     }
 
+    #[profiling::function]
     pub fn load_save(
         &mut self,
         level_number: u8,
@@ -91,6 +94,7 @@ impl Level {
         self.survived += 1;
     }
 
+    #[profiling::function]
     pub fn connect_swamps(&mut self, metadata_handler: &mut MetadataHandler) {
         for i in metadata_handler.swamps.iter() {
             match self.tiles[i.swamp[0] as usize][i.swamp[1] as usize] {
@@ -106,16 +110,17 @@ impl Level {
                     // );
                 }
                 _ => {
-                    println!(
-                        "{} - {} - {} - {}",
-                        i.swamp[0], i.swamp[1], i.teleport[0], i.teleport[1]
-                    );
+                    //  println!(
+                    //     "{} - {} - {} - {}",
+                    //   i.swamp[0], i.swamp[1], i.teleport[0], i.teleport[1]
+                    //);
                     panic!("COULDN'T PAIR METADATA WITH LOADED MAP");
                 }
             }
         }
     }
 
+    #[profiling::function]
     pub fn light_bonfires(&mut self, metadata_handler: &mut MetadataHandler) {
         for bonfire in metadata_handler.bonfires.iter_mut() {
             match self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize] {
@@ -157,6 +162,7 @@ impl Level {
         }
     }
 
+    #[profiling::function]
     pub fn update(
         &self,
         scene_handler: &mut SceneHandler,
@@ -171,6 +177,7 @@ impl Level {
         }
     }
 
+    #[profiling::function]
     pub fn draw(
         &self,
         rl: &mut RaylibDrawHandle,
