@@ -58,16 +58,18 @@ impl UIHandler {
             quitting: false,
             pause_button_recs: vec![
                 Rectangle::new(
-                    SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6. - 32. * TILE_SCALE as f32,
+                    SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6.
+                        - 32. * TILE_SCALE_DEFAULT as f32,
                     SCREEN_HEIGHT as f32 / 3. + 30.,
-                    64. * TILE_SCALE as f32,
-                    16. * TILE_SCALE as f32,
+                    64. * TILE_SCALE_DEFAULT as f32,
+                    16. * TILE_SCALE_DEFAULT as f32,
                 ),
                 Rectangle::new(
-                    SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6. - 32. * TILE_SCALE as f32,
+                    SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6.
+                        - 32. * TILE_SCALE_DEFAULT as f32,
                     SCREEN_HEIGHT as f32 / 3. + 150.,
-                    64. * TILE_SCALE as f32,
-                    16. * TILE_SCALE as f32,
+                    64. * TILE_SCALE_DEFAULT as f32,
+                    16. * TILE_SCALE_DEFAULT as f32,
                 ),
             ],
         }
@@ -248,9 +250,9 @@ impl UIHandler {
                         rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
                     ),
             ) {
-                6. * TILE_SCALE as f32
+                6. * TILE_SCALE_DEFAULT as f32
             } else {
-                2. * TILE_SCALE as f32
+                2. * TILE_SCALE_DEFAULT as f32
             };
 
             button.offset = lerp(button.offset, target_offset, 10. * rl.get_frame_time());
@@ -260,7 +262,7 @@ impl UIHandler {
                 texture_handler.get("pedestal"),
                 Vector2::new(button.rect.x, button.rect.y),
                 0.0,
-                TILE_SCALE as f32,
+                TILE_SCALE_DEFAULT as f32,
                 Color::WHITE,
             );
 
@@ -473,15 +475,15 @@ impl UIHandler {
 
         // panel
         let panel_position = Vector2::new(
-            (screen_width / 2) as f32 - 64. * TILE_SCALE as f32,
-            (screen_height / 2) as f32 - 48. * TILE_SCALE as f32,
+            (screen_width / 2) as f32 - 64. * TILE_SCALE_DEFAULT as f32,
+            (screen_height / 2) as f32 - 48. * TILE_SCALE_DEFAULT as f32,
         );
 
         rl.draw_texture_ex(
             texture_handler.get("pause_menu"),
             panel_position,
             0.0,
-            TILE_SCALE as f32,
+            TILE_SCALE_DEFAULT as f32,
             Color::WHITE,
         );
 
@@ -490,7 +492,7 @@ impl UIHandler {
             "Меню",
             Vector2::new(
                 screen_width as f32 / 2. - 50.,
-                (screen_height / 2) as f32 - 48. * TILE_SCALE as f32 + 12.,
+                (screen_height / 2) as f32 - 48. * TILE_SCALE_DEFAULT as f32 + 12.,
             ),
             64.,
             2.,
@@ -535,7 +537,7 @@ impl UIHandler {
                 },
                 Vector2::new(
                     button_rect.x + button_rect.x / 2. - 160.,
-                    button_rect.y + 16. - texture_offset / 16. * 2. * TILE_SCALE as f32,
+                    button_rect.y + 16. - texture_offset / 16. * 2. * TILE_SCALE_DEFAULT as f32,
                 ),
                 64.,
                 2.,
