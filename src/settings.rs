@@ -1,22 +1,26 @@
 use serde::{Deserialize, Serialize};
 
+use crate::map::TILE_SCALE_DEFAULT;
+
 #[derive(Serialize, Deserialize)]
 pub struct Settings {
-    fullscreen: bool,
-    pixel_scale: u8,
+    language: String,
     music: f32,
     sound: f32,
-    language: String,
+    pixel_scale: u8,
+    shader: bool,
+    fullscreen: bool,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            fullscreen: false,
-            pixel_scale: 4,
+            pixel_scale: TILE_SCALE_DEFAULT as u8,
             music: 100.0,
             sound: 100.0,
             language: "ru".to_string(),
+            shader: false,
+            fullscreen: false,
         }
     }
 }
@@ -39,10 +43,14 @@ impl SettingsHandler {
         }
 
         let Ok(s) = std::fs::read_to_string(path) else {
-            panic!("COULDN'T LOAD SETTINGS");
+            return Self {
+                settings: Settings::default(),
+            };
         };
         let Ok(settings) = serde_json::from_str(&s) else {
-            panic!("COULDN'T PARSE SETTINGS JSON");
+            return Self {
+                settings: Settings::default(),
+            };
         };
 
         Self { settings }

@@ -142,6 +142,7 @@ fn main() {
 
     let mut settings_handler = SettingsHandler::new();
     settings_handler.save();
+
     while !rl.window_should_close() && !should_close {
         profiling::scope!("Game frame");
         println!("{:#?}", scene_handler);
