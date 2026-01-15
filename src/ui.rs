@@ -1,6 +1,9 @@
-use std::{cmp::min, collections::HashMap};
+use std::{cmp::min, collections::HashMap, ffi::CString};
 
-use raylib::{ffi::CheckCollisionPointRec, prelude::*};
+use raylib::{
+    ffi::{CheckCollisionPointRec, MeasureTextEx},
+    prelude::*,
+};
 
 use crate::{
     SCREEN_HEIGHT, SCREEN_WIDTH,
@@ -12,6 +15,24 @@ use crate::{
     texture_handler::TextureHandler,
 };
 
+pub fn get_text_size(
+    font: &Font,
+    text: &str,
+    text_size_basic: f32,
+    text_space_basic: f32,
+) -> raylib::ffi::Vector2 {
+    let ctext = CString::new(text).unwrap();
+    //do i need to drop it manually?
+    return unsafe {
+        MeasureTextEx(
+            **font,
+            ctext.as_ptr(), //???
+            TILE_SCALE_DEFAULT as f32 * text_size_basic,
+            text_space_basic * TILE_SCALE_DEFAULT as f32,
+        )
+    };
+}
+
 pub struct Button {
     pub rect: Rectangle,
     pub offset: f32,
@@ -22,6 +43,7 @@ pub struct UIHandler {
     build_buttons: HashMap<String, Button>,
     quitting: bool,
     pause_button_recs: Vec<Rectangle>,
+    pause_button_labels: Vec<String>,
     // dialogue_accumulator: String,
     // dialogure_iterator: Option<Chars<'a>>,
     // current_dialogue: usize,
@@ -53,25 +75,23 @@ impl UIHandler {
             );
         }
 
+        let mut rects: Vec<Rectangle> = Vec::new();
+        for i in 0..2 {
+            rects.push(Rectangle::new(
+                SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6.
+                    - 32. * TILE_SCALE_DEFAULT as f32,
+                SCREEN_HEIGHT as f32 / 3. + 18. * (i + 1) as f32 * TILE_SCALE_DEFAULT as f32
+                    - 8. * TILE_SCALE_DEFAULT as f32,
+                64. * TILE_SCALE_DEFAULT as f32,
+                16. * TILE_SCALE_DEFAULT as f32,
+            ));
+        }
+
         Self {
             build_buttons: buttons,
             quitting: false,
-            pause_button_recs: vec![
-                Rectangle::new(
-                    SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6.
-                        - 32. * TILE_SCALE_DEFAULT as f32,
-                    SCREEN_HEIGHT as f32 / 3. + 30.,
-                    64. * TILE_SCALE_DEFAULT as f32,
-                    16. * TILE_SCALE_DEFAULT as f32,
-                ),
-                Rectangle::new(
-                    SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6.
-                        - 32. * TILE_SCALE_DEFAULT as f32,
-                    SCREEN_HEIGHT as f32 / 3. + 150.,
-                    64. * TILE_SCALE_DEFAULT as f32,
-                    16. * TILE_SCALE_DEFAULT as f32,
-                ),
-            ],
+            pause_button_recs: rects,
+            pause_button_labels: vec!["Заново".to_string(), "Выйти".to_string()],
         }
     }
 
@@ -487,15 +507,18 @@ impl UIHandler {
             Color::WHITE,
         );
 
+        let text_size = get_text_size(font, "Меню", 12., 1.05);
+
         rl.draw_text_ex(
             font,
             "Меню",
-            Vector2::new(
-                screen_width as f32 / 2. - 50.,
-                (screen_height / 2) as f32 - 48. * TILE_SCALE_DEFAULT as f32 + 12.,
-            ),
-            64.,
-            2.,
+            panel_position
+                + Vector2::new(
+                    TILE_SCALE_DEFAULT as f32 * 64. - text_size.x / 2.,
+                    TILE_SCALE_DEFAULT as f32 * 7. - text_size.y / 2.,
+                ),
+            TILE_SCALE_DEFAULT as f32 * 12.,
+            1.05 * TILE_SCALE_DEFAULT as f32,
             CustomColor::BLACK_TEXT,
         );
 
@@ -527,20 +550,18 @@ impl UIHandler {
             //         Color::from_hex("0b8a8f").unwrap()
             //     },
             // );
+            let text_size_button = get_text_size(font, &self.pause_button_labels[index], 12., 1.05);
 
             rl.draw_text_ex(
                 font,
-                if index <= 0 {
-                    "Заново"
-                } else {
-                    "Выйти"
-                },
+                &self.pause_button_labels[index],
                 Vector2::new(
-                    button_rect.x + button_rect.x / 2. - 160.,
-                    button_rect.y + 16. - texture_offset / 16. * 2. * TILE_SCALE_DEFAULT as f32,
+                    button_rect.x - text_size_button.x / 2. + 32. * TILE_SCALE_DEFAULT as f32,
+                    button_rect.y - text_size.y / 2. + 8. * TILE_SCALE_DEFAULT as f32
+                        - texture_offset / 16. * 2. * TILE_SCALE_DEFAULT as f32,
                 ),
-                64.,
-                2.,
+                12. * TILE_SCALE_DEFAULT as f32,
+                1.05 * TILE_SCALE_DEFAULT as f32,
                 CustomColor::BLACK_TEXT,
             );
         }
