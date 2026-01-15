@@ -144,6 +144,7 @@ fn main() {
     settings_handler.save();
     while !rl.window_should_close() && !should_close {
         profiling::scope!("Game frame");
+        println!("{:#?}", scene_handler);
         if rl.is_key_pressed(KeyboardKey::KEY_F) {
             if rl.is_window_fullscreen() {
                 rl.set_window_size(SCREEN_WIDTH, SCREEN_HEIGHT);

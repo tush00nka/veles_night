@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use raylib::prelude::*;
 
 use crate::{SCREEN_HEIGHT, SCREEN_WIDTH};
@@ -12,6 +14,7 @@ pub enum Scene {
     LevelSelection,
 }
 
+#[derive(Debug)]
 pub struct SceneHandler {
     current: Scene,
     next: Option<Scene>,

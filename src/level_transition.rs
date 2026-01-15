@@ -79,13 +79,15 @@ impl LevelTransition {
 
         new_transition
     }
+    fn reset_stage(&mut self) {
+        for i in self.cards.iter_mut() {
+            i.stage = 0;
+        }
+    }
 
     #[profiling::function]
     pub fn set_cards(&mut self, level_completed: usize) {
-        for card in self.cards.iter_mut() {
-            card.stage = 0;
-        }
-
+        self.reset_stage();
         self.cards[0].content =
             CardContentType::Image(self.unlock_wrapper.unlocks[level_completed].texture.clone());
         self.cards[1].content =
@@ -97,7 +99,7 @@ impl LevelTransition {
         );
     }
 
-    const CARD_SIZE: i32 = 64 * TILE_SCALE_DEFAULT;
+    pub const CARD_SIZE: i32 = 64 * TILE_SCALE_DEFAULT;
 
     #[profiling::function]
     pub fn draw(
@@ -135,7 +137,11 @@ impl LevelTransition {
                 offset = 64. * 5.;
             } else {
                 offset = self.cards[i].stage as f32 * 64.;
-                self.cards[i].stage = ((rl.get_time() * 8.) % 6.).floor() as usize;
+                self.cards[i].stage = ((rl.get_time() * 8.) % 6.).floor() as usize; //wtf this shit
+                //is
+                //how it works
+                //if i understand it correctly, this is pitfall where level transition cards are
+                //buged
             };
 
             rl.draw_texture_pro(
