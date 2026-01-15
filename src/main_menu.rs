@@ -36,6 +36,7 @@ impl MainMenuHandler {
                     64. * TILE_SCALE as f32,
                     16. * TILE_SCALE as f32,
                 ),
+				offset: 0.,
             },
         );
 
@@ -49,6 +50,7 @@ impl MainMenuHandler {
                     64. * TILE_SCALE as f32,
                     16. * TILE_SCALE as f32,
                 ),
+				offset: 0.,
             },
         );
 
@@ -62,6 +64,7 @@ impl MainMenuHandler {
                     64. * TILE_SCALE as f32,
                     16. * TILE_SCALE as f32,
                 ),
+				offset: 0.,
             },
         );
 

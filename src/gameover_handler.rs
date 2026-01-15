@@ -50,6 +50,7 @@ impl GameOverHandler {
                         150.,
                         64.,
                     ),
+					offset: 0.,
                     selected: false,
                 },
             );

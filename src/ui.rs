@@ -13,7 +13,8 @@ use crate::{
 
 pub struct Button {
     pub rect: Rectangle,
-    pub selected: bool,
+	pub offset: f32,
+	pub selected: bool,
 }
 
 const TEXT_COLOR: Color = Color::new(46, 34, 47, 255);
@@ -57,6 +58,7 @@ impl UIHandler {
                         16. * TILE_SCALE as f32,
                         16. * TILE_SCALE as f32,
                     ),
+					offset: 0.,
                     selected: false,
                 },
             );
@@ -231,39 +233,47 @@ impl UIHandler {
     ) {
         let dialoging = dialogue_h.current_phrase < dialogue_h.dialogue.len();
 
-        for (tex_name, button) in self.build_buttons.iter() {
+        for (tex_name, button) in self.build_buttons.iter_mut() {
             if dialoging {
                 break;
             }
 
-            let color = if unsafe {
-                CheckCollisionPointRec(
-                    (rl.get_mouse_position()
-                        - Vector2::new(
-                            rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                            rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
-                        ))
-                    .into(),
-                    button.rect.into(),
-                )
-            } {
-                Color::WHITE
+            let target_offset = if button.rect.check_collision_point_rec(
+                rl.get_mouse_position()
+                    - Vector2::new(
+                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                    ),
+            ) {
+                6. * TILE_SCALE as f32
             } else {
-                Color::BLACK.alpha(0.5)
+                2. * TILE_SCALE as f32
             };
 
-            rl.draw_rectangle_rec(button.rect, color);
+			button.offset = lerp(button.offset, target_offset, 10. * rl.get_frame_time());
+
+            // rl.draw_rectangle_rec(button.rect, color);
+            rl.draw_texture_ex(
+                texture_handler.get("pedestal"),
+                Vector2::new(button.rect.x, button.rect.y),
+                0.0,
+                TILE_SCALE as f32,
+                Color::WHITE,
+            );
 
             if !button.selected {
-                rl.draw_texture_pro(
-                    texture_handler.get_safe(tex_name),
+				let mut offset_rect = button.rect;
+				offset_rect.y -= button.offset;
+
+				rl.draw_texture_pro(
+                    texture_handler.get(tex_name),
                     Rectangle::new(
                         ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,
                         16.,
                         16.,
                         16.,
                     ),
-                    button.rect,
+                    offset_rect,
                     Vector2::zero(),
                     0.0,
                     Color::WHITE,
@@ -456,8 +466,8 @@ impl UIHandler {
             return;
         }
 
-		let screen_width = rl.get_screen_width();
-		let screen_height = rl.get_screen_height();
+        let screen_width = rl.get_screen_width();
+        let screen_height = rl.get_screen_height();
 
         // panel
         rl.draw_rectangle(
@@ -493,7 +503,7 @@ impl UIHandler {
             if mouse_over {
                 Color::from_hex("30e1b9").unwrap()
             } else {
-				Color::from_hex("0b8a8f").unwrap()
+                Color::from_hex("0b8a8f").unwrap()
             },
         );
 
@@ -503,7 +513,7 @@ impl UIHandler {
             Vector2::new(RESTART_BUTTON.x + 16., RESTART_BUTTON.y + 16.),
             64.,
             2.,
-			Color::RAYWHITE
+            Color::RAYWHITE,
         );
 
         let mouse_over = QUIT_BUTTON.check_collision_point_rec(
@@ -519,7 +529,7 @@ impl UIHandler {
             if mouse_over {
                 Color::from_hex("30e1b9").unwrap()
             } else {
-				Color::from_hex("0b8a8f").unwrap()
+                Color::from_hex("0b8a8f").unwrap()
             },
         );
 
@@ -529,7 +539,7 @@ impl UIHandler {
             Vector2::new(QUIT_BUTTON.x + 16., QUIT_BUTTON.y + 16.),
             64.,
             2.,
-			Color::RAYWHITE
+            Color::RAYWHITE,
         );
     }
 }

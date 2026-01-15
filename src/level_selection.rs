@@ -154,10 +154,6 @@ impl LevelSelector {
                 offset = 0.;
             }
 
-            fn lerp(a: f32, b: f32, f: f32) -> f32 {
-                a * (1. - f) + (b * f)
-            }
-
             button.offset = lerp(button.offset, offset, 10. * rl.get_frame_time());
 
             let color = if i < 10 {
