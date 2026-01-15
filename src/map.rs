@@ -171,11 +171,24 @@ impl Level {
         }
     }
 
-    pub fn draw(&self, rl: &mut RaylibDrawHandle, texture_handler: &TextureHandler) {
+    pub fn draw(
+        &self,
+        rl: &mut RaylibDrawHandle,
+        texture_handler: &TextureHandler,
+        level_number: u8,
+    ) {
         for x in 0..LEVEL_WIDTH_TILES {
             for y in 0..LEVEL_HEIGHT_TILES {
+                let stage_offset = if level_number < 10 {
+                    0.
+                } else if level_number < 20 {
+					TILE_SIZE_PX as f32
+                } else {
+                    TILE_SIZE_PX as f32 * 2. 
+                };
+
                 // let source = Rectangle::new(((x + y) % 3) as f32 * 16., 0., 16., 16.);
-                let source = Rectangle::new(((x + y) % 3) as f32 * 16., 16., 16., 16.);
+                let source = Rectangle::new(((x + y) % 3) as f32 * 16., stage_offset, 16., 16.);
 
                 rl.draw_texture_pro(
                     texture_handler.get_safe("grass"),
@@ -229,23 +242,18 @@ impl Level {
                             2
                         };
 
-                        let source = if selected {
-                            Rectangle::new(
-                                offset as f32 * TILE_SIZE_PX as f32,
-                                // TILE_SIZE_PX as f32,
-								TILE_SIZE_PX as f32 * 3.,
-                                TILE_SIZE_PX as f32,
-                                TILE_SIZE_PX as f32,
-                            )
+                        let selected_offset = if selected {
+                            stage_offset * 2. + TILE_SIZE_PX as f32
                         } else {
-                            Rectangle::new(
-                                offset as f32 * TILE_SIZE_PX as f32,
-                                // 0.,
-								TILE_SIZE_PX as f32 * 2.,
-                                TILE_SIZE_PX as f32,
-                                TILE_SIZE_PX as f32,
-                            )
+                            stage_offset * 2.
                         };
+
+                        let source = Rectangle::new(
+                            offset as f32 * TILE_SIZE_PX as f32,
+                            selected_offset,
+                            TILE_SIZE_PX as f32,
+                            TILE_SIZE_PX as f32,
+                        );
 
                         rl.draw_texture_pro(
                             texture_handler.get_safe("trees"),

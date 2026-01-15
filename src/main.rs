@@ -349,6 +349,7 @@ fn main() {
                 match scene_handler.get_current() {
                     Scene::Level => draw_level(
                         &mut level,
+						level_number,
                         &texture_handler,
                         &mut spirits_handler,
                         &mut enemies_handler,
@@ -539,6 +540,7 @@ fn update_level<'a>(
 
 fn draw_level(
     level: &mut Level,
+	level_number: u8,
     texture_handler: &TextureHandler,
     spirits_handler: &mut SpiritsHandler,
     enemies_handler: &mut EnemiesHandler,
@@ -547,7 +549,7 @@ fn draw_level(
 ) {
     rl.clear_background(Color::from_hex("0b8a8f").unwrap());
 
-    level.draw(rl, texture_handler);
+    level.draw(rl, texture_handler, level_number);
     for spirit in spirits_handler.spirits.values() {
         spirit.draw(rl, texture_handler);
     }
