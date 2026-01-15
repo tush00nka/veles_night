@@ -13,8 +13,8 @@ use crate::{
 
 pub struct Button {
     pub rect: Rectangle,
-	pub offset: f32,
-	pub selected: bool,
+    pub offset: f32,
+    pub selected: bool,
 }
 
 const TEXT_COLOR: Color = Color::new(46, 34, 47, 255);
@@ -58,7 +58,7 @@ impl UIHandler {
                         16. * TILE_SCALE as f32,
                         16. * TILE_SCALE as f32,
                     ),
-					offset: 0.,
+                    offset: 0.,
                     selected: false,
                 },
             );
@@ -250,7 +250,7 @@ impl UIHandler {
                 2. * TILE_SCALE as f32
             };
 
-			button.offset = lerp(button.offset, target_offset, 10. * rl.get_frame_time());
+            button.offset = lerp(button.offset, target_offset, 10. * rl.get_frame_time());
 
             // rl.draw_rectangle_rec(button.rect, color);
             rl.draw_texture_ex(
@@ -262,10 +262,10 @@ impl UIHandler {
             );
 
             if !button.selected {
-				let mut offset_rect = button.rect;
-				offset_rect.y -= button.offset;
+                let mut offset_rect = button.rect;
+                offset_rect.y -= button.offset;
 
-				rl.draw_texture_pro(
+                rl.draw_texture_pro(
                     texture_handler.get(tex_name),
                     Rectangle::new(
                         ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,
@@ -390,8 +390,10 @@ impl UIHandler {
         // );
 
         if dialoging {
+            let (speaker, line) = &mut dialogue_h.dialogue[dialogue_h.current_phrase];
+
             rl.draw_texture_ex(
-                texture_handler.get_safe("yarilo"),
+                texture_handler.get_safe(speaker),
                 Vector2::new(0., SCREEN_HEIGHT as f32 - 48. * TILE_SCALE as f32),
                 0.0,
                 TILE_SCALE as f32,
@@ -409,30 +411,19 @@ impl UIHandler {
                 Color::WHITE,
             );
 
-            if dialogue_h.dialogue_counter
-                < dialogue_h.dialogue[dialogue_h.current_phrase]
-                    .1
-                    .chars()
-                    .count()
-            {
+            if dialogue_h.dialogue_counter < line.chars().count() {
                 dialogue_h.dialogue_counter += 1;
             }
 
-            let line = &mut dialogue_h.dialogue[dialogue_h.current_phrase]
-                .1
-                .chars()
-                .rev();
-            let line_len = dialogue_h.dialogue[dialogue_h.current_phrase]
-                .1
-                .chars()
-                .count();
+            let mut temp_line = line.chars().rev();
+            let line_len = line.chars().count();
             for _ in 0..line_len - dialogue_h.dialogue_counter {
-                line.next();
+                temp_line.next();
             }
 
             rl.draw_text_ex(
                 font,
-                &line.rev().collect::<String>(),
+                &temp_line.rev().collect::<String>(),
                 Vector2::new(
                     32. * TILE_SCALE as f32 + 64.,
                     SCREEN_HEIGHT as f32 - 3. * 8. * TILE_SCALE as f32 - 20.,
@@ -442,12 +433,7 @@ impl UIHandler {
                 TEXT_COLOR,
             );
 
-            if dialogue_h.dialogue_accumulator.chars().count()
-                >= dialogue_h.dialogue[dialogue_h.current_phrase]
-                    .1
-                    .chars()
-                    .count()
-            {
+            if dialogue_h.dialogue_accumulator.chars().count() >= line.chars().count() {
                 rl.draw_text_ex(
                     font,
                     "Далее...",
