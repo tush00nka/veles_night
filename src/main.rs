@@ -47,6 +47,7 @@ mod spirit;
 mod spirits_handler;
 mod texture_handler;
 mod ui;
+mod color;
 
 pub const FIRST_LEVEL: u8 = 0;
 

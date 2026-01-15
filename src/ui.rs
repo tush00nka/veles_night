@@ -4,6 +4,7 @@ use raylib::{ffi::CheckCollisionPointRec, prelude::*};
 
 use crate::{
     SCREEN_HEIGHT, SCREEN_WIDTH,
+    color::CustomColor,
     dialogue::DialogueHandler,
     hotkey_handler::{HotkeyCategory, HotkeyHandler},
     map::{Level, TILE_SCALE, TILE_SIZE, TileType},
@@ -17,25 +18,10 @@ pub struct Button {
     pub selected: bool,
 }
 
-const TEXT_COLOR: Color = Color::new(46, 34, 47, 255);
-
-const RESTART_BUTTON: Rectangle = Rectangle::new(
-    SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6. - 100.,
-    SCREEN_HEIGHT as f32 / 3. + 30.,
-    200.,
-    100.,
-);
-
-const QUIT_BUTTON: Rectangle = Rectangle::new(
-    SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6. - 100.,
-    SCREEN_HEIGHT as f32 / 3. + 150.,
-    200.,
-    100.,
-);
-
 pub struct UIHandler {
     build_buttons: HashMap<String, Button>,
     quitting: bool,
+    pause_button_recs: Vec<Rectangle>,
     // dialogue_accumulator: String,
     // dialogure_iterator: Option<Chars<'a>>,
     // current_dialogue: usize,
@@ -67,9 +53,20 @@ impl UIHandler {
         Self {
             build_buttons: buttons,
             quitting: false,
-            // dialogue_accumulator: String::new(),
-            // dialogure_iterator: Some(Self::DIALOGUE[0].chars()),
-            // current_dialogue: 0,
+            pause_button_recs: vec![
+                Rectangle::new(
+                    SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6. - 32. * TILE_SCALE as f32,
+                    SCREEN_HEIGHT as f32 / 3. + 30.,
+                    64. * TILE_SCALE as f32,
+                    16. * TILE_SCALE as f32,
+                ),
+                Rectangle::new(
+                    SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6. - 32. * TILE_SCALE as f32,
+                    SCREEN_HEIGHT as f32 / 3. + 150.,
+                    64. * TILE_SCALE as f32,
+                    16. * TILE_SCALE as f32,
+                ),
+            ],
         }
     }
 
@@ -194,7 +191,7 @@ impl UIHandler {
             return (false, false);
         }
 
-        if QUIT_BUTTON.check_collision_point_rec(
+        if self.pause_button_recs[1].check_collision_point_rec(
             rl.get_mouse_position()
                 - Vector2::new(
                     rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
@@ -207,7 +204,7 @@ impl UIHandler {
             return (true, false);
         };
 
-        if RESTART_BUTTON.check_collision_point_rec(
+        if self.pause_button_recs[0].check_collision_point_rec(
             rl.get_mouse_position()
                 - Vector2::new(
                     rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
@@ -342,7 +339,7 @@ impl UIHandler {
             bar_offset + Vector2::new(16. * TILE_SCALE as f32, 10.),
             8. * TILE_SCALE as f32,
             1.0,
-            TEXT_COLOR,
+            CustomColor::BLACK_TEXT,
         );
 
         rl.draw_texture_ex(
@@ -359,7 +356,7 @@ impl UIHandler {
             bar_offset + Vector2::new(16. * TILE_SCALE as f32, 10. + 12. * TILE_SCALE as f32),
             8. * TILE_SCALE as f32,
             1.0,
-            TEXT_COLOR,
+            CustomColor::BLACK_TEXT,
         );
 
         // let hint_text = if level_number == 0 {
@@ -430,7 +427,7 @@ impl UIHandler {
                 ),
                 8. * TILE_SCALE as f32,
                 0.,
-                TEXT_COLOR,
+                CustomColor::BLACK_TEXT,
             );
 
             if dialogue_h.dialogue_accumulator.chars().count() >= line.chars().count() {
@@ -456,12 +453,17 @@ impl UIHandler {
         let screen_height = rl.get_screen_height();
 
         // panel
-        rl.draw_rectangle(
-            screen_width / 3,
-            screen_height / 4,
-            screen_width / 3,
-            screen_height / 2,
-            Color::from_hex("0b5e65").unwrap(),
+        let panel_position = Vector2::new(
+            (screen_width / 2) as f32 - 64. * TILE_SCALE as f32,
+            (screen_height / 2) as f32 - 48. * TILE_SCALE as f32,
+        );
+
+        rl.draw_texture_ex(
+            texture_handler.get("pause_menu"),
+            panel_position,
+            0.0,
+            TILE_SCALE as f32,
+            Color::WHITE,
         );
 
         rl.draw_text_ex(
@@ -469,63 +471,54 @@ impl UIHandler {
             "Меню",
             Vector2::new(
                 screen_width as f32 / 2. - 50.,
-                screen_height as f32 / 3. - 50.,
+                (screen_height / 2) as f32 - 48. * TILE_SCALE as f32 + 12.,
             ),
             64.,
             2.,
-            Color::RAYWHITE,
+            CustomColor::BLACK_TEXT,
         );
 
-        let mouse_over = RESTART_BUTTON.check_collision_point_rec(
-            rl.get_mouse_position()
-                - Vector2::new(
-                    rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                    rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
-                ),
-        );
+        for (index, button_rect) in self.pause_button_recs.iter().enumerate() {
+            let mouse_over = button_rect.check_collision_point_rec(
+                rl.get_mouse_position()
+                    - Vector2::new(
+                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                    ),
+            );
 
-        rl.draw_rectangle_rec(
-            RESTART_BUTTON,
-            if mouse_over {
-                Color::from_hex("30e1b9").unwrap()
-            } else {
-                Color::from_hex("0b8a8f").unwrap()
-            },
-        );
+            let texture_offset = if mouse_over { 16. } else { 0. };
+            let source = Rectangle::new(0., texture_offset, 64., 16.);
+            rl.draw_texture_pro(
+                texture_handler.get("game_buttons"),
+                source,
+                button_rect,
+                Vector2::zero(),
+                0.0,
+                Color::WHITE,
+            );
 
-        rl.draw_text_ex(
-            font,
-            "Заново",
-            Vector2::new(RESTART_BUTTON.x + 16., RESTART_BUTTON.y + 16.),
-            64.,
-            2.,
-            Color::RAYWHITE,
-        );
+            // rl.draw_rectangle_rec(
+            //     button_rect,
+            //     if mouse_over {
+            //         Color::from_hex("30e1b9").unwrap()
+            //     } else {
+            //         Color::from_hex("0b8a8f").unwrap()
+            //     },
+            // );
 
-        let mouse_over = QUIT_BUTTON.check_collision_point_rec(
-            rl.get_mouse_position()
-                - Vector2::new(
-                    rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                    rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
-                ),
-        );
-
-        rl.draw_rectangle_rec(
-            QUIT_BUTTON,
-            if mouse_over {
-                Color::from_hex("30e1b9").unwrap()
-            } else {
-                Color::from_hex("0b8a8f").unwrap()
-            },
-        );
-
-        rl.draw_text_ex(
-            font,
-            "Выйти",
-            Vector2::new(QUIT_BUTTON.x + 16., QUIT_BUTTON.y + 16.),
-            64.,
-            2.,
-            Color::RAYWHITE,
-        );
+            rl.draw_text_ex(
+                font,
+                if index <= 0 {
+                    "Заново"
+                } else {
+                    "Выйти"
+                },
+                Vector2::new(button_rect.x + button_rect.x / 2. - 160., button_rect.y + 16. - texture_offset / 16. * 2. * TILE_SCALE as f32),
+                64.,
+                2.,
+                CustomColor::BLACK_TEXT,
+            );
+        }
     }
 }
