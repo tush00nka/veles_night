@@ -76,7 +76,7 @@ impl UIHandler {
         }
 
         let mut rects: Vec<Rectangle> = Vec::new();
-        for i in 0..2 {
+        for i in 0..3 {
             rects.push(Rectangle::new(
                 SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6.
                     - 32. * TILE_SCALE_DEFAULT as f32,
@@ -91,7 +91,11 @@ impl UIHandler {
             build_buttons: buttons,
             quitting: false,
             pause_button_recs: rects,
-            pause_button_labels: vec!["Заново".to_string(), "Выйти".to_string()],
+            pause_button_labels: vec![
+                "Заново".to_string(),
+                "Настройки".to_string(),
+                "Выйти".to_string(),
+            ],
         }
     }
 
@@ -197,7 +201,7 @@ impl UIHandler {
         scene_h: &mut SceneHandler,
         dialogue_h: &mut DialogueHandler,
         rl: &mut RaylibHandle,
-    ) -> (bool, bool) {
+    ) -> (bool, bool, bool) {
         if hotkey_h.check_pressed(rl, HotkeyCategory::Exit) {
             self.quitting = !self.quitting;
         }
@@ -215,10 +219,10 @@ impl UIHandler {
         }
 
         if !self.quitting {
-            return (false, false);
+            return (false, false, false);
         }
 
-        if self.pause_button_recs[1].check_collision_point_rec(
+        if self.pause_button_recs[2].check_collision_point_rec(
             rl.get_mouse_position()
                 - Vector2::new(
                     rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
@@ -228,7 +232,7 @@ impl UIHandler {
         {
             scene_h.set(Scene::MainMenu);
             self.quitting = false;
-            return (true, false);
+            return (true, false, false);
         };
 
         if self.pause_button_recs[0].check_collision_point_rec(
@@ -240,10 +244,22 @@ impl UIHandler {
         ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
         {
             self.quitting = false;
-            return (false, true);
+            return (false, true, false);
         };
 
-        return (false, false);
+        if self.pause_button_recs[1].check_collision_point_rec(
+            rl.get_mouse_position()
+                - Vector2::new(
+                    rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                    rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                ),
+        ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+        {
+            self.quitting = false;
+            return (false, false, true);
+        };
+
+        return (false, false, false);
     }
 
     #[profiling::function]

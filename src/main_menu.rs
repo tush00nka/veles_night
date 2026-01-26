@@ -1,4 +1,3 @@
-use raylib::core::text::RaylibFont;
 use raylib::prelude::*;
 use std::collections::HashMap;
 
@@ -10,6 +9,7 @@ use crate::{
     metadata_handler::MetadataHandler,
     save_handler::SaveHandler,
     scene::{Scene, SceneHandler},
+    settings_menu::SettingsMenuHandler,
     spirits_handler::SpiritsHandler,
     texture_handler::TextureHandler,
     ui::{Button, UIHandler},
@@ -27,51 +27,27 @@ impl MainMenuHandler {
     #[profiling::function]
     pub fn new() -> Self {
         let mut buttons = HashMap::new();
+        for i in 0..4 {
+            buttons.insert(
+                i,
+                Button {
+                    selected: false,
+                    rect: Rectangle::new(
+                        (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE_DEFAULT as f32,
+                        (SCREEN_HEIGHT / 2) as f32 + 16. * (i as i32 * TILE_SCALE_DEFAULT) as f32,
+                        64. * TILE_SCALE_DEFAULT as f32,
+                        16. * TILE_SCALE_DEFAULT as f32,
+                    ),
+                    offset: 0.,
+                },
+            );
+        }
 
-        buttons.insert(
-            0,
-            Button {
-                selected: false,
-                rect: Rectangle::new(
-                    (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE_DEFAULT as f32,
-                    (SCREEN_HEIGHT / 2) as f32,
-                    64. * TILE_SCALE_DEFAULT as f32,
-                    16. * TILE_SCALE_DEFAULT as f32,
-                ),
-				offset: 0.,
-            },
-        );
+        let labels = vec!["Продолжить", "Начать", "Настройки", "Выйти", "Уровни"];
+        let labels_offsets = vec![0., 4.25, 0., 3.5, 4.];
+        assert_eq!(labels.len(), labels_offsets.len());
+        assert_eq!(labels.len(), buttons.len() + 1);
 
-        buttons.insert(
-            1,
-            Button {
-                selected: false,
-                rect: Rectangle::new(
-                    (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE_DEFAULT as f32,
-                    (SCREEN_HEIGHT / 2) as f32 + 16. * TILE_SCALE_DEFAULT as f32,
-                    64. * TILE_SCALE_DEFAULT as f32,
-                    16. * TILE_SCALE_DEFAULT as f32,
-                ),
-				offset: 0.,
-            },
-        );
-
-        buttons.insert(
-            2,
-            Button {
-                selected: false,
-                rect: Rectangle::new(
-                    (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE_DEFAULT as f32,
-                    (SCREEN_HEIGHT / 2) as f32 + 32. * TILE_SCALE_DEFAULT as f32,
-                    64. * TILE_SCALE_DEFAULT as f32,
-                    16. * TILE_SCALE_DEFAULT as f32,
-                ),
-				offset: 0.,
-            },
-        );
-
-        let labels = vec!["Продолжить", "Начать", "Выйти", "Уровни"];
-        let labels_offsets = vec![0., 4.25, 3.5, 4.];
         Self {
             buttons,
             labels,
@@ -93,6 +69,7 @@ impl MainMenuHandler {
         enemies_handler: &mut EnemiesHandler,
         ui_handler: &mut UIHandler,
         level_transition: &mut LevelTransition,
+        settings_menu: &mut SettingsMenuHandler,
     ) {
         for (key, button) in self.buttons.iter() {
             if button.rect.check_collision_point_rec(
@@ -124,9 +101,15 @@ impl MainMenuHandler {
                         scene_handler.set(Scene::Level);
                     }
                     2 => {
+                        settings_menu.set_scene(Scene::MainMenu);
+                        scene_handler.set(Scene::Settings);
+                    }
+                    3 => {
                         *should_close = true;
                     }
-                    _ => {}
+                    _ => {
+                        panic!("Not implemented yet!");
+                    }
                 }
             }
         }
@@ -222,7 +205,7 @@ impl MainMenuHandler {
             if i == 1 && save_handler.is_there_saves {
                 label_num = self.labels.len() - 1;
             }
-
+            //rewrite this shit with legacy text_size function
             rl.draw_text_pro(
                 font,
                 self.labels[label_num],

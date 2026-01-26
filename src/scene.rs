@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use raylib::prelude::*;
 
 use crate::{SCREEN_HEIGHT, SCREEN_WIDTH};
@@ -12,6 +10,7 @@ pub enum Scene {
     GameOver,
     GameEnd,
     LevelSelection,
+    Settings,
 }
 
 #[derive(Debug)]

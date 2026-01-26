@@ -19,6 +19,7 @@ use crate::{
     save_handler::SaveHandler,
     scene::{Scene, SceneHandler},
     settings::SettingsHandler,
+    settings_menu::SettingsMenuHandler,
     spirit::Spirit,
     spirits_handler::SpiritsHandler,
     texture_handler::TextureHandler,
@@ -34,6 +35,8 @@ mod hotkey_handler;
 mod level_selection;
 mod level_transition;
 mod main_menu;
+mod settings_menu;
+
 mod map;
 mod map_loader;
 mod metadata_handler;
@@ -49,7 +52,6 @@ mod texture_handler;
 mod ui;
 
 mod color;
-
 pub const FIRST_LEVEL: u8 = 0;
 
 const SCREEN_WIDTH: i32 = 16 * 16 * TILE_SCALE_DEFAULT;
@@ -90,6 +92,7 @@ fn main() {
     // also a common one - get
 
     let mut main_menu = MainMenuHandler::new();
+    let mut settings_menu = SettingsMenuHandler::new();
 
     let args: Vec<String> = std::env::args().collect();
 
@@ -140,12 +143,11 @@ fn main() {
     let mut dialogue_handler = DialogueHandler::new();
     dialogue_handler.load_dialogue(&format!("level_{level_number}"));
 
-    let mut settings_handler = SettingsHandler::new();
+    let settings_handler = SettingsHandler::new();
     settings_handler.save();
 
     while !rl.window_should_close() && !should_close {
         profiling::scope!("Game frame");
-        println!("{:#?}", scene_handler);
         if rl.is_key_pressed(KeyboardKey::KEY_F) {
             if rl.is_window_fullscreen() {
                 rl.set_window_size(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -232,6 +234,7 @@ fn main() {
                     &mut enemies_handler,
                     &mut ui_handler,
                     &mut level_transition,
+                    &mut settings_menu,
                 );
             }
             Scene::GameEnd => {
@@ -301,6 +304,7 @@ fn main() {
                     &mut enemies_handler,
                     &mut save_handler,
                     &mut dialogue_handler,
+                    &mut settings_menu,
                 ) {
                     reload_procedure(
                         level_number,
@@ -310,6 +314,11 @@ fn main() {
                         &mut spirits_handler,
                         &mut rl,
                     );
+                }
+
+                if settings_menu.check_scene() {
+                    settings_menu.set_scene(Scene::Level);
+                    scene_handler.set(Scene::Settings);
                 }
             }
             Scene::Transition => update_transition(
@@ -337,6 +346,21 @@ fn main() {
                     &mut scene_handler,
                     &mut dialogue_handler,
                     &mut rl,
+                );
+            }
+            Scene::Settings => {
+                settings_menu.update(
+                    &mut scene_handler,
+                    &mut should_close,
+                    &mut rl,
+                    &mut save_handler,
+                    &mut level_number,
+                    &mut metadata_handler,
+                    &mut level,
+                    &mut spirits_handler,
+                    &mut enemies_handler,
+                    &mut ui_handler,
+                    &mut level_transition,
                 );
             }
         }
@@ -371,6 +395,9 @@ fn main() {
             match scene_handler.get_current() {
                 Scene::MainMenu => {
                     main_menu.draw(&font, &save_handler, &texture_handler, &mut t);
+                }
+                Scene::Settings => {
+                    settings_menu.draw(&font, &save_handler, &texture_handler, &mut t);
                 }
                 Scene::GameEnd => gameend_handler.draw_gameover(&font, &mut t),
                 Scene::GameOver => gameover_handler.draw_gameover(&font, &mut t),
@@ -490,6 +517,7 @@ fn update_level<'a>(
     enemies_handler: &mut EnemiesHandler,
     save_handler: &mut SaveHandler,
     dialogue_handler: &mut DialogueHandler,
+    settings_menu: &mut SettingsMenuHandler,
 ) -> bool {
     for spirit in spirits_handler.spirits.values() {
         if spirit.get_dead() {
@@ -524,7 +552,7 @@ fn update_level<'a>(
 
     ui_handler.build(level, rl, hotkey_handler, dialogue_handler);
 
-    let (level_quit, level_restart) =
+    let (level_quit, level_restart, level_settings) =
         ui_handler.update(hotkey_handler, scene_handler, dialogue_handler, rl);
 
     if level_quit {
@@ -541,6 +569,9 @@ fn update_level<'a>(
         return true;
     }
 
+    if level_settings {
+        settings_menu.set_scene(Scene::Level);
+    }
     return false;
 }
 
