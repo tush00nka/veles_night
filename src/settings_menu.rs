@@ -1,8 +1,9 @@
+use std::cmp::min;
+
 use raylib::prelude::*;
 
 use crate::{
     SCREEN_HEIGHT, SCREEN_WIDTH,
-    color::CustomColor,
     enemy_spirit::EnemiesHandler,
     level_transition::LevelTransition,
     map::{Level, TILE_SCALE_DEFAULT},
@@ -20,15 +21,79 @@ pub enum SliderStyle {
     Ruler,
 }
 
-pub const SLIDER_WIDTH_PX: u8 = 48;
-pub const SLIDER_HEIGHT_PX: u8 = 16;
-pub const SLIDER_TEXTURE_OFFSET: u8 = 16;
+const SLIDER_WIDTH_PX: u8 = 48;
+const SLIDER_HEIGHT_PX: u8 = 16;
+const RULER_PICKER_WIDTH_PX: u8 = 16;
+const SLIDER_TEXTURE_OFFSET: u8 = 16;
+const BUTTON_TEXTURE_WIDTH: f32 = 32.;
+const UI_X_OFFSET: f32 = 192.;
+const UI_Y_OFFSET: f32 = 14.;
+const UI_SHIFT_SIZE: f32 = 20.;
+const UI_Y_TOP_OFFSET: f32 = 1.;
+const TEXT_X_OFFSET: f32 = 32.;
+const TEXT_SIZE: f32 = 12.;
+const TEXT_SPACING: f32 = 1.05;
+
+const BACKGROUND_COLOR_HEX: &str = "0b8a8f";
+const BACKGROUND_IMAGE: &str = "main_menu_bg";
+const SETTINGS_BUTTON_TEXTURE: &str = "settings_button";
+
+const BUTTONS_SETTINGS: [&str; 2] = ["Шейдер", "Текст"];
+const SLIDERS_SETTINGS: [&str; 3] = ["Громкость музыки", "Громкость звуков", "Разрешение"];
+
+const SLIDER_TYPES: [SliderStyle; 3] =
+    [SliderStyle::Volume, SliderStyle::Volume, SliderStyle::Ruler];
+
+fn find_nearest(values: Vec<usize>, value: usize) -> usize {
+    let mut nearest = values[0];
+
+    for i in 0..values.len() {
+        let temp = value.abs_diff(values[i]);
+
+        if temp < value.abs_diff(nearest) {
+            nearest = values[i];
+        }
+    }
+    return nearest;
+}
 
 impl SliderStyle {
-    pub fn is_snap(slider_style: &SliderStyle) -> bool {
-        return *slider_style == SliderStyle::Ruler;
+    pub fn get_sprite_offset(slider_style: &SliderStyle) -> Vector2 {
+        return match *slider_style {
+            SliderStyle::Ruler => Vector2::new(0., 0.),
+            SliderStyle::Volume => Vector2::new(-1., -2.),
+        };
     }
-
+    fn get_snap_points(slider_style: &SliderStyle) -> Vec<usize> {
+        return match *slider_style {
+            SliderStyle::Ruler => vec![0, 33, 64, 100],
+            _ => panic!("not implemented yet!"),
+        };
+    }
+    fn get_snap(slider_style: &SliderStyle) -> bool {
+        return match *slider_style {
+            SliderStyle::Ruler => true,
+            _ => false,
+        };
+    }
+    fn special_size_picker(slider_style: &SliderStyle) -> bool {
+        return match *slider_style {
+            SliderStyle::Ruler => true,
+            _ => false,
+        };
+    }
+    fn get_picker_size(slider_style: &SliderStyle) -> (usize, usize) {
+        return match *slider_style {
+            SliderStyle::Ruler => (RULER_PICKER_WIDTH_PX as usize, SLIDER_HEIGHT_PX as usize),
+            _ => panic!("Not implemented yet!"),
+        };
+    }
+    fn get_picker_rect(slider_style: &SliderStyle) -> usize {
+        return match *slider_style {
+            SliderStyle::Volume => 0,
+            SliderStyle::Ruler => 1,
+        };
+    }
     fn get_outline_rect(slider_style: &SliderStyle) -> usize {
         return match *slider_style {
             SliderStyle::Volume => 1,
@@ -50,14 +115,27 @@ impl SliderStyle {
         };
     }
 
-    fn get_rects(slider_style: &SliderStyle, multiplier: u8) -> Vec<Rectangle> {
+    fn get_rects(
+        slider_style: &SliderStyle,
+        multiplier: usize,
+        initial_position: Vector2,
+    ) -> Vec<Rectangle> {
         let mut vector: Vec<Rectangle> = vec![];
-        for _ in 0..Self::get_sprite_parts_amount(slider_style) {
+        let need_special_size = SliderStyle::special_size_picker(slider_style);
+
+        for index in 0..Self::get_sprite_parts_amount(slider_style) {
+            let (width, height) = if need_special_size
+                && SliderStyle::get_picker_rect(slider_style) == index as usize
+            {
+                SliderStyle::get_picker_size(slider_style)
+            } else {
+                (SLIDER_WIDTH_PX as usize, SLIDER_HEIGHT_PX as usize)
+            };
             vector.push(Rectangle {
-                x: 0.,
-                y: 0.,
-                width: (SLIDER_WIDTH_PX * multiplier) as f32,
-                height: (SLIDER_HEIGHT_PX * multiplier) as f32,
+                x: initial_position.x,
+                y: initial_position.y,
+                width: (width * multiplier) as f32,
+                height: (height * multiplier) as f32,
             });
         }
 
@@ -73,27 +151,15 @@ pub struct Slider {
 }
 
 impl Slider {
-    pub fn new(slider_style: SliderStyle) -> Self {
-        let rects = SliderStyle::get_rects(&slider_style, TILE_SCALE_DEFAULT as u8);
+    pub fn new(slider_style: SliderStyle, start_position: Vector2) -> Self {
+        let rects =
+            SliderStyle::get_rects(&slider_style, TILE_SCALE_DEFAULT as usize, start_position);
 
         Self {
             slider_value: 50,
-            snap: SliderStyle::is_snap(&slider_style),
+            snap: SliderStyle::get_snap(&slider_style),
             slider_style,
             rects,
-        }
-    }
-    fn change_position(&mut self, position: Vector2) {
-        for rectangle in self.rects.iter_mut() {
-            rectangle.x = position.x;
-            rectangle.y = position.y;
-        }
-    }
-
-    fn change_size(&mut self, dimensions: Vector2, index: usize) {
-        {
-            self.rects[index].width = dimensions.x;
-            self.rects[index].height = dimensions.y;
         }
     }
 }
@@ -104,12 +170,6 @@ pub struct SettingsMenuHandler {
     buttons: Vec<Button>,
     sliders: Vec<Slider>,
 }
-
-const BUTTONS_SETTINGS: [&str; 2] = ["Шейдер", "Текст"];
-const SLIDER_NUMBER: usize = BUTTONS_SETTINGS.len();
-
-const SLIDERS_SETTINGS: [&str; 3] = ["Громкость музыки", "Громкость звуков", "Разрешение"];
-
 impl SettingsMenuHandler {
     pub fn new() -> Self {
         let mut buttons = Vec::new();
@@ -119,45 +179,28 @@ impl SettingsMenuHandler {
             buttons.push(Button {
                 selected: false,
                 rect: Rectangle {
-                    x: (192 * TILE_SCALE_DEFAULT as usize) as f32,
-                    y: ((index + 1) * 24 * TILE_SCALE_DEFAULT as usize) as f32,
-                    width: 32. * TILE_SCALE_DEFAULT as f32 / 2.,
-                    height: 32. * TILE_SCALE_DEFAULT as f32 / 2.,
+                    x: TILE_SCALE_DEFAULT as f32 * UI_X_OFFSET,
+                    y: (UI_Y_OFFSET + UI_Y_TOP_OFFSET + index as f32 * UI_SHIFT_SIZE)
+                        * TILE_SCALE_DEFAULT as f32,
+                    width: BUTTON_TEXTURE_WIDTH * TILE_SCALE_DEFAULT as f32 / 2.,
+                    height: BUTTON_TEXTURE_WIDTH * TILE_SCALE_DEFAULT as f32 / 2.,
                 },
                 offset: 0.,
             });
         }
 
-        let mut slider_type = SliderStyle::Volume;
-
-        for index in 0..SLIDERS_SETTINGS.len() {
-            if index == 2 {
-                slider_type = SliderStyle::Ruler;
-            };
-
-            sliders.push(Slider::new(slider_type));
-        }
-
-        for (index, slider) in sliders.iter_mut().enumerate() {
-            slider.change_position(Vector2::new(
-                (192 * TILE_SCALE_DEFAULT) as f32,
-                ((3 + index) * 24 * TILE_SCALE_DEFAULT as usize) as f32,
+        for (index, slider_type) in SLIDER_TYPES.iter().enumerate() {
+            sliders.push(Slider::new(
+                *slider_type,
+                Vector2::new(
+                    UI_X_OFFSET * TILE_SCALE_DEFAULT as f32,
+                    (UI_Y_OFFSET
+                        + UI_Y_TOP_OFFSET
+                        + (index + BUTTONS_SETTINGS.len()) as f32 * UI_SHIFT_SIZE)
+                        * TILE_SCALE_DEFAULT as f32,
+                ) + SliderStyle::get_sprite_offset(slider_type)
+                    * Vector2::new(TILE_SCALE_DEFAULT as f32, TILE_SCALE_DEFAULT as f32),
             ));
-
-            for i in 0..slider.rects.len() {
-                let dimensions = if slider.slider_style == SliderStyle::Ruler && i == 1 {
-                    Vector2::new(
-                        16. * TILE_SCALE_DEFAULT as f32,
-                        16. * TILE_SCALE_DEFAULT as f32,
-                    )
-                } else {
-                    Vector2::new(
-                        48. * TILE_SCALE_DEFAULT as f32,
-                        16. * TILE_SCALE_DEFAULT as f32,
-                    )
-                };
-                slider.change_size(dimensions, i);
-            }
         }
 
         return Self {
@@ -211,10 +254,18 @@ impl SettingsMenuHandler {
             }
             index += 1;
         }
-        if self.picked_element.is_some()
+        if self.picked_element.is_some_and(|b| b >= index)
             && rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT)
         {
+            let val = self.picked_element.unwrap();
             self.picked_element = None;
+
+            if self.sliders[val - BUTTONS_SETTINGS.len()].snap {
+                self.sliders[val - BUTTONS_SETTINGS.len()].slider_value = find_nearest(
+                    SliderStyle::get_snap_points(&SliderStyle::Ruler),
+                    self.sliders[val - BUTTONS_SETTINGS.len()].slider_value as usize,
+                ) as u8;
+            }
         };
 
         for slider in self.sliders.iter_mut() {
@@ -232,7 +283,6 @@ impl SettingsMenuHandler {
             }
 
             if self.picked_element.is_some_and(|b| b != index) || self.picked_element.is_none() {
-                println!("what");
                 index += 1;
                 continue;
             };
@@ -265,10 +315,10 @@ impl SettingsMenuHandler {
         texture_handler: &TextureHandler,
         rl: &mut RaylibDrawHandle,
     ) {
-        rl.clear_background(Color::from_hex("0b8a8f").unwrap());
+        rl.clear_background(Color::from_hex(BACKGROUND_COLOR_HEX).unwrap());
 
         rl.draw_texture_ex(
-            texture_handler.get_safe("main_menu_bg"),
+            texture_handler.get_safe(BACKGROUND_IMAGE),
             Vector2::zero(),
             0.0,
             TILE_SCALE_DEFAULT as f32,
@@ -289,10 +339,10 @@ impl SettingsMenuHandler {
                 && self.picked_element.is_none()
             {
                 self.picked_element = Some(index);
-                32.
+                BUTTON_TEXTURE_WIDTH
             } else {
                 if self.picked_element.is_some_and(|b| b == index) && mouse_down {
-                    32.
+                    BUTTON_TEXTURE_WIDTH
                 } else {
                     0.
                 }
@@ -300,8 +350,13 @@ impl SettingsMenuHandler {
 
             let button_state = if button.selected { 32. } else { 0. };
             rl.draw_texture_pro(
-                texture_handler.get_safe("settings_button"),
-                Rectangle::new(texture_offset, button_state, 32., 32.),
+                texture_handler.get_safe(SETTINGS_BUTTON_TEXTURE),
+                Rectangle::new(
+                    texture_offset,
+                    button_state,
+                    BUTTON_TEXTURE_WIDTH,
+                    BUTTON_TEXTURE_WIDTH,
+                ),
                 button.rect,
                 Vector2::zero(),
                 0.0,
@@ -312,31 +367,31 @@ impl SettingsMenuHandler {
                 font,
                 BUTTONS_SETTINGS[button_num],
                 Vector2::new(
-                    32. * TILE_SCALE_DEFAULT as f32,
-                    (index + 1) as f32 * 24. * TILE_SCALE_DEFAULT as f32,
+                    TEXT_X_OFFSET * TILE_SCALE_DEFAULT as f32,
+                    (UI_Y_OFFSET + UI_Y_TOP_OFFSET + index as f32 * UI_SHIFT_SIZE)
+                        * TILE_SCALE_DEFAULT as f32,
                 ),
                 Vector2::zero(),
                 0.,
-                12. * TILE_SCALE_DEFAULT as f32,
-                1.05 * TILE_SCALE_DEFAULT as f32,
-                CustomColor::BLACK_TEXT,
+                TEXT_SIZE * TILE_SCALE_DEFAULT as f32,
+                TEXT_SPACING * TILE_SCALE_DEFAULT as f32,
+                Color::RAYWHITE,
             );
 
             index += 1;
         }
         for (slider_num, slider) in self.sliders.iter_mut().enumerate() {
             for i in 0..slider.rects.len() {
-                let mut width = SLIDER_WIDTH_PX;
-                let mut height = SLIDER_HEIGHT_PX;
+                let mut width = SLIDER_WIDTH_PX as usize;
+                let mut height = SLIDER_HEIGHT_PX as usize;
                 let x = 0;
                 let y = i as u8 * SLIDER_TEXTURE_OFFSET;
 
                 match slider.slider_style {
                     SliderStyle::Ruler => {
-                        if i == slider.rects.len() - 1 {
-                            height = 16;
-                            width = 16;
-                            let new_val = if slider.slider_value as f32 > 97. {
+                        if i == SliderStyle::get_picker_rect(&SliderStyle::Ruler) {
+                            (height, width) = SliderStyle::get_picker_size(&slider.slider_style);
+                            let new_val = if slider.slider_value as f32 > 95. {
                                 95.
                             } else {
                                 slider.slider_value as f32
@@ -348,9 +403,9 @@ impl SettingsMenuHandler {
                         }
                     }
                     SliderStyle::Volume => {
-                        if i == 0 {
+                        if i == SliderStyle::get_picker_rect(&slider.slider_style) {
                             width = (SLIDER_WIDTH_PX as f32 * slider.slider_value as f32 / 100.)
-                                .floor() as u8;
+                                .floor() as usize;
 
                             slider.rects[i].width = width as f32 * TILE_SCALE_DEFAULT as f32;
                         }
@@ -370,17 +425,18 @@ impl SettingsMenuHandler {
                 font,
                 SLIDERS_SETTINGS[slider_num],
                 Vector2::new(
-                    32. * TILE_SCALE_DEFAULT as f32,
-                    (index + 1) as f32 * 24. * TILE_SCALE_DEFAULT as f32,
+                    TEXT_X_OFFSET * TILE_SCALE_DEFAULT as f32,
+                    (UI_Y_OFFSET
+                        + UI_Y_TOP_OFFSET
+                        + (slider_num + BUTTONS_SETTINGS.len()) as f32 * UI_SHIFT_SIZE)
+                        * TILE_SCALE_DEFAULT as f32,
                 ),
                 Vector2::zero(),
                 0.,
-                12. * TILE_SCALE_DEFAULT as f32,
-                1.05 * TILE_SCALE_DEFAULT as f32,
-                CustomColor::BLACK_TEXT,
+                TEXT_SIZE * TILE_SCALE_DEFAULT as f32,
+                TEXT_SPACING * TILE_SCALE_DEFAULT as f32,
+                Color::RAYWHITE,
             );
-
-            index += 1;
         }
     }
 }
