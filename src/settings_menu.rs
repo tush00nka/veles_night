@@ -35,8 +35,8 @@ const SLIDER_WIDTH_PX: u8 = 48;
 const SLIDER_HEIGHT_PX: u8 = 16;
 const RULER_PICKER_WIDTH_PX: u8 = 16;
 const SLIDER_TEXTURE_OFFSET: u8 = 16;
-const BUTTON_TEXTURE_WIDTH: f32 = 32.;
-const UI_X_OFFSET: f32 = 192.;
+const BUTTON_TEXTURE_WIDTH: f32 = 16.;
+const UI_X_OFFSET: f32 = 128.;
 const UI_Y_OFFSET: f32 = 14.;
 const UI_SHIFT_SIZE: f32 = 20.;
 const UI_Y_TOP_OFFSET: f32 = 1.;
@@ -50,8 +50,9 @@ const UI_UTILITY_WIDTH: u8 = 64;
 const UI_UTILITY_HEIGHT: u8 = 16;
 
 const BACKGROUND_COLOR_HEX: &str = "0b8a8f";
-const BACKGROUND_IMAGE: &str = "main_menu_bg";
+const BACKGROUND_IMAGE: &str = "settings_bg";
 const SETTINGS_BUTTON_TEXTURE: &str = "settings_button";
+// const SETTINGS_UI_TEXTURE: &str = "settings_ui";
 
 const BUTTONS_SETTINGS: [&str; 2] = ["Шейдер", "Полный экран"];
 const SLIDERS_SETTINGS: [&str; 3] = ["Громкость музыки", "Громкость звуков", "Разрешение"];
@@ -116,12 +117,12 @@ impl SliderStyle {
     fn get_picker_size(slider_style: &SliderStyle) -> (usize, usize) {
         return match *slider_style {
             SliderStyle::Ruler => (RULER_PICKER_WIDTH_PX as usize, SLIDER_HEIGHT_PX as usize),
-            _ => panic!("Not implemented yet!"),
+            _ => unimplemented!("Not implemented yet"),
         };
     }
     fn get_picker_rect(slider_style: &SliderStyle) -> usize {
         return match *slider_style {
-            SliderStyle::Volume => 0,
+            SliderStyle::Volume => 1,
             SliderStyle::Ruler => 1,
         };
     }
@@ -217,8 +218,8 @@ impl SettingsMenuHandler {
                     x: TILE_SCALE_DEFAULT as f32 * UI_X_OFFSET,
                     y: (UI_Y_OFFSET + UI_Y_TOP_OFFSET + index as f32 * UI_SHIFT_SIZE)
                         * TILE_SCALE_DEFAULT as f32,
-                    width: BUTTON_TEXTURE_WIDTH * TILE_SCALE_DEFAULT as f32 / 2.,
-                    height: BUTTON_TEXTURE_WIDTH * TILE_SCALE_DEFAULT as f32 / 2.,
+                    width: BUTTON_TEXTURE_WIDTH * TILE_SCALE_DEFAULT as f32,
+                    height: BUTTON_TEXTURE_WIDTH * TILE_SCALE_DEFAULT as f32,
                 },
                 offset: 0.,
             });
@@ -478,6 +479,7 @@ impl SettingsMenuHandler {
 
         for (button_num, button) in self.buttons.iter().enumerate() {
             let mouse_down = rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT);
+
             let texture_offset = if button.rect.check_collision_point_rec(
                 rl.get_mouse_position()
                     - Vector2::new(
@@ -502,6 +504,7 @@ impl SettingsMenuHandler {
             } else {
                 0.
             };
+
             rl.draw_texture_pro(
                 texture_handler.get_safe(SETTINGS_BUTTON_TEXTURE),
                 Rectangle::new(

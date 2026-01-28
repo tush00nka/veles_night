@@ -44,9 +44,6 @@ pub struct UIHandler {
     quitting: bool,
     pause_button_recs: Vec<Rectangle>,
     pause_button_labels: Vec<String>,
-    // dialogue_accumulator: String,
-    // dialogure_iterator: Option<Chars<'a>>,
-    // current_dialogue: usize,
 }
 
 impl UIHandler {
@@ -80,7 +77,7 @@ impl UIHandler {
             rects.push(Rectangle::new(
                 SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6.
                     - 32. * TILE_SCALE_DEFAULT as f32,
-                SCREEN_HEIGHT as f32 / 3. + 18. * (i + 1) as f32 * TILE_SCALE_DEFAULT as f32
+                SCREEN_HEIGHT as f32 / 4. + 18. * (i + 1) as f32 * TILE_SCALE_DEFAULT as f32
                     - 8. * TILE_SCALE_DEFAULT as f32,
                 64. * TILE_SCALE_DEFAULT as f32,
                 16. * TILE_SCALE_DEFAULT as f32,
@@ -506,13 +503,14 @@ impl UIHandler {
             return;
         }
 
-        let screen_width = rl.get_screen_width();
-        let screen_height = rl.get_screen_height();
+		// not needed?
+        // let screen_width = rl.get_screen_width();
+        // let screen_height = rl.get_screen_height();
 
         // panel
         let panel_position = Vector2::new(
-            (screen_width / 2) as f32 - 64. * TILE_SCALE_DEFAULT as f32,
-            (screen_height / 2) as f32 - 48. * TILE_SCALE_DEFAULT as f32,
+            (SCREEN_WIDTH / 2) as f32 - 64. * TILE_SCALE_DEFAULT as f32, // screen_width
+            (SCREEN_HEIGHT / 2) as f32 - 48. * TILE_SCALE_DEFAULT as f32, // screen_height
         );
 
         rl.draw_texture_ex(
@@ -577,7 +575,7 @@ impl UIHandler {
                         - texture_offset / 16. * 2. * TILE_SCALE_DEFAULT as f32,
                 ),
                 12. * TILE_SCALE_DEFAULT as f32,
-                1.05 * TILE_SCALE_DEFAULT as f32,
+                TILE_SCALE_DEFAULT as f32,
                 CustomColor::BLACK_TEXT,
             );
         }

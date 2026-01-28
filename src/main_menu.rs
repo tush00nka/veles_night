@@ -241,8 +241,8 @@ impl MainMenuHandler {
             font,
             format!("Версия {}", VERSION).as_str(),
             Vector2::one() * TILE_SCALE_DEFAULT as f32,
-            12. * TILE_SCALE_DEFAULT as f32,
-            1.25 * TILE_SCALE_DEFAULT as f32,
+            6. * TILE_SCALE_DEFAULT as f32,
+            0.,
             Color::RAYWHITE,
         );
     }
