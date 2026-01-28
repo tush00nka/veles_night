@@ -9,6 +9,7 @@ use crate::{
     metadata_handler::MetadataHandler,
     save_handler::SaveHandler,
     scene::{Scene, SceneHandler},
+    settings::SettingsHandler,
     settings_menu::SettingsMenuHandler,
     spirits_handler::SpiritsHandler,
     texture_handler::TextureHandler,
@@ -62,6 +63,7 @@ impl MainMenuHandler {
         should_close: &mut bool,
         rl: &mut RaylibHandle,
         save_handler: &mut SaveHandler,
+        settings_handler: &SettingsHandler,
         level_number: &mut u8,
         metadata_handler: &mut MetadataHandler,
         level: &mut Level,
@@ -102,6 +104,7 @@ impl MainMenuHandler {
                     }
                     2 => {
                         settings_menu.set_scene(Scene::MainMenu);
+                        settings_menu.align_settings(settings_handler.get_settings());
                         scene_handler.set(Scene::Settings);
                     }
                     3 => {

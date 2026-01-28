@@ -10,6 +10,7 @@ use crate::{
     metadata_handler::MetadataHandler,
     save_handler::SaveHandler,
     scene::{Scene, SceneHandler},
+    settings::{MAXIMUM_PIXEL_SCALE, Settings, SettingsHandler},
     spirits_handler::SpiritsHandler,
     texture_handler::TextureHandler,
     ui::{Button, UIHandler},
@@ -19,6 +20,15 @@ use crate::{
 pub enum SliderStyle {
     Volume,
     Ruler,
+}
+
+#[derive(PartialEq, Clone, Copy)]
+pub enum SettingsOptions {
+    Shader,
+    Fullscreen,
+    MusicVolume,
+    SoundVolume,
+    Resolution,
 }
 
 const SLIDER_WIDTH_PX: u8 = 48;
@@ -34,12 +44,33 @@ const TEXT_X_OFFSET: f32 = 32.;
 const TEXT_SIZE: f32 = 12.;
 const TEXT_SPACING: f32 = 1.05;
 
+const UI_UTILITY_X_OFFSET: u8 = 112;
+const UI_UTILITY_Y_OFFSET: u8 = 128;
+const UI_UTILITY_WIDTH: u8 = 64;
+const UI_UTILITY_HEIGHT: u8 = 16;
+
 const BACKGROUND_COLOR_HEX: &str = "0b8a8f";
 const BACKGROUND_IMAGE: &str = "main_menu_bg";
 const SETTINGS_BUTTON_TEXTURE: &str = "settings_button";
 
-const BUTTONS_SETTINGS: [&str; 2] = ["Шейдер", "Текст"];
+const BUTTONS_SETTINGS: [&str; 2] = ["Шейдер", "Полный экран"];
 const SLIDERS_SETTINGS: [&str; 3] = ["Громкость музыки", "Громкость звуков", "Разрешение"];
+
+const WARNING_TEXT: &str = "Вы точно хотите выйти без сохранения настроек?";
+const WARNING_BUTTONS_TEXT: [&str; 2] = ["Да", "Еще подумаю"];
+
+const UTILITY_BUTTONS: [&str; 2] = ["Выйти", "Сохранить настройки"];
+const UTILITY_BUTTONS_TEXTURE: &str = "main_menu_buttons";
+
+const SETTINGS_OPTIONS: [SettingsOptions; BUTTONS_SETTINGS.len() + SLIDERS_SETTINGS.len()] = [
+    SettingsOptions::Shader,
+    SettingsOptions::Fullscreen,
+    SettingsOptions::MusicVolume,
+    SettingsOptions::SoundVolume,
+    SettingsOptions::Resolution,
+];
+
+const PIXEL_SCALE_TO_SLIDER_VALUE: f32 = 100. / MAXIMUM_PIXEL_SCALE as f32;
 
 const SLIDER_TYPES: [SliderStyle; 3] =
     [SliderStyle::Volume, SliderStyle::Volume, SliderStyle::Ruler];
@@ -110,7 +141,7 @@ impl SliderStyle {
 
     fn get_sprite_parts_amount(slider_style: &SliderStyle) -> u8 {
         return match *slider_style {
-            SliderStyle::Volume => 3,
+            SliderStyle::Volume => 2,
             SliderStyle::Ruler => 2,
         };
     }
@@ -169,11 +200,15 @@ pub struct SettingsMenuHandler {
     picked_element: Option<usize>,
     buttons: Vec<Button>,
     sliders: Vec<Slider>,
+    ui_buttons: Vec<Button>,
+    in_menu_settings: Settings,
+    draw_warning: bool,
 }
 impl SettingsMenuHandler {
     pub fn new() -> Self {
         let mut buttons = Vec::new();
         let mut sliders = Vec::new();
+        let mut buttons_utility = Vec::new();
 
         for index in 0..BUTTONS_SETTINGS.len() {
             buttons.push(Button {
@@ -184,6 +219,31 @@ impl SettingsMenuHandler {
                         * TILE_SCALE_DEFAULT as f32,
                     width: BUTTON_TEXTURE_WIDTH * TILE_SCALE_DEFAULT as f32 / 2.,
                     height: BUTTON_TEXTURE_WIDTH * TILE_SCALE_DEFAULT as f32 / 2.,
+                },
+                offset: 0.,
+            });
+        }
+
+        for index in 0..UTILITY_BUTTONS.len() {
+            buttons_utility.push(Button {
+                selected: false,
+                rect: Rectangle {
+                    x: (TILE_SCALE_DEFAULT * UI_UTILITY_X_OFFSET as i32) as f32 * index as f32,
+                    y: index as f32 * (UI_UTILITY_Y_OFFSET as i32 * TILE_SCALE_DEFAULT) as f32,
+                    width: (UI_UTILITY_WIDTH as i32 * TILE_SCALE_DEFAULT) as f32,
+                    height: (UI_UTILITY_HEIGHT as i32 * TILE_SCALE_DEFAULT) as f32,
+                },
+                offset: 0.,
+            });
+        }
+        for index in 0..WARNING_BUTTONS_TEXT.len() {
+            buttons_utility.push(Button {
+                selected: false,
+                rect: Rectangle {
+                    x: (TILE_SCALE_DEFAULT * UI_UTILITY_X_OFFSET as i32) as f32 * index as f32,
+                    y: index as f32 * (128 * TILE_SCALE_DEFAULT) as f32,
+                    width: (UI_UTILITY_WIDTH as i32 * TILE_SCALE_DEFAULT) as f32,
+                    height: (UI_UTILITY_HEIGHT as i32 * TILE_SCALE_DEFAULT) as f32,
                 },
                 offset: 0.,
             });
@@ -207,16 +267,72 @@ impl SettingsMenuHandler {
             picked_element: None,
             previous_scene: None,
             buttons,
+            ui_buttons: buttons_utility,
             sliders,
+            in_menu_settings: Settings::default(),
+            draw_warning: false,
         };
+    }
+
+    fn set_setting_button(settings: &mut Settings, settings_option: SettingsOptions, value: bool) {
+        match settings_option {
+            SettingsOptions::Fullscreen => settings.fullscreen = value,
+            SettingsOptions::Shader => settings.shader = value,
+            _ => panic!("Not implemented yet!"),
+        };
+    }
+
+    fn set_setting_slider(settings: &mut Settings, settings_option: SettingsOptions, value: u8) {
+        match settings_option {
+            SettingsOptions::SoundVolume => settings.sound = value as f32,
+            SettingsOptions::MusicVolume => settings.music = value as f32,
+            SettingsOptions::Resolution => settings.pixel_scale = value,
+            _ => panic!("Not implemented yet!"),
+        };
+    }
+
+    pub fn align_settings(&mut self, settings: &Settings) {
+        for (index, button) in self.buttons.iter_mut().enumerate() {
+            match SETTINGS_OPTIONS[index] {
+                SettingsOptions::Shader => {
+                    self.in_menu_settings.shader = settings.shader;
+                    button.selected = settings.shader;
+                }
+                SettingsOptions::Fullscreen => {
+                    self.in_menu_settings.shader = settings.fullscreen;
+                    button.selected = settings.fullscreen;
+                }
+                _ => panic!("Not implemented yet!"),
+            };
+        }
+
+        for (index, slider) in self.sliders.iter_mut().enumerate() {
+            match SETTINGS_OPTIONS[index + BUTTONS_SETTINGS.len()] {
+                SettingsOptions::MusicVolume => {
+                    self.in_menu_settings.music = settings.music;
+                    slider.slider_value = settings.music as u8;
+                }
+                SettingsOptions::SoundVolume => {
+                    self.in_menu_settings.sound = settings.sound;
+                    slider.slider_value = settings.sound as u8;
+                }
+                SettingsOptions::Resolution => {
+                    self.in_menu_settings.pixel_scale = settings.pixel_scale;
+                    slider.slider_value = settings.pixel_scale * PIXEL_SCALE_TO_SLIDER_VALUE as u8;
+                }
+                _ => panic!("Not implemented yet!"),
+            };
+        }
     }
 
     pub fn set_scene(&mut self, scene: Scene) {
         self.previous_scene = Some(scene);
     }
+
     pub fn check_scene(&mut self) -> bool {
         return self.previous_scene.is_some();
     }
+
     #[profiling::function]
     pub fn update(
         &mut self,
@@ -231,13 +347,35 @@ impl SettingsMenuHandler {
         _enemies_handler: &mut EnemiesHandler,
         _ui_handler: &mut UIHandler,
         _level_transition: &mut LevelTransition,
+        settings_handler: &mut SettingsHandler,
     ) {
         let mut index = 0;
-        for button in self.buttons.iter_mut() {
-            if rl.is_key_pressed(KeyboardKey::KEY_ESCAPE) && self.previous_scene.is_some() {
-                scene_handler.set(self.previous_scene.unwrap());
-                self.previous_scene = None;
+        for (i, button) in self.ui_buttons.iter_mut().enumerate() {
+            if button.selected && rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT) {
+                button.selected = false;
+                match i {
+                    0 => {
+                        if *settings_handler.get_settings() != self.in_menu_settings {
+                            self.draw_warning = true;
+                            return;
+                        }
+                        scene_handler.set(self.previous_scene.unwrap());
+                        self.previous_scene = None;
+                    }
+                    1 => {
+                        settings_handler.set_settings(&self.in_menu_settings);
+                    }
+                    _ => panic!("Not implemented yet!"),
+                };
             }
+        }
+
+        if rl.is_key_pressed(KeyboardKey::KEY_ESCAPE) && self.previous_scene.is_some() {
+            scene_handler.set(self.previous_scene.unwrap());
+            self.previous_scene = None;
+        }
+
+        for button in self.buttons.iter_mut() {
             if rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT)
                 && self.picked_element.is_some_and(|b| b == index)
             {
@@ -250,10 +388,16 @@ impl SettingsMenuHandler {
                         ),
                 ) {
                     button.selected = !button.selected;
+                    SettingsMenuHandler::set_setting_button(
+                        &mut self.in_menu_settings,
+                        SETTINGS_OPTIONS[index],
+                        button.selected,
+                    );
                 }
             }
             index += 1;
         }
+
         if self.picked_element.is_some_and(|b| b >= index)
             && rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT)
         {
@@ -303,6 +447,11 @@ impl SettingsMenuHandler {
             };
 
             slider.slider_value = slider_value as u8;
+            SettingsMenuHandler::set_setting_slider(
+                &mut self.in_menu_settings,
+                SETTINGS_OPTIONS[index],
+                slider.slider_value,
+            );
             index += 1;
         }
     }
@@ -327,7 +476,7 @@ impl SettingsMenuHandler {
 
         let mut index = 0;
 
-        for (button_num, button) in self.buttons.iter_mut().enumerate() {
+        for (button_num, button) in self.buttons.iter().enumerate() {
             let mouse_down = rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT);
             let texture_offset = if button.rect.check_collision_point_rec(
                 rl.get_mouse_position()
@@ -348,7 +497,11 @@ impl SettingsMenuHandler {
                 }
             };
 
-            let button_state = if button.selected { 32. } else { 0. };
+            let button_state = if button.selected {
+                BUTTON_TEXTURE_WIDTH
+            } else {
+                0.
+            };
             rl.draw_texture_pro(
                 texture_handler.get_safe(SETTINGS_BUTTON_TEXTURE),
                 Rectangle::new(
@@ -436,6 +589,38 @@ impl SettingsMenuHandler {
                 TEXT_SIZE * TILE_SCALE_DEFAULT as f32,
                 TEXT_SPACING * TILE_SCALE_DEFAULT as f32,
                 Color::RAYWHITE,
+            );
+        }
+
+        for button in self.ui_buttons.iter_mut() {
+            let mouse_down = rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT);
+            let texture_offset = if button.rect.check_collision_point_rec(
+                rl.get_mouse_position()
+                    - Vector2::new(
+                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                    ),
+            ) && mouse_down
+                && self.picked_element.is_none()
+            {
+                button.selected = true;
+                UI_UTILITY_HEIGHT as f32
+            } else {
+                0.
+            };
+
+            rl.draw_texture_pro(
+                texture_handler.get_safe(UTILITY_BUTTONS_TEXTURE),
+                Rectangle::new(
+                    0.,
+                    texture_offset,
+                    UI_UTILITY_WIDTH as f32,
+                    UI_UTILITY_HEIGHT as f32,
+                ),
+                button.rect,
+                Vector2::zero(),
+                0.0,
+                Color::WHITE,
             );
         }
     }

@@ -1,15 +1,16 @@
 use serde::{Deserialize, Serialize};
 
 use crate::map::TILE_SCALE_DEFAULT;
+pub const MAXIMUM_PIXEL_SCALE: u8 = 4;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, PartialEq)]
 pub struct Settings {
-    language: String,
-    music: f32,
-    sound: f32,
-    pixel_scale: u8,
-    shader: bool,
-    fullscreen: bool,
+    pub language: String,
+    pub music: f32,
+    pub sound: f32,
+    pub pixel_scale: u8,
+    pub shader: bool,
+    pub fullscreen: bool,
 }
 
 impl Default for Settings {
@@ -63,5 +64,11 @@ impl SettingsHandler {
         };
 
         std::fs::write(SETTINGS_PATH, s).expect("COULDN'T WRITE SETTINGS TO FILE");
+    }
+    pub fn get_settings(&self) -> &Settings {
+        return &self.settings;
+    }
+    pub fn set_settings(&mut self, settings: &Settings) {
+        self.settings = settings.clone();
     }
 }

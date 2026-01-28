@@ -143,7 +143,7 @@ fn main() {
     let mut dialogue_handler = DialogueHandler::new();
     dialogue_handler.load_dialogue(&format!("level_{level_number}"));
 
-    let settings_handler = SettingsHandler::new();
+    let mut settings_handler = SettingsHandler::new();
     settings_handler.save();
 
     while !rl.window_should_close() && !should_close {
@@ -227,6 +227,7 @@ fn main() {
                     &mut should_close,
                     &mut rl,
                     &mut save_handler,
+                    &settings_handler,
                     &mut level_number,
                     &mut metadata_handler,
                     &mut level,
@@ -318,6 +319,7 @@ fn main() {
 
                 if settings_menu.check_scene() {
                     settings_menu.set_scene(Scene::Level);
+                    settings_menu.align_settings(&settings_handler.get_settings());
                     scene_handler.set(Scene::Settings);
                 }
             }
@@ -361,6 +363,7 @@ fn main() {
                     &mut enemies_handler,
                     &mut ui_handler,
                     &mut level_transition,
+                    &mut settings_handler,
                 );
             }
         }
