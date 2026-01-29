@@ -373,7 +373,7 @@ fn main() {
         {
             let mut t = d.begin_texture_mode(&thread, &mut target);
             if !settings_handler.settings.shader {
-                draw_level(
+                level_texture(
                     &mut level,
                     level_number,
                     &texture_handler,
@@ -381,27 +381,21 @@ fn main() {
                     &mut enemies_handler,
                     &mut order_handler,
                     &mut t,
+                    &mut particles,
                 );
             } else {
-                t.draw_shader_mode(&mut shader, |mut s| {
-                    match scene_handler.get_current() {
-                        Scene::Level => {
-                            draw_level(
-                                &mut level,
-                                level_number,
-                                &texture_handler,
-                                &mut spirits_handler,
-                                &mut enemies_handler,
-                                &mut order_handler,
-                                &mut s,
-                            );
-                        }
-                        _ => {}
-                    }
-
-                    for particle in particles.iter_mut() {
-                        particle.draw(&mut s);
-                    }
+                t.draw_shader_mode(&mut shader, |mut s| match scene_handler.get_current() {
+                    Scene::Level => level_texture(
+                        &mut level,
+                        level_number,
+                        &texture_handler,
+                        &mut spirits_handler,
+                        &mut enemies_handler,
+                        &mut order_handler,
+                        &mut s,
+                        &mut particles,
+                    ),
+                    _ => {}
                 });
             }
 
@@ -681,4 +675,28 @@ fn reload_procedure(
     *spirits_handler = SpiritsHandler::new();
     spirits_handler.spawn_spirits(metadata_handler);
     enemies_handler.spawn_enemies(metadata_handler);
+}
+
+fn level_texture(
+    level: &mut Level,
+    level_number: u8,
+    texture_handler: &TextureHandler,
+    spirits_handler: &mut SpiritsHandler,
+    enemies_handler: &mut EnemiesHandler,
+    order_handler: &mut OrderHandler,
+    rl: &mut RaylibDrawHandle,
+    particles: &mut Vec<Particle>,
+) {
+    draw_level(
+        level,
+        level_number,
+        &texture_handler,
+        spirits_handler,
+        enemies_handler,
+        order_handler,
+        rl,
+    );
+    for particle in particles.iter_mut() {
+        particle.draw(rl);
+    }
 }
