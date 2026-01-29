@@ -149,13 +149,14 @@ fn main() {
     while !rl.window_should_close() && !should_close {
         profiling::scope!("Game frame");
         if rl.is_key_pressed(KeyboardKey::KEY_F) {
-            if rl.is_window_fullscreen() {
+            settings_handler.settings.fullscreen = !settings_handler.settings.fullscreen;
+            if settings_handler.settings.fullscreen {
                 rl.set_window_size(SCREEN_WIDTH, SCREEN_HEIGHT);
             }
             rl.toggle_fullscreen();
         }
 
-        music_handler.music_update();
+        music_handler.music_update(&settings_handler.get_settings());
         save_handler.check_saves();
 
         if save_handler.should_save {
@@ -202,15 +203,23 @@ fn main() {
         }
 
         if hotkey_handler.check_down(&rl, HotkeyCategory::VolumeUp) {
-            rl_audio.set_master_volume(rl_audio.get_master_volume() + 0.01);
+            settings_handler.settings.general_audio += 1.;
+            if settings_handler.settings.general_audio > 100. {
+                settings_handler.settings.general_audio = 100.;
+            }
+
+            rl_audio.set_master_volume(settings_handler.settings.general_audio / 100.);
         }
 
         if hotkey_handler.check_down(&rl, HotkeyCategory::VolumeDown) {
-            rl_audio.set_master_volume(rl_audio.get_master_volume() - 0.01);
-            if rl_audio.get_master_volume() >= 1. {
-                rl_audio.set_master_volume(1.0);
+            settings_handler.settings.general_audio -= 1.;
+            if settings_handler.settings.general_audio <= 0. {
+                settings_handler.settings.general_audio = 0.;
             }
+
+            rl_audio.set_master_volume(settings_handler.settings.general_audio / 100.);
         }
+
         match scene_handler.get_current() {
             Scene::GameOver => (),
             _ => music_handler.music_resume(),
@@ -306,6 +315,7 @@ fn main() {
                     &mut save_handler,
                     &mut dialogue_handler,
                     &mut settings_menu,
+                    &mut settings_handler,
                 ) {
                     reload_procedure(
                         level_number,
@@ -362,25 +372,38 @@ fn main() {
         // we draw to the texture
         {
             let mut t = d.begin_texture_mode(&thread, &mut target);
+            if !settings_handler.settings.shader {
+                draw_level(
+                    &mut level,
+                    level_number,
+                    &texture_handler,
+                    &mut spirits_handler,
+                    &mut enemies_handler,
+                    &mut order_handler,
+                    &mut t,
+                );
+            } else {
+                t.draw_shader_mode(&mut shader, |mut s| {
+                    match scene_handler.get_current() {
+                        Scene::Level => {
+                            draw_level(
+                                &mut level,
+                                level_number,
+                                &texture_handler,
+                                &mut spirits_handler,
+                                &mut enemies_handler,
+                                &mut order_handler,
+                                &mut s,
+                            );
+                        }
+                        _ => {}
+                    }
 
-            t.draw_shader_mode(&mut shader, |mut s| {
-                match scene_handler.get_current() {
-                    Scene::Level => draw_level(
-                        &mut level,
-                        level_number,
-                        &texture_handler,
-                        &mut spirits_handler,
-                        &mut enemies_handler,
-                        &mut order_handler,
-                        &mut s,
-                    ),
-                    _ => {}
-                }
-
-                for particle in particles.iter_mut() {
-                    particle.draw(&mut s);
-                }
-            });
+                    for particle in particles.iter_mut() {
+                        particle.draw(&mut s);
+                    }
+                });
+            }
 
             match scene_handler.get_current() {
                 Scene::MainMenu => {
@@ -508,6 +531,7 @@ fn update_level<'a>(
     save_handler: &mut SaveHandler,
     dialogue_handler: &mut DialogueHandler,
     settings_menu: &mut SettingsMenuHandler,
+    settings_handler: &mut SettingsHandler,
 ) -> bool {
     for spirit in spirits_handler.spirits.values() {
         if spirit.get_dead() {
@@ -534,7 +558,7 @@ fn update_level<'a>(
     }
 
     for spirit in spirits_handler.spirits.values_mut() {
-        spirit.update_behaviour(level, music_handler, rl);
+        spirit.update_behaviour(level, music_handler, rl, settings_handler);
     }
 
     order_handler.select_spirit(spirits_handler, level, rl, hotkey_handler);
@@ -553,6 +577,7 @@ fn update_level<'a>(
         scene_handler,
         spirits_handler.spirits.len() as u8,
         music_handler,
+        settings_handler,
     );
 
     if hotkey_handler.check_pressed(rl, HotkeyCategory::Reset) || level_restart {

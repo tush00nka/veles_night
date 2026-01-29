@@ -5,6 +5,7 @@ use crate::{
     metadata_handler::MetadataHandler,
     music_handler::MusicHandler,
     scene::{Scene, SceneHandler},
+    settings::SettingsHandler,
     texture_handler::TextureHandler,
 };
 
@@ -168,11 +169,12 @@ impl Level {
         scene_handler: &mut SceneHandler,
         left_amount: u8,
         music_handler: &MusicHandler,
+        settings_handler: &SettingsHandler,
     ) {
         if self.completed() && left_amount == 0 {
             scene_handler.set(Scene::Transition);
         } else if left_amount == 0 {
-            music_handler.play("death");
+            music_handler.play("death", &settings_handler.get_settings());
             scene_handler.set(Scene::GameOver);
         }
     }

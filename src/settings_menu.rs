@@ -22,6 +22,7 @@ pub enum SettingsOptions {
     Fullscreen,
     MusicVolume,
     SoundVolume,
+    GeneralAudio,
     Resolution,
 }
 
@@ -57,7 +58,12 @@ const SETTINGS_BUTTON_TEXTURE: &str = "settings_button";
 const SETTINGS_UI_TEXTURE: &str = "pause_menu";
 
 const BUTTONS_SETTINGS: [&str; 2] = ["Шейдер", "Полный экран"];
-const SLIDERS_SETTINGS: [&str; 3] = ["Громкость музыки", "Громкость звуков", "Разрешение"];
+const SLIDERS_SETTINGS: [&str; 4] = [
+    "Общая громкость",
+    "Громкость музыки",
+    "Громкость звуков",
+    "Разрешение",
+];
 
 const WARNING_TEXT: [&str; 3] = ["Вы хотите выйти", "без сохранения", "настроек?"];
 const WARNING_BUTTONS_TEXT: [&str; 2] = ["Да", "Нет"];
@@ -68,6 +74,7 @@ const UTILITY_BUTTONS_TEXTURE: &str = "main_menu_buttons";
 const SETTINGS_OPTIONS: [SettingsOptions; BUTTONS_SETTINGS.len() + SLIDERS_SETTINGS.len()] = [
     SettingsOptions::Shader,
     SettingsOptions::Fullscreen,
+    SettingsOptions::GeneralAudio,
     SettingsOptions::MusicVolume,
     SettingsOptions::SoundVolume,
     SettingsOptions::Resolution,
@@ -75,8 +82,12 @@ const SETTINGS_OPTIONS: [SettingsOptions; BUTTONS_SETTINGS.len() + SLIDERS_SETTI
 
 const PIXEL_SCALE_TO_SLIDER_VALUE: f32 = 100. / MAXIMUM_PIXEL_SCALE as f32;
 
-const SLIDER_TYPES: [SliderStyle; 3] =
-    [SliderStyle::Volume, SliderStyle::Volume, SliderStyle::Ruler];
+const SLIDER_TYPES: [SliderStyle; 4] = [
+    SliderStyle::Volume,
+    SliderStyle::Volume,
+    SliderStyle::Volume,
+    SliderStyle::Ruler,
+];
 
 fn find_nearest(values: Vec<usize>, value: usize) -> usize {
     let mut nearest = values[0];
@@ -320,6 +331,7 @@ impl SettingsMenuHandler {
             SettingsOptions::SoundVolume => settings.sound = value as f32,
             SettingsOptions::MusicVolume => settings.music = value as f32,
             SettingsOptions::Resolution => settings.pixel_scale = value,
+            SettingsOptions::GeneralAudio => settings.general_audio = value as f32,
             _ => panic!("Not implemented yet!"),
         };
     }
@@ -353,6 +365,11 @@ impl SettingsMenuHandler {
                     self.in_menu_settings.pixel_scale = settings.pixel_scale;
                     slider.slider_value = settings.pixel_scale * PIXEL_SCALE_TO_SLIDER_VALUE as u8;
                 }
+                SettingsOptions::GeneralAudio => {
+                    self.in_menu_settings.general_audio = settings.general_audio;
+                    slider.slider_value = settings.general_audio as u8;
+                }
+
                 _ => panic!("Not implemented yet!"),
             };
         }
@@ -405,6 +422,7 @@ impl SettingsMenuHandler {
                             continue;
                         }
                         settings_handler.set_settings(&self.in_menu_settings);
+                        settings_handler.save();
                     }
                     2 => {
                         self.draw_warning = false;

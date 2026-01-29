@@ -6,17 +6,26 @@ pub const MAXIMUM_PIXEL_SCALE: u8 = 3;
 #[derive(Serialize, Deserialize, Clone, PartialEq)]
 pub struct Settings {
     pub language: String,
+    pub general_audio: f32,
     pub music: f32,
     pub sound: f32,
     pub pixel_scale: u8,
     pub shader: bool,
     pub fullscreen: bool,
 }
-
+impl Settings {
+    pub fn get_final_music_volume(&self) -> f32 {
+        return (self.music * self.general_audio) / 10000.;
+    }
+    pub fn get_final_sound_volume(&self) -> f32 {
+        return (self.sound * self.general_audio) / 10000.;
+    }
+}
 impl Default for Settings {
     fn default() -> Self {
         Self {
             pixel_scale: TILE_SCALE_DEFAULT as u8,
+            general_audio: 100.0,
             music: 100.0,
             sound: 100.0,
             language: "ru".to_string(),
@@ -27,7 +36,7 @@ impl Default for Settings {
 }
 
 pub struct SettingsHandler {
-    settings: Settings,
+    pub settings: Settings,
 }
 
 const SETTINGS_PATH: &str = "dynamic/settings.json";
