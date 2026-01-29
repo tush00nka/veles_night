@@ -13,7 +13,7 @@ use crate::{
     settings_menu::SettingsMenuHandler,
     spirits_handler::SpiritsHandler,
     texture_handler::TextureHandler,
-    ui::{Button, UIHandler},
+    ui::{Button, UIHandler, get_text_size},
 };
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -158,33 +158,6 @@ impl MainMenuHandler {
             Color::WHITE,
         );
 
-        for (key, button) in self.buttons.iter_mut() {
-            if *key == 0 && !save_handler.is_there_saves {
-                continue;
-            }
-
-            let texture_offset = if button.rect.check_collision_point_rec(
-                rl.get_mouse_position()
-                    - Vector2::new(
-                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
-                    ),
-            ) {
-                0.
-            } else {
-                16.
-            };
-
-            rl.draw_texture_pro(
-                texture_handler.get_safe("main_menu_buttons"),
-                Rectangle::new(0., texture_offset, 64., 16.),
-                button.rect,
-                Vector2::zero(),
-                0.0,
-                Color::WHITE,
-            );
-        }
-
         for i in 0..self.labels.len() - 1 {
             if i == 0 && !save_handler.is_there_saves {
                 continue;
@@ -208,23 +181,28 @@ impl MainMenuHandler {
             if i == 1 && save_handler.is_there_saves {
                 label_num = self.labels.len() - 1;
             }
-            //rewrite this shit with legacy text_size function
-            rl.draw_text_pro(
+
+            let text_dimensions = get_text_size(
                 font,
                 self.labels[label_num],
-                Vector2::new(
-                    button.rect.x
-                        + 5.5 * TILE_SCALE_DEFAULT as f32
-                        + ((maxlen - self.labels[label_num].len()) * TILE_SCALE_DEFAULT as usize)
-                            as f32
-                        + self.labels_offsets[label_num] * TILE_SCALE_DEFAULT as f32,
-                    button.rect.y - text_offset_y + 1.5 * TILE_SCALE_DEFAULT as f32,
-                ),
-                Vector2::zero(),
-                0.0,
                 12. * TILE_SCALE_DEFAULT as f32,
                 1.25 * TILE_SCALE_DEFAULT as f32,
-                Color::RAYWHITE,
+            );
+
+            let texture_offset = if text_offset_y == 0. { 16. } else { 0. };
+
+            button.draw_with_text_middle(
+                rl,
+                self.labels[label_num],
+                font,
+                texture_handler.get_safe("main_menu_buttons"),
+                &Rectangle::new(0., texture_offset, 64., 16.),
+                text_dimensions,
+                &Color::RAYWHITE,
+                12. * TILE_SCALE_DEFAULT as f32,
+                1.25 * TILE_SCALE_DEFAULT as f32,
+                Vector2::new(0., -text_offset_y),
+                Vector2::new(0., 0.),
             );
 
             // rl.draw_texture_pro(

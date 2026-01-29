@@ -351,20 +351,7 @@ fn main() {
                 );
             }
             Scene::Settings => {
-                settings_menu.update(
-                    &mut scene_handler,
-                    &mut should_close,
-                    &mut rl,
-                    &mut save_handler,
-                    &mut level_number,
-                    &mut metadata_handler,
-                    &mut level,
-                    &mut spirits_handler,
-                    &mut enemies_handler,
-                    &mut ui_handler,
-                    &mut level_transition,
-                    &mut settings_handler,
-                );
+                settings_menu.update(&mut scene_handler, &mut rl, &mut settings_handler);
             }
         }
         profiling::scope!("Drawing");
@@ -400,7 +387,7 @@ fn main() {
                     main_menu.draw(&font, &save_handler, &texture_handler, &mut t);
                 }
                 Scene::Settings => {
-                    settings_menu.draw(&font, &save_handler, &texture_handler, &mut t);
+                    settings_menu.draw(&font, &texture_handler, &mut t);
                 }
                 Scene::GameEnd => gameend_handler.draw_gameover(&font, &mut t),
                 Scene::GameOver => gameover_handler.draw_gameover(&font, &mut t),

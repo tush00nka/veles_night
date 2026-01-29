@@ -38,7 +38,51 @@ pub struct Button {
     pub offset: f32,
     pub selected: bool,
 }
+impl Button {
+    pub fn draw_with_text_middle(
+        &self,
+        rl: &mut RaylibDrawHandle,
+        text: &str,
+        font: &Font,
+        texture: &Texture2D,
+        texture_rectangle: &Rectangle,
+        text_dimensions: raylib::ffi::Vector2,
+        color: &Color,
+        text_size: f32,
+        text_spacing: f32,
+        text_offset_pressed: Vector2,
+        texture_offset: Vector2,
+    ) {
+        rl.draw_texture_pro(
+            texture,
+            texture_rectangle,
+            self.rect,
+            Vector2::zero(),
+            0.0,
+            Color::WHITE,
+        );
 
+        rl.draw_text_pro(
+            font,
+            text,
+            Vector2::new(
+                self.rect.x
+                    + (self.rect.width - text_dimensions.x) / 2.
+                    + text_offset_pressed.x
+                    + texture_offset.x,
+                self.rect.y
+                    + (self.rect.height - text_dimensions.y) / 2.
+                    + text_offset_pressed.y
+                    + texture_offset.y,
+            ),
+            Vector2::zero(),
+            0.,
+            text_size,
+            text_spacing,
+            color,
+        );
+    }
+}
 pub struct UIHandler {
     build_buttons: HashMap<String, Button>,
     quitting: bool,
