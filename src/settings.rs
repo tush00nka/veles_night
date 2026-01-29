@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::map::TILE_SCALE_DEFAULT;
-pub const MAXIMUM_PIXEL_SCALE: u8 = 4;
+pub const MAXIMUM_PIXEL_SCALE: u8 = 3;
 
 #[derive(Serialize, Deserialize, Clone, PartialEq)]
 pub struct Settings {

@@ -27,8 +27,8 @@ pub fn get_text_size(
         MeasureTextEx(
             **font,
             ctext.as_ptr(), //???
-            TILE_SCALE_DEFAULT as f32 * text_size_basic,
-            text_space_basic * TILE_SCALE_DEFAULT as f32,
+            text_size_basic,
+            text_space_basic,
         )
     };
 }
@@ -503,7 +503,7 @@ impl UIHandler {
             return;
         }
 
-		// not needed?
+        // not needed?
         // let screen_width = rl.get_screen_width();
         // let screen_height = rl.get_screen_height();
 
@@ -521,7 +521,12 @@ impl UIHandler {
             Color::WHITE,
         );
 
-        let text_size = get_text_size(font, "Меню", 12., 1.05);
+        let text_size = get_text_size(
+            font,
+            "Меню",
+            12. * TILE_SCALE_DEFAULT as f32,
+            1.05 * TILE_SCALE_DEFAULT as f32,
+        );
 
         rl.draw_text_ex(
             font,

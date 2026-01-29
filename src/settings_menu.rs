@@ -4,6 +4,7 @@ use raylib::prelude::*;
 
 use crate::{
     SCREEN_HEIGHT, SCREEN_WIDTH,
+    color::CustomColor,
     enemy_spirit::EnemiesHandler,
     level_transition::LevelTransition,
     map::{Level, TILE_SCALE_DEFAULT},
@@ -13,7 +14,7 @@ use crate::{
     settings::{MAXIMUM_PIXEL_SCALE, Settings, SettingsHandler},
     spirits_handler::SpiritsHandler,
     texture_handler::TextureHandler,
-    ui::{Button, UIHandler},
+    ui::{Button, UIHandler, get_text_size},
 };
 
 #[derive(PartialEq, Clone, Copy)]
@@ -33,6 +34,7 @@ pub enum SettingsOptions {
 
 const SLIDER_WIDTH_PX: u8 = 48;
 const SLIDER_HEIGHT_PX: u8 = 16;
+const RULER_WIDTH_PX: u8 = 48;
 const RULER_PICKER_WIDTH_PX: u8 = 16;
 const SLIDER_TEXTURE_OFFSET: u8 = 16;
 const BUTTON_TEXTURE_WIDTH: f32 = 16.;
@@ -49,15 +51,22 @@ const UI_UTILITY_Y_OFFSET: u8 = 128;
 const UI_UTILITY_WIDTH: u8 = 64;
 const UI_UTILITY_HEIGHT: u8 = 16;
 
+const UI_WARNING_X_OFFSET: u8 = 80;
+const UI_WARNING_Y_OFFSET: u8 = 105;
+const UI_WARNING_X_SHIFT: u8 = 61;
+const UI_WARNING_WIDTH: u8 = 32;
+const UI_WARNING_HEIGHT: u8 = 16;
+//64. 26.
+
 const BACKGROUND_COLOR_HEX: &str = "0b8a8f";
 const BACKGROUND_IMAGE: &str = "settings_bg";
 const SETTINGS_BUTTON_TEXTURE: &str = "settings_button";
-// const SETTINGS_UI_TEXTURE: &str = "settings_ui";
+const SETTINGS_UI_TEXTURE: &str = "pause_menu";
 
 const BUTTONS_SETTINGS: [&str; 2] = ["Шейдер", "Полный экран"];
 const SLIDERS_SETTINGS: [&str; 3] = ["Громкость музыки", "Громкость звуков", "Разрешение"];
 
-const WARNING_TEXT: &str = "Вы точно хотите выйти без сохранения настроек?";
+const WARNING_TEXT: [&str; 3] = ["Вы точно хотите выйти", "без сохранения", "настроек?"];
 const WARNING_BUTTONS_TEXT: [&str; 2] = ["Да", "Еще подумаю"];
 
 const UTILITY_BUTTONS: [&str; 2] = ["Выйти", "Сохранить настройки"];
@@ -98,7 +107,7 @@ impl SliderStyle {
     }
     fn get_snap_points(slider_style: &SliderStyle) -> Vec<usize> {
         return match *slider_style {
-            SliderStyle::Ruler => vec![0, 33, 64, 100],
+            SliderStyle::Ruler => vec![0, 46, 100],
             _ => panic!("not implemented yet!"),
         };
     }
@@ -120,6 +129,29 @@ impl SliderStyle {
             _ => unimplemented!("Not implemented yet"),
         };
     }
+
+    fn get_picker_pressed_texture(slider_style: &SliderStyle) -> (u8, u8) {
+        return match *slider_style {
+            SliderStyle::Ruler => (16, 16),
+            _ => unimplemented!("Not implemented yet"),
+        };
+    }
+
+    fn get_picker_offset_according_to_slider(slider_style: &SliderStyle) -> f32 {
+        return match *slider_style {
+            SliderStyle::Ruler => -6.,
+            SliderStyle::Volume => 0.,
+            //_ => unimplemented!("Not implemented yet"),
+        };
+    }
+    fn get_picker_offset_according_to_slider_pressed(slider_style: &SliderStyle) -> f32 {
+        return match *slider_style {
+            SliderStyle::Ruler => -7.,
+            SliderStyle::Volume => 1.,
+            //_ => unimplemented!("Not implemented yet"),
+        };
+    }
+
     fn get_picker_rect(slider_style: &SliderStyle) -> usize {
         return match *slider_style {
             SliderStyle::Volume => 1,
@@ -128,7 +160,7 @@ impl SliderStyle {
     }
     fn get_outline_rect(slider_style: &SliderStyle) -> usize {
         return match *slider_style {
-            SliderStyle::Volume => 1,
+            SliderStyle::Volume => 0,
             SliderStyle::Ruler => 0,
         };
     }
@@ -139,7 +171,12 @@ impl SliderStyle {
             SliderStyle::Ruler => "ruler_slider",
         };
     }
-
+    fn get_dimensions(slider_style: &SliderStyle) -> (usize, usize) {
+        return match *slider_style {
+            SliderStyle::Volume => (SLIDER_WIDTH_PX as usize, SLIDER_HEIGHT_PX as usize),
+            SliderStyle::Ruler => (RULER_WIDTH_PX as usize, SLIDER_HEIGHT_PX as usize),
+        };
+    }
     fn get_sprite_parts_amount(slider_style: &SliderStyle) -> u8 {
         return match *slider_style {
             SliderStyle::Volume => 2,
@@ -161,7 +198,7 @@ impl SliderStyle {
             {
                 SliderStyle::get_picker_size(slider_style)
             } else {
-                (SLIDER_WIDTH_PX as usize, SLIDER_HEIGHT_PX as usize)
+                SliderStyle::get_dimensions(slider_style)
             };
             vector.push(Rectangle {
                 x: initial_position.x,
@@ -241,10 +278,12 @@ impl SettingsMenuHandler {
             buttons_utility.push(Button {
                 selected: false,
                 rect: Rectangle {
-                    x: (TILE_SCALE_DEFAULT * UI_UTILITY_X_OFFSET as i32) as f32 * index as f32,
-                    y: index as f32 * (128 * TILE_SCALE_DEFAULT) as f32,
-                    width: (UI_UTILITY_WIDTH as i32 * TILE_SCALE_DEFAULT) as f32,
-                    height: (UI_UTILITY_HEIGHT as i32 * TILE_SCALE_DEFAULT) as f32,
+                    x: (TILE_SCALE_DEFAULT * UI_WARNING_X_OFFSET as i32) as f32
+                        + (UI_WARNING_X_SHIFT as usize * TILE_SCALE_DEFAULT as usize * index)
+                            as f32,
+                    y: (TILE_SCALE_DEFAULT * UI_WARNING_Y_OFFSET as i32) as f32,
+                    width: (UI_WARNING_WIDTH as i32 * TILE_SCALE_DEFAULT) as f32,
+                    height: (UI_WARNING_HEIGHT as i32 * TILE_SCALE_DEFAULT) as f32,
                 },
                 offset: 0.,
             });
@@ -352,10 +391,23 @@ impl SettingsMenuHandler {
     ) {
         let mut index = 0;
         for (i, button) in self.ui_buttons.iter_mut().enumerate() {
-            if button.selected && rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT) {
+            if button.selected
+                && rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT)
+                && button.rect.check_collision_point_rec(
+                    rl.get_mouse_position()
+                        - Vector2::new(
+                            rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                            rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        ),
+                )
+            {
+                let warning = self.draw_warning;
                 button.selected = false;
                 match i {
                     0 => {
+                        if warning {
+                            continue;
+                        }
                         if *settings_handler.get_settings() != self.in_menu_settings {
                             self.draw_warning = true;
                             return;
@@ -364,13 +416,26 @@ impl SettingsMenuHandler {
                         self.previous_scene = None;
                     }
                     1 => {
+                        if warning {
+                            continue;
+                        }
                         settings_handler.set_settings(&self.in_menu_settings);
                     }
-                    _ => panic!("Not implemented yet!"),
+                    2 => {
+                        self.draw_warning = false;
+                        scene_handler.set(self.previous_scene.unwrap());
+                        self.previous_scene = None;
+                    }
+                    3 => {
+                        self.draw_warning = false;
+                    }
+                    _ => break,
                 };
             }
         }
-
+        if self.draw_warning {
+            return;
+        }
         if rl.is_key_pressed(KeyboardKey::KEY_ESCAPE) && self.previous_scene.is_some() {
             scene_handler.set(self.previous_scene.unwrap());
             self.previous_scene = None;
@@ -488,11 +553,15 @@ impl SettingsMenuHandler {
                     ),
             ) && mouse_down
                 && self.picked_element.is_none()
+                && !self.draw_warning
             {
                 self.picked_element = Some(index);
                 BUTTON_TEXTURE_WIDTH
             } else {
-                if self.picked_element.is_some_and(|b| b == index) && mouse_down {
+                if self.picked_element.is_some_and(|b| b == index)
+                    && mouse_down
+                    && !self.draw_warning
+                {
                     BUTTON_TEXTURE_WIDTH
                 } else {
                     0.
@@ -538,10 +607,11 @@ impl SettingsMenuHandler {
         }
         for (slider_num, slider) in self.sliders.iter_mut().enumerate() {
             for i in 0..slider.rects.len() {
-                let mut width = SLIDER_WIDTH_PX as usize;
-                let mut height = SLIDER_HEIGHT_PX as usize;
-                let x = 0;
-                let y = i as u8 * SLIDER_TEXTURE_OFFSET;
+                let (mut width, mut height) = SliderStyle::get_dimensions(&slider.slider_style);
+                let mut x = 0;
+                let mut y = i as u8 * SLIDER_TEXTURE_OFFSET;
+                let mut picker_offset =
+                    SliderStyle::get_picker_offset_according_to_slider(&slider.slider_style);
 
                 match slider.slider_style {
                     SliderStyle::Ruler => {
@@ -552,8 +622,21 @@ impl SettingsMenuHandler {
                             } else {
                                 slider.slider_value as f32
                             };
+
+                            if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT)
+                                && self.picked_element.is_some_and(|b| b == index + slider_num)
+                            {
+                                picker_offset =
+                                    SliderStyle::get_picker_offset_according_to_slider_pressed(
+                                        &SliderStyle::Ruler,
+                                    );
+
+                                (x, y) =
+                                    SliderStyle::get_picker_pressed_texture(&SliderStyle::Ruler);
+                            }
                             slider.rects[i].x =
                                 slider.rects[SliderStyle::get_outline_rect(&SliderStyle::Ruler)].x
+                                    + (picker_offset as i32 * TILE_SCALE_DEFAULT) as f32
                                     + (SLIDER_WIDTH_PX as f32 * new_val / 100.).floor()
                                         * TILE_SCALE_DEFAULT as f32;
                         }
@@ -595,9 +678,9 @@ impl SettingsMenuHandler {
             );
         }
 
-        for button in self.ui_buttons.iter_mut() {
+        for i in 0..UTILITY_BUTTONS.len() {
             let mouse_down = rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT);
-            let texture_offset = if button.rect.check_collision_point_rec(
+            let texture_offset = if self.ui_buttons[i].rect.check_collision_point_rec(
                 rl.get_mouse_position()
                     - Vector2::new(
                         rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
@@ -605,8 +688,9 @@ impl SettingsMenuHandler {
                     ),
             ) && mouse_down
                 && self.picked_element.is_none()
+                && !self.draw_warning
             {
-                button.selected = true;
+                self.ui_buttons[i].selected = true;
                 UI_UTILITY_HEIGHT as f32
             } else {
                 0.
@@ -620,10 +704,98 @@ impl SettingsMenuHandler {
                     UI_UTILITY_WIDTH as f32,
                     UI_UTILITY_HEIGHT as f32,
                 ),
-                button.rect,
+                self.ui_buttons[i].rect,
                 Vector2::zero(),
                 0.0,
                 Color::WHITE,
+            );
+        }
+
+        if !self.draw_warning {
+            return;
+        }
+
+        rl.draw_texture_ex(
+            texture_handler.get_safe(SETTINGS_UI_TEXTURE),
+            Vector2::new(
+                64. * TILE_SCALE_DEFAULT as f32,
+                26. * TILE_SCALE_DEFAULT as f32,
+            ),
+            0.0,
+            TILE_SCALE_DEFAULT as f32,
+            Color::WHITE,
+        );
+
+        for i in 0..WARNING_TEXT.len() {
+            let text_size = get_text_size(font, WARNING_TEXT[i], TEXT_SIZE, TEXT_SPACING);
+            rl.draw_text_pro(
+                font,
+                WARNING_TEXT[i],
+                Vector2::new(
+                    64. * TILE_SCALE_DEFAULT as f32 - text_size.x / 2.
+                        + 32. * TILE_SCALE_DEFAULT as f32,
+                    26. * TILE_SCALE_DEFAULT as f32 - text_size.y / 2.
+                        + 8. * TILE_SCALE_DEFAULT as f32
+                        + i as f32 * TILE_SCALE_DEFAULT as f32 * text_size.y,
+                ),
+                Vector2::zero(),
+                0.,
+                TEXT_SIZE * TILE_SCALE_DEFAULT as f32,
+                TEXT_SPACING * TILE_SCALE_DEFAULT as f32,
+                CustomColor::BLACK_TEXT,
+            );
+        }
+
+        for i in 0..WARNING_BUTTONS_TEXT.len() {
+            let mouse_down = rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT);
+            let texture_offset = if self.ui_buttons[i + UTILITY_BUTTONS.len()]
+                .rect
+                .check_collision_point_rec(
+                    rl.get_mouse_position()
+                        - Vector2::new(
+                            rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
+                            rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        ),
+                )
+                && mouse_down
+                && self.picked_element.is_none()
+            {
+                self.ui_buttons[i + UTILITY_BUTTONS.len()].selected = true;
+                UI_UTILITY_HEIGHT as f32
+            } else {
+                0.
+            };
+
+            rl.draw_texture_pro(
+                texture_handler.get_safe(UTILITY_BUTTONS_TEXTURE),
+                Rectangle::new(
+                    0.,
+                    texture_offset,
+                    UI_WARNING_WIDTH as f32,
+                    UI_WARNING_HEIGHT as f32,
+                ),
+                self.ui_buttons[i + WARNING_BUTTONS_TEXT.len()].rect,
+                Vector2::zero(),
+                0.0,
+                Color::WHITE,
+            );
+
+            let text_size = get_text_size(font, WARNING_BUTTONS_TEXT[i], TEXT_SIZE, TEXT_SPACING);
+
+            rl.draw_text_pro(
+                font,
+                WARNING_BUTTONS_TEXT[i],
+                Vector2::new(
+                    self.ui_buttons[i + WARNING_BUTTONS_TEXT.len()].rect.x - text_size.x / 2.
+                        + 32. * TILE_SCALE_DEFAULT as f32,
+                    self.ui_buttons[i + WARNING_BUTTONS_TEXT.len()].rect.y - text_size.y / 2.
+                        + 8. * TILE_SCALE_DEFAULT as f32,
+                ),
+                Vector2::zero(),
+                0.,
+                TEXT_SIZE * TILE_SCALE_DEFAULT as f32,
+                TEXT_SPACING * TILE_SCALE_DEFAULT as f32,
+                CustomColor::BLACK_TEXT,
             );
         }
     }
