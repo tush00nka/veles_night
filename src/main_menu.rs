@@ -21,7 +21,6 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 pub struct MainMenuHandler {
     buttons: HashMap<u8, Button>,
     labels: Vec<&'static str>,
-    labels_offsets: Vec<f32>,
 }
 
 impl MainMenuHandler {
@@ -45,15 +44,9 @@ impl MainMenuHandler {
         }
 
         let labels = vec!["Продолжить", "Начать", "Настройки", "Выйти", "Уровни"];
-        let labels_offsets = vec![0., 4.25, 0., 3.5, 4.];
-        assert_eq!(labels.len(), labels_offsets.len());
         assert_eq!(labels.len(), buttons.len() + 1);
 
-        Self {
-            buttons,
-            labels,
-            labels_offsets,
-        }
+        Self { buttons, labels }
     }
 
     #[profiling::function]

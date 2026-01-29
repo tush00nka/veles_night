@@ -140,7 +140,7 @@ impl SliderStyle {
     fn get_picker_offset_according_to_slider_pressed(slider_style: &SliderStyle) -> f32 {
         return match *slider_style {
             SliderStyle::Ruler => -7.,
-            SliderStyle::Volume => 1.,
+            SliderStyle::Volume => 4.,
             //_ => unimplemented!("Not implemented yet"),
         };
     }
@@ -587,6 +587,8 @@ impl SettingsMenuHandler {
         }
 
         for (slider_num, slider) in self.sliders.iter_mut().enumerate() {
+            let picker = SliderStyle::get_picker_rect(&slider.slider_style);
+
             for i in 0..slider.rects.len() {
                 let (mut width, mut height) = SliderStyle::get_dimensions(&slider.slider_style);
                 let mut x = 0;
@@ -594,45 +596,38 @@ impl SettingsMenuHandler {
                 let mut picker_offset =
                     SliderStyle::get_picker_offset_according_to_slider(&slider.slider_style);
 
-                match slider.slider_style {
-                    SliderStyle::Ruler => {
-                        if i == SliderStyle::get_picker_rect(&SliderStyle::Ruler) {
-                            (height, width) = SliderStyle::get_picker_size(&slider.slider_style);
-                            let new_val = if slider.slider_value as f32 > 95. {
-                                95.
-                            } else {
-                                slider.slider_value as f32
-                            };
+                if SliderStyle::special_size_picker(&slider.slider_style) && picker == i {
+                    (width, height) = SliderStyle::get_picker_size(&slider.slider_style);
+                    let new_val = if slider.slider_value as f32 > 95. {
+                        95.
+                    } else {
+                        slider.slider_value as f32
+                    };
 
-                            if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT)
-                                && self
-                                    .picked_element
-                                    .is_some_and(|b| b == self.buttons.len() + slider_num)
-                            {
-                                picker_offset =
-                                    SliderStyle::get_picker_offset_according_to_slider_pressed(
-                                        &SliderStyle::Ruler,
-                                    );
+                    if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT)
+                        && self
+                            .picked_element
+                            .is_some_and(|b| b == self.buttons.len() + slider_num)
+                    {
+                        picker_offset = SliderStyle::get_picker_offset_according_to_slider_pressed(
+                            &slider.slider_style,
+                        );
 
-                                (x, y) =
-                                    SliderStyle::get_picker_pressed_texture(&SliderStyle::Ruler);
-                            }
-                            slider.rects[i].x =
-                                slider.rects[SliderStyle::get_outline_rect(&SliderStyle::Ruler)].x
-                                    + (picker_offset as i32 * TILE_SCALE_DEFAULT) as f32
-                                    + (SLIDER_WIDTH_PX as f32 * new_val / 100.).floor()
-                                        * TILE_SCALE_DEFAULT as f32;
-                        }
+                        (x, y) = SliderStyle::get_picker_pressed_texture(&slider.slider_style);
                     }
-                    SliderStyle::Volume => {
-                        if i == SliderStyle::get_picker_rect(&slider.slider_style) {
-                            width = (SLIDER_WIDTH_PX as f32 * slider.slider_value as f32 / 100.)
-                                .floor() as usize;
 
-                            slider.rects[i].width = width as f32 * TILE_SCALE_DEFAULT as f32;
-                        }
-                    }
-                };
+                    slider.rects[i].x = slider.rects
+                        [SliderStyle::get_outline_rect(&slider.slider_style)]
+                    .x + (picker_offset as i32 * TILE_SCALE_DEFAULT) as f32
+                        + (SLIDER_WIDTH_PX as f32 * new_val / 100.).floor()
+                            * TILE_SCALE_DEFAULT as f32;
+                } else if i == picker {
+                    width = ((SLIDER_WIDTH_PX as f32 * slider.slider_value as f32 / 100.).floor()
+                        + picker_offset * TILE_SCALE_DEFAULT as f32)
+                        as usize;
+
+                    slider.rects[i].width = width as f32 * TILE_SCALE_DEFAULT as f32;
+                }
 
                 rl.draw_texture_pro(
                     texture_handler.get_safe(SliderStyle::get_texture_name(&slider.slider_style)),
@@ -643,6 +638,7 @@ impl SettingsMenuHandler {
                     Color::WHITE,
                 );
             }
+
             rl.draw_text_pro(
                 font,
                 SLIDERS_SETTINGS[slider_num],
