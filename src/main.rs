@@ -163,6 +163,8 @@ fn main() {
         SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32,
     );
 
+    let mut fullscreen = settings_handler.settings.fullscreen;
+
     while !rl.window_should_close() && !should_close {
         profiling::scope!("Game frame");
         if settings_menu.should_remade {
@@ -185,12 +187,13 @@ fn main() {
         }
         if rl.is_key_pressed(KeyboardKey::KEY_F) {
             settings_handler.settings.fullscreen = !settings_handler.settings.fullscreen;
-            if settings_handler.settings.fullscreen {
-                rl.set_window_size(
-                    SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32,
-                    SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32,
-                );
-            }
+        }
+        if settings_handler.settings.fullscreen != fullscreen {
+            fullscreen = settings_handler.settings.fullscreen;
+            rl.set_window_size(
+                SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32,
+                SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32,
+            );
             rl.toggle_fullscreen();
         }
 

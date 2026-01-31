@@ -40,6 +40,7 @@ impl MainMenuHandler {
                         16. * scale,
                     ),
                     offset: 0.,
+                    recoil: None,
                 },
             );
         }

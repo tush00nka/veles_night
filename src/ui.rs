@@ -16,6 +16,8 @@ use crate::{
     texture_handler::TextureHandler,
 };
 
+const RECOIL_TIME: f32 = 1.;
+
 pub fn get_text_size(
     font: &Font,
     text: &str,
@@ -38,6 +40,7 @@ pub struct Button {
     pub rect: Rectangle,
     pub offset: f32,
     pub selected: bool,
+    pub recoil: Option<f32>,
 }
 impl Button {
     pub fn draw_with_text_middle(
@@ -83,6 +86,16 @@ impl Button {
             color,
         );
     }
+
+    pub fn check_recoil(&self, time: f32) -> bool {
+        return self.recoil.is_some_and(|rec| time - rec < RECOIL_TIME);
+    }
+    pub fn set_recoil(&mut self, time: f32) {
+        self.recoil = Some(time);
+    }
+    pub fn remove_recoil(&mut self) {
+        self.recoil = None;
+    }
 }
 pub struct UIHandler {
     build_buttons: HashMap<String, Button>,
@@ -109,6 +122,7 @@ impl UIHandler {
                         16. * scale,
                         16. * scale,
                     ),
+                    recoil: None,
                     offset: 0.,
                     selected: false,
                 },

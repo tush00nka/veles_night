@@ -53,6 +53,7 @@ impl GameOverHandler {
                     ),
                     offset: 0.,
                     selected: false,
+                    recoil: None,
                 },
             );
             restart_text.insert(

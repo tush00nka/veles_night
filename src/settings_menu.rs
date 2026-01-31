@@ -37,7 +37,7 @@ const BUTTON_TEXTURE_HEIGHT: f32 = 16.;
 
 const UI_X_OFFSET: f32 = 128.;
 const UI_Y_OFFSET: f32 = 14.;
-const UI_SHIFT_SIZE: f32 = 20.;
+const UI_SHIFT_SIZE: f32 = 18.;
 const UI_Y_TOP_OFFSET: f32 = 1.;
 const TEXT_X_OFFSET: f32 = 32.;
 const TEXT_SIZE: f32 = 12.;
@@ -278,6 +278,7 @@ impl SettingsMenuHandler {
                 selected: false,
                 rect: Rectangle::default(),
                 offset: 0.,
+                recoil: None,
             });
         }
 
@@ -286,6 +287,7 @@ impl SettingsMenuHandler {
                 selected: false,
                 rect: Rectangle::default(),
                 offset: 0.,
+                recoil: None,
             });
         }
         for _ in 0..WARNING_BUTTONS_TEXT.len() {
@@ -293,6 +295,7 @@ impl SettingsMenuHandler {
                 selected: false,
                 rect: Rectangle::default(),
                 offset: 0.,
+                recoil: None,
             });
         }
 
@@ -418,10 +421,11 @@ impl SettingsMenuHandler {
                 }
                 SettingsOptions::Resolution => {
                     self.in_menu_settings.pixel_scale = settings.pixel_scale;
-                    slider.slider_value = find_nearest(
+                    let snap_points = SliderStyle::get_snap_points(&slider.slider_style);
+                    slider.slider_value = snap_points[find_nearest(
                         SliderStyle::get_snap_points(&slider.slider_style),
                         (settings.pixel_scale as f32 * PIXEL_SCALE_TO_SLIDER_VALUE) as usize,
-                    ) as u8;
+                    ) as usize] as u8;
                 }
                 SettingsOptions::GeneralAudio => {
                     self.in_menu_settings.general_audio = settings.general_audio;
@@ -465,6 +469,7 @@ impl SettingsMenuHandler {
                         ),
                 )
             {
+                button.set_recoil(rl.get_time() as f32);
                 let warning = self.draw_warning;
                 button.selected = false;
                 match i {
@@ -777,6 +782,7 @@ impl SettingsMenuHandler {
         }
 
         for i in 0..UTILITY_BUTTONS.len() {
+            let recoil_check = self.ui_buttons[i].check_recoil(rl.get_time() as f32);
             let (texture_offset, text_offset) =
                 if self.ui_buttons[i].rect.check_collision_point_rec(
                     rl.get_mouse_position()
@@ -792,6 +798,7 @@ impl SettingsMenuHandler {
                         ),
                 ) && self.picked_element.is_none()
                     && !self.draw_warning
+                    && !recoil_check
                 {
                     self.ui_buttons[i].selected = true;
                     (0., 0.)
@@ -801,6 +808,9 @@ impl SettingsMenuHandler {
                         settings_handler.settings.pixel_scale as f32,
                     )
                 };
+            if recoil_check {
+                self.ui_buttons[i].remove_recoil();
+            }
 
             let text_dimensions = get_text_size(
                 font,
@@ -870,6 +880,8 @@ impl SettingsMenuHandler {
         }
 
         for i in 0..WARNING_BUTTONS_TEXT.len() {
+            let recoil_check =
+                self.ui_buttons[i + UTILITY_BUTTONS.len()].check_recoil(rl.get_time() as f32);
             let (texture_offset, text_offset) = if self.ui_buttons[i + UTILITY_BUTTONS.len()]
                 .rect
                 .check_collision_point_rec(
@@ -886,6 +898,7 @@ impl SettingsMenuHandler {
                         ),
                 )
                 && self.picked_element.is_none()
+                && !recoil_check
             {
                 self.ui_buttons[i + UTILITY_BUTTONS.len()].selected = true;
                 (0., 0.)
@@ -895,6 +908,10 @@ impl SettingsMenuHandler {
                     settings_handler.settings.pixel_scale as f32,
                 )
             };
+
+            if recoil_check {
+                self.ui_buttons[i].remove_recoil();
+            }
 
             let text_size = get_text_size(
                 font,
