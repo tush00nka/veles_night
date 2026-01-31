@@ -93,13 +93,13 @@ const SLIDER_TYPES: [SliderStyle; 4] = [
 ];
 
 fn find_nearest(values: Vec<usize>, value: usize) -> usize {
-    let mut nearest = values[0];
+    let mut nearest = 0;
 
     for i in 0..values.len() {
         let temp = value.abs_diff(values[i]);
 
-        if temp < value.abs_diff(nearest) {
-            nearest = values[i];
+        if temp < value.abs_diff(values[nearest]) {
+            nearest = i;
         }
     }
     return nearest;
@@ -385,7 +385,7 @@ impl SettingsMenuHandler {
         match settings_option {
             SettingsOptions::SoundVolume => settings.sound = value as f32,
             SettingsOptions::MusicVolume => settings.music = value as f32,
-            SettingsOptions::Resolution => settings.pixel_scale = value,
+            SettingsOptions::Resolution => settings.pixel_scale = value + 1,
             SettingsOptions::GeneralAudio => settings.general_audio = value as f32,
             _ => panic!("Not implemented yet!"),
         };
@@ -418,7 +418,10 @@ impl SettingsMenuHandler {
                 }
                 SettingsOptions::Resolution => {
                     self.in_menu_settings.pixel_scale = settings.pixel_scale;
-                    slider.slider_value = settings.pixel_scale * PIXEL_SCALE_TO_SLIDER_VALUE as u8;
+                    slider.slider_value = find_nearest(
+                        SliderStyle::get_snap_points(&slider.slider_style),
+                        (settings.pixel_scale as f32 * PIXEL_SCALE_TO_SLIDER_VALUE) as usize,
+                    ) as u8;
                 }
                 SettingsOptions::GeneralAudio => {
                     self.in_menu_settings.general_audio = settings.general_audio;
@@ -482,15 +485,12 @@ impl SettingsMenuHandler {
                         if warning {
                             continue;
                         }
-                        self.in_menu_settings.pixel_scale = self.in_menu_settings.pixel_scale
-                            / PIXEL_SCALE_TO_SLIDER_VALUE as u8
-                            + 1;
+
                         self.should_remade = true;
                         rl.set_window_size(
                             SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32,
                             SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32,
                         );
-
                         settings_handler.set_settings(&self.in_menu_settings);
                         settings_handler.save();
                     }
@@ -546,10 +546,15 @@ impl SettingsMenuHandler {
             self.picked_element = None;
 
             if self.sliders[val - BUTTONS_SETTINGS.len()].snap {
-                self.sliders[val - BUTTONS_SETTINGS.len()].slider_value = find_nearest(
-                    SliderStyle::get_snap_points(&SliderStyle::Ruler),
-                    self.sliders[val - BUTTONS_SETTINGS.len()].slider_value as usize,
-                ) as u8;
+                let snap_values = SliderStyle::get_snap_points(
+                    &self.sliders[val - BUTTONS_SETTINGS.len()].slider_style,
+                );
+
+                self.sliders[val - BUTTONS_SETTINGS.len()].slider_value =
+                    snap_values[find_nearest(
+                        snap_values.clone(),
+                        self.sliders[val - BUTTONS_SETTINGS.len()].slider_value as usize,
+                    ) as usize] as u8;
             }
         };
 
@@ -598,12 +603,19 @@ impl SettingsMenuHandler {
                     (mouse_cords.x - slider.rects[outline_rect_n].x) * 100. / maxlen as f32
                 }
             };
+            let mut value_to_set = slider_value;
+            slider.slider_value = if slider.snap {
+                let snap_points = SliderStyle::get_snap_points(&slider.slider_style);
+                value_to_set = find_nearest(snap_points.clone(), slider_value as usize) as f32;
+                snap_points[value_to_set as usize] as u8
+            } else {
+                slider_value as u8
+            };
 
-            slider.slider_value = slider_value as u8;
             SettingsMenuHandler::set_setting_slider(
                 &mut self.in_menu_settings,
                 SETTINGS_OPTIONS[index + buttons_len],
-                slider.slider_value,
+                value_to_set as u8,
             );
         }
     }

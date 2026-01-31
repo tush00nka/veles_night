@@ -170,6 +170,11 @@ fn main() {
             // settings_menu.change_resolution(settings_handler.settings.pixel_scale as f32);
             settings_menu.rescale_ui(settings_handler.settings.pixel_scale as f32);
 
+            rl.set_window_size(
+                SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32,
+                SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32,
+            );
+
             target = rl
                 .load_render_texture(
                     &thread,
