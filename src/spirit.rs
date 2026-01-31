@@ -1,7 +1,7 @@
 use raylib::prelude::*;
 
 use crate::{
-    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, Level, TILE_SIZE, TileType},
+    map::{LEVEL_HEIGHT_TILES, LEVEL_WIDTH_TILES, Level, TILE_SIZE_PX, TileType},
     music_handler::MusicHandler,
     settings::SettingsHandler,
     texture_handler::TextureHandler,
@@ -134,15 +134,22 @@ impl Spirit {
         settings_handler: &SettingsHandler,
     ) {
         let (tile_x, tile_y) = (
-            (self.get_position().x / TILE_SIZE as f32).floor() as usize,
-            (self.get_position().y / TILE_SIZE as f32).floor() as usize,
+            (self.get_position().x
+                / (settings_handler.settings.pixel_scale as i32 * TILE_SIZE_PX) as f32)
+                .floor() as usize,
+            (self.get_position().y
+                / (settings_handler.settings.pixel_scale as i32 * TILE_SIZE_PX) as f32)
+                .floor() as usize,
         );
 
-        let mut next = self.get_position() + self.direction * TILE_SIZE as f32;
+        let mut next = self.get_position()
+            + self.direction * (settings_handler.settings.pixel_scale as i32 * TILE_SIZE_PX) as f32;
 
         let (next_x, next_y) = (
-            (next.x / TILE_SIZE as f32).round() as usize,
-            (next.y / TILE_SIZE as f32).round() as usize,
+            (next.x / (settings_handler.settings.pixel_scale as i32 * TILE_SIZE_PX) as f32).round()
+                as usize,
+            (next.y / (settings_handler.settings.pixel_scale as i32 * TILE_SIZE_PX) as f32).round()
+                as usize,
         );
 
         if self.teleported != 0 {
@@ -179,7 +186,8 @@ impl Spirit {
             TileType::Swamp { teleport_position } => {
                 if self.teleported == 0 {
                     self.teleported = 2;
-                    next = teleport_position * TILE_SIZE as f32;
+                    next = teleport_position
+                        * (settings_handler.settings.pixel_scale as i32 * TILE_SIZE_PX) as f32;
                 }
             }
             _ => {}
@@ -258,9 +266,14 @@ impl Spirit {
             }
         }
 
-        let target = Vector2::new(x as f32 * TILE_SIZE as f32, y as f32 * TILE_SIZE as f32);
+        let target = Vector2::new(
+            x as f32 * (settings_handler.settings.pixel_scale as i32 * TILE_SIZE_PX) as f32,
+            y as f32 * (settings_handler.settings.pixel_scale as i32 * TILE_SIZE_PX) as f32,
+        );
 
-        if self.position.distance_to(target) <= (TILE_SIZE / 10) as f32 {
+        if self.position.distance_to(target)
+            <= ((settings_handler.settings.pixel_scale as i32 * TILE_SIZE_PX) / 10) as f32
+        {
             let tile = level.tiles.get_mut(x).unwrap().get_mut(y).unwrap();
             match tile {
                 TileType::FireTD {
@@ -310,9 +323,14 @@ impl Spirit {
             }
         };
 
-        let target = Vector2::new(x as f32 * TILE_SIZE as f32, y as f32 * TILE_SIZE as f32);
+        let target = Vector2::new(
+            x as f32 * (settings_handler.settings.pixel_scale as i32 * TILE_SIZE_PX) as f32,
+            y as f32 * (settings_handler.settings.pixel_scale as i32 * TILE_SIZE_PX) as f32,
+        );
 
-        if self.position.distance_to(target) <= (TILE_SIZE / 10) as f32 {
+        if self.position.distance_to(target)
+            <= ((settings_handler.settings.pixel_scale as i32 * TILE_SIZE_PX) / 10) as f32
+        {
             level.tiles[x][y] = TileType::Air;
             level.add_wood();
             self.dead = true;
@@ -327,7 +345,12 @@ impl Spirit {
     }
 
     #[profiling::function]
-    pub fn draw(&self, rl: &mut RaylibDrawHandle, texture_handler: &TextureHandler) {
+    pub fn draw(
+        &self,
+        rl: &mut RaylibDrawHandle,
+        texture_handler: &TextureHandler,
+        settings_handler: &SettingsHandler,
+    ) {
         let source = Rectangle::new(
             ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,
             16.,
@@ -341,8 +364,8 @@ impl Spirit {
             Rectangle::new(
                 self.get_draw_position().x,
                 self.get_draw_position().y,
-                TILE_SIZE as f32,
-                TILE_SIZE as f32,
+                (settings_handler.settings.pixel_scale as i32 * TILE_SIZE_PX) as f32,
+                (settings_handler.settings.pixel_scale as i32 * TILE_SIZE_PX) as f32,
             ),
             Vector2::zero(),
             0.0,

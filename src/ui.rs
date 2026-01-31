@@ -10,8 +10,9 @@ use crate::{
     color::CustomColor,
     dialogue::DialogueHandler,
     hotkey_handler::{HotkeyCategory, HotkeyHandler},
-    map::{Level, TILE_SCALE_DEFAULT, TILE_SIZE, TileType},
+    map::{Level, TILE_SIZE_PX, TileType},
     scene::{Scene, SceneHandler},
+    settings::SettingsHandler,
     texture_handler::TextureHandler,
 };
 
@@ -92,7 +93,7 @@ pub struct UIHandler {
 
 impl UIHandler {
     #[profiling::function]
-    pub fn new(level_number: usize) -> Self {
+    pub fn new(level_number: usize, scale: f32) -> Self {
         let mut buttons = HashMap::new();
 
         let labels = ["fire_td", "fire_lr", "fire_stop"];
@@ -102,13 +103,11 @@ impl UIHandler {
                 labels[i].to_string(),
                 Button {
                     rect: Rectangle::new(
-                        i as f32 * 20. * TILE_SCALE_DEFAULT as f32 + (SCREEN_WIDTH / 2) as f32
-                            - 10.
-                                * TILE_SCALE_DEFAULT as f32
-                                * min(labels.len(), level_number) as f32,
-                        SCREEN_HEIGHT as f32 - 10. - 16. * TILE_SCALE_DEFAULT as f32,
-                        16. * TILE_SCALE_DEFAULT as f32,
-                        16. * TILE_SCALE_DEFAULT as f32,
+                        i as f32 * 20. * scale + ((SCREEN_WIDTH * scale as i32) / 2) as f32
+                            - 10. * scale * min(labels.len(), level_number) as f32,
+                        (SCREEN_HEIGHT * scale as i32) as f32 - 10. - 16. * scale,
+                        16. * scale,
+                        16. * scale,
                     ),
                     offset: 0.,
                     selected: false,
@@ -119,12 +118,13 @@ impl UIHandler {
         let mut rects: Vec<Rectangle> = Vec::new();
         for i in 0..3 {
             rects.push(Rectangle::new(
-                SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6.
-                    - 32. * TILE_SCALE_DEFAULT as f32,
-                SCREEN_HEIGHT as f32 / 4. + 18. * (i + 1) as f32 * TILE_SCALE_DEFAULT as f32
-                    - 8. * TILE_SCALE_DEFAULT as f32,
-                64. * TILE_SCALE_DEFAULT as f32,
-                16. * TILE_SCALE_DEFAULT as f32,
+                (SCREEN_WIDTH * scale as i32) as f32 / 3.
+                    + (SCREEN_WIDTH * scale as i32) as f32 / 6.
+                    - 32. * scale,
+                (SCREEN_HEIGHT * scale as i32) as f32 / 4. + 18. * (i + 1) as f32 * scale
+                    - 8. * scale,
+                64. * scale,
+                16. * scale,
             ));
         }
 
@@ -147,6 +147,7 @@ impl UIHandler {
         rl: &mut RaylibHandle,
         hotkey_h: &mut HotkeyHandler,
         dialogue_h: &mut DialogueHandler,
+        settings_handler: &mut SettingsHandler,
     ) {
         let dialoging = dialogue_h.current_phrase < dialogue_h.dialogue.len();
 
@@ -167,8 +168,14 @@ impl UIHandler {
                     CheckCollisionPointRec(
                         (rl.get_mouse_position()
                             - Vector2::new(
-                                rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                                rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                                rl.get_screen_width() as f32 / 2.
+                                    - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
+                                        as f32
+                                        / 2.,
+                                rl.get_screen_height() as f32 / 2.
+                                    - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
+                                        as f32
+                                        / 2.,
                             ))
                         .into(),
                         button.rect.into(),
@@ -199,10 +206,15 @@ impl UIHandler {
             if button.selected && level.get_wood() > 0 {
                 let pos = (rl.get_mouse_position()
                     - Vector2::new(
-                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        rl.get_screen_width() as f32 / 2.
+                            - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                        rl.get_screen_height() as f32 / 2.
+                            - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
                     ))
-                    / (Vector2::one() * TILE_SIZE as f32);
+                    / (Vector2::one()
+                        * (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32);
                 let (x, y) = (pos.x as usize, pos.y as usize);
 
                 if level.tiles[x][y] != TileType::Air {
@@ -242,6 +254,7 @@ impl UIHandler {
         scene_h: &mut SceneHandler,
         dialogue_h: &mut DialogueHandler,
         rl: &mut RaylibHandle,
+        settings_handler: &mut SettingsHandler,
     ) -> (bool, bool, bool) {
         if hotkey_h.check_pressed(rl, HotkeyCategory::Exit) {
             self.quitting = !self.quitting;
@@ -266,8 +279,11 @@ impl UIHandler {
         if self.pause_button_recs[2].check_collision_point_rec(
             rl.get_mouse_position()
                 - Vector2::new(
-                    rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                    rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                    rl.get_screen_width() as f32 / 2.
+                        - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32 / 2.,
+                    rl.get_screen_height() as f32 / 2.
+                        - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                            / 2.,
                 ),
         ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
         {
@@ -279,8 +295,11 @@ impl UIHandler {
         if self.pause_button_recs[0].check_collision_point_rec(
             rl.get_mouse_position()
                 - Vector2::new(
-                    rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                    rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                    rl.get_screen_width() as f32 / 2.
+                        - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32 / 2.,
+                    rl.get_screen_height() as f32 / 2.
+                        - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                            / 2.,
                 ),
         ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
         {
@@ -291,8 +310,11 @@ impl UIHandler {
         if self.pause_button_recs[1].check_collision_point_rec(
             rl.get_mouse_position()
                 - Vector2::new(
-                    rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                    rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                    rl.get_screen_width() as f32 / 2.
+                        - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32 / 2.,
+                    rl.get_screen_height() as f32 / 2.
+                        - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                            / 2.,
                 ),
         ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
         {
@@ -309,9 +331,9 @@ impl UIHandler {
         texture_handler: &TextureHandler,
         dialogue_h: &mut DialogueHandler,
         level: &mut Level,
-        _level_number: usize,
         font: &Font,
         rl: &mut RaylibDrawHandle,
+        settings_handler: &mut SettingsHandler,
     ) {
         let dialoging = dialogue_h.current_phrase < dialogue_h.dialogue.len();
 
@@ -323,13 +345,17 @@ impl UIHandler {
             let target_offset = if button.rect.check_collision_point_rec(
                 rl.get_mouse_position()
                     - Vector2::new(
-                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        rl.get_screen_width() as f32 / 2.
+                            - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                        rl.get_screen_height() as f32 / 2.
+                            - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
                     ),
             ) {
-                6. * TILE_SCALE_DEFAULT as f32
+                6. * settings_handler.settings.pixel_scale as f32
             } else {
-                2. * TILE_SCALE_DEFAULT as f32
+                2. * settings_handler.settings.pixel_scale as f32
             };
 
             button.offset = lerp(button.offset, target_offset, 10. * rl.get_frame_time());
@@ -339,7 +365,7 @@ impl UIHandler {
                 texture_handler.get("pedestal"),
                 Vector2::new(button.rect.x, button.rect.y),
                 0.0,
-                TILE_SCALE_DEFAULT as f32,
+                settings_handler.settings.pixel_scale as f32,
                 Color::WHITE,
             );
 
@@ -372,18 +398,32 @@ impl UIHandler {
                     Rectangle::new(
                         (rl.get_mouse_position()
                             - Vector2::new(
-                                rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                                rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                                rl.get_screen_width() as f32 / 2.
+                                    - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
+                                        as f32
+                                        / 2.,
+                                rl.get_screen_height() as f32 / 2.
+                                    - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
+                                        as f32
+                                        / 2.,
                             ))
-                        .x - (TILE_SIZE / 2) as f32,
+                        .x - ((TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) / 2)
+                            as f32,
                         (rl.get_mouse_position()
                             - Vector2::new(
-                                rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                                rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                                rl.get_screen_width() as f32 / 2.
+                                    - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
+                                        as f32
+                                        / 2.,
+                                rl.get_screen_height() as f32 / 2.
+                                    - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
+                                        as f32
+                                        / 2.,
                             ))
-                        .y - (TILE_SIZE / 2) as f32,
-                        TILE_SIZE as f32,
-                        TILE_SIZE as f32,
+                        .y - ((TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) / 2)
+                            as f32,
+                        (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32,
+                        (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32,
                     ),
                     Vector2::zero(),
                     0.0,
@@ -395,22 +435,22 @@ impl UIHandler {
         // rl.draw_rectangle(
         //     5,
         //     5,
-        //     64 * TILE_SCALE_DEFAULT,
-        //     18 * TILE_SCALE_DEFAULT,
+        //     64 * settings_handler.settings.pixel_scale,
+        //     18 * settings_handler.settings.pixel_scale,
         //     Color::BLACK.alpha(0.5),
         // );
 
         rl.draw_texture_ex(
             texture_handler.get("stat_bar"),
-            Vector2::one() * TILE_SCALE_DEFAULT as f32,
+            Vector2::one() * settings_handler.settings.pixel_scale as f32,
             0.0,
-            TILE_SCALE_DEFAULT as f32,
+            settings_handler.settings.pixel_scale as f32,
             Color::WHITE,
         );
 
         let bar_offset = Vector2::new(
-            6. * TILE_SCALE_DEFAULT as f32,
-            5. * TILE_SCALE_DEFAULT as f32,
+            6. * settings_handler.settings.pixel_scale as f32,
+            5. * settings_handler.settings.pixel_scale as f32,
         );
 
         // rl.draw_texture_ex(texture, position, rotation, scale, tint);
@@ -419,7 +459,7 @@ impl UIHandler {
             texture_handler.get("spirit_icon"),
             bar_offset,
             0.0,
-            TILE_SCALE_DEFAULT as f32,
+            settings_handler.settings.pixel_scale as f32,
             Color::WHITE,
         );
 
@@ -428,19 +468,19 @@ impl UIHandler {
             format!("{}/{}", level.survived, level.survive).as_str(),
             bar_offset
                 + Vector2::new(
-                    16. * TILE_SCALE_DEFAULT as f32,
-                    1.5 * TILE_SCALE_DEFAULT as f32,
+                    16. * settings_handler.settings.pixel_scale as f32,
+                    1.5 * settings_handler.settings.pixel_scale as f32,
                 ),
-            8. * TILE_SCALE_DEFAULT as f32,
+            8. * settings_handler.settings.pixel_scale as f32,
             1.0,
             CustomColor::BLACK_TEXT,
         );
 
         rl.draw_texture_ex(
             texture_handler.get("wood_icon"),
-            bar_offset + Vector2::new(0., 12. * TILE_SCALE_DEFAULT as f32),
+            bar_offset + Vector2::new(0., 12. * settings_handler.settings.pixel_scale as f32),
             0.0,
-            TILE_SCALE_DEFAULT as f32,
+            settings_handler.settings.pixel_scale as f32,
             Color::WHITE,
         );
 
@@ -449,10 +489,11 @@ impl UIHandler {
             format!("{}", level.get_wood()).as_str(),
             bar_offset
                 + Vector2::new(
-                    16. * TILE_SCALE_DEFAULT as f32,
-                    1.5 * TILE_SCALE_DEFAULT as f32 + 12. * TILE_SCALE_DEFAULT as f32,
+                    16. * settings_handler.settings.pixel_scale as f32,
+                    1.5 * settings_handler.settings.pixel_scale as f32
+                        + 12. * settings_handler.settings.pixel_scale as f32,
                 ),
-            8. * TILE_SCALE_DEFAULT as f32,
+            8. * settings_handler.settings.pixel_scale as f32,
             1.0,
             CustomColor::BLACK_TEXT,
         );
@@ -469,17 +510,17 @@ impl UIHandler {
 
         // rl.draw_rectangle(
         //     5,
-        //     30 * TILE_SCALE_DEFAULT,
-        //     64 * TILE_SCALE_DEFAULT,
-        //     9 * (height + 1) as i32 * TILE_SCALE_DEFAULT,
+        //     30 * settings_handler.settings.pixel_scale,
+        //     64 * settings_handler.settings.pixel_scale,
+        //     9 * (height + 1) as i32 * settings_handler.settings.pixel_scale,
         //     Color::BLACK.alpha(0.5),
         // );
 
         // rl.draw_text_ex(
         //     font,
         //     hint_text,
-        //     Vector2::new(10., 28. * TILE_SCALE_DEFAULT as f32 + 18.),
-        //     8. * TILE_SCALE_DEFAULT as f32,
+        //     Vector2::new(10., 28. * settings_handler.settings.pixel_scale as f32 + 18.),
+        //     8. * settings_handler.settings.pixel_scale as f32,
         //     1.0,
         //     Color::RAYWHITE,
         // );
@@ -489,20 +530,25 @@ impl UIHandler {
 
             rl.draw_texture_ex(
                 texture_handler.get_safe(speaker),
-                Vector2::new(0., SCREEN_HEIGHT as f32 - 48. * TILE_SCALE_DEFAULT as f32),
+                Vector2::new(
+                    0.,
+                    (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                        - 48. * settings_handler.settings.pixel_scale as f32,
+                ),
                 0.0,
-                TILE_SCALE_DEFAULT as f32,
+                settings_handler.settings.pixel_scale as f32,
                 Color::WHITE,
             );
 
             rl.draw_texture_ex(
                 texture_handler.get("dialogue_box"),
                 Vector2::new(
-                    32. * TILE_SCALE_DEFAULT as f32,
-                    SCREEN_HEIGHT as f32 - 48. * TILE_SCALE_DEFAULT as f32,
+                    32. * settings_handler.settings.pixel_scale as f32,
+                    (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                        - 48. * settings_handler.settings.pixel_scale as f32,
                 ),
                 0.0,
-                TILE_SCALE_DEFAULT as f32,
+                settings_handler.settings.pixel_scale as f32,
                 Color::WHITE,
             );
 
@@ -520,10 +566,12 @@ impl UIHandler {
                 font,
                 &temp_line.rev().collect::<String>(),
                 Vector2::new(
-                    32. * TILE_SCALE_DEFAULT as f32 + 64.,
-                    SCREEN_HEIGHT as f32 - 3. * 8. * TILE_SCALE_DEFAULT as f32 - 20.,
+                    32. * settings_handler.settings.pixel_scale as f32 + 64.,
+                    (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                        - 3. * 8. * settings_handler.settings.pixel_scale as f32
+                        - 20.,
                 ),
-                8. * TILE_SCALE_DEFAULT as f32,
+                8. * settings_handler.settings.pixel_scale as f32,
                 0.,
                 CustomColor::BLACK_TEXT,
             );
@@ -533,10 +581,12 @@ impl UIHandler {
                     font,
                     "Далее...",
                     Vector2::new(
-                        SCREEN_WIDTH as f32 - 32. * TILE_SCALE_DEFAULT as f32,
-                        SCREEN_HEIGHT as f32 - 12. * TILE_SCALE_DEFAULT as f32,
+                        (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
+                            - 32. * settings_handler.settings.pixel_scale as f32,
+                        (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                            - 12. * settings_handler.settings.pixel_scale as f32,
                     ),
-                    8. * TILE_SCALE_DEFAULT as f32,
+                    8. * settings_handler.settings.pixel_scale as f32,
                     0.,
                     Color::RAYWHITE.alpha((rl.get_time() * 2.).sin().abs() as f32),
                 )
@@ -553,23 +603,25 @@ impl UIHandler {
 
         // panel
         let panel_position = Vector2::new(
-            (SCREEN_WIDTH / 2) as f32 - 64. * TILE_SCALE_DEFAULT as f32, // screen_width
-            (SCREEN_HEIGHT / 2) as f32 - 48. * TILE_SCALE_DEFAULT as f32, // screen_height
+            ((SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) / 2) as f32
+                - 64. * settings_handler.settings.pixel_scale as f32, // screen_width
+            ((SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) / 2) as f32
+                - 48. * settings_handler.settings.pixel_scale as f32, // screen_height
         );
 
         rl.draw_texture_ex(
             texture_handler.get("pause_menu"),
             panel_position,
             0.0,
-            TILE_SCALE_DEFAULT as f32,
+            settings_handler.settings.pixel_scale as f32,
             Color::WHITE,
         );
 
         let text_size = get_text_size(
             font,
             "Меню",
-            12. * TILE_SCALE_DEFAULT as f32,
-            1.05 * TILE_SCALE_DEFAULT as f32,
+            12. * settings_handler.settings.pixel_scale as f32,
+            1.05 * settings_handler.settings.pixel_scale as f32,
         );
 
         rl.draw_text_ex(
@@ -577,11 +629,11 @@ impl UIHandler {
             "Меню",
             panel_position
                 + Vector2::new(
-                    TILE_SCALE_DEFAULT as f32 * 64. - text_size.x / 2.,
-                    TILE_SCALE_DEFAULT as f32 * 7. - text_size.y / 2.,
+                    settings_handler.settings.pixel_scale as f32 * 64. - text_size.x / 2.,
+                    settings_handler.settings.pixel_scale as f32 * 7. - text_size.y / 2.,
                 ),
-            TILE_SCALE_DEFAULT as f32 * 12.,
-            1.05 * TILE_SCALE_DEFAULT as f32,
+            settings_handler.settings.pixel_scale as f32 * 12.,
+            1.05 * settings_handler.settings.pixel_scale as f32,
             CustomColor::BLACK_TEXT,
         );
 
@@ -589,8 +641,12 @@ impl UIHandler {
             let mouse_over = button_rect.check_collision_point_rec(
                 rl.get_mouse_position()
                     - Vector2::new(
-                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        rl.get_screen_width() as f32 / 2.
+                            - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                        rl.get_screen_height() as f32 / 2.
+                            - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
                     ),
             );
 
@@ -619,12 +675,14 @@ impl UIHandler {
                 font,
                 &self.pause_button_labels[index],
                 Vector2::new(
-                    button_rect.x - text_size_button.x / 2. + 32. * TILE_SCALE_DEFAULT as f32,
-                    button_rect.y - text_size.y / 2. + 8. * TILE_SCALE_DEFAULT as f32
-                        - texture_offset / 16. * 2. * TILE_SCALE_DEFAULT as f32,
+                    button_rect.x - text_size_button.x / 2.
+                        + 32. * settings_handler.settings.pixel_scale as f32,
+                    button_rect.y - text_size.y / 2.
+                        + 8. * settings_handler.settings.pixel_scale as f32
+                        - texture_offset / 16. * 2. * settings_handler.settings.pixel_scale as f32,
                 ),
-                12. * TILE_SCALE_DEFAULT as f32,
-                TILE_SCALE_DEFAULT as f32,
+                12. * settings_handler.settings.pixel_scale as f32,
+                settings_handler.settings.pixel_scale as f32,
                 CustomColor::BLACK_TEXT,
             );
         }

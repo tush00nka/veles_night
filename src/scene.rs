@@ -1,6 +1,6 @@
 use raylib::prelude::*;
 
-use crate::{SCREEN_HEIGHT, SCREEN_WIDTH};
+use crate::{SCREEN_HEIGHT, SCREEN_WIDTH, settings::SettingsHandler};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Scene {
@@ -86,10 +86,13 @@ impl SceneHandler {
     }
 
     #[profiling::function]
-    pub fn draw(&self, rl: &mut RaylibDrawHandle) {
+    pub fn draw(&self, rl: &mut RaylibDrawHandle, settings_handler: &SettingsHandler) {
         rl.draw_rectangle_v(
             Vector2::zero(),
-            Vector2::new(SCREEN_WIDTH as f32, SCREEN_HEIGHT as f32),
+            Vector2::new(
+                (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32,
+                (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32,
+            ),
             Color::BLACK.alpha(self.progress),
         );
     }

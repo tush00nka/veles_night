@@ -1,4 +1,6 @@
-use crate::{Spirit, map::TILE_SIZE, metadata_handler::MetadataHandler};
+use crate::{
+    Spirit, map::TILE_SIZE_PX, metadata_handler::MetadataHandler, settings::SettingsHandler,
+};
 use raylib::prelude::*;
 use std::collections::HashMap;
 
@@ -14,7 +16,11 @@ impl SpiritsHandler {
         }
     }
     #[profiling::function]
-    pub fn spawn_spirits(&mut self, metadata_handler: &mut MetadataHandler) {
+    pub fn spawn_spirits(
+        &mut self,
+        metadata_handler: &mut MetadataHandler,
+        settings_handler: &SettingsHandler,
+    ) {
         self.spirits = HashMap::new();
         for spirits_list in 0..metadata_handler.spirits.len() {
             for i in 0..metadata_handler.spirits[spirits_list].amount {
@@ -23,9 +29,11 @@ impl SpiritsHandler {
                     Spirit::new(
                         Vector2::new(
                             metadata_handler.spirits[spirits_list].position[0] as f32
-                                * TILE_SIZE as f32,
+                                * (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32)
+                                    as f32,
                             metadata_handler.spirits[spirits_list].position[1] as f32
-                                * TILE_SIZE as f32,
+                                * (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32)
+                                    as f32,
                         ),
                         Vector2::new(
                             metadata_handler.spirits[spirits_list].direction[0] as f32,

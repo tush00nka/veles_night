@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use raylib::prelude::*;
 
 use crate::{
-    map::TILE_SIZE, metadata_handler::MetadataHandler, spirits_handler::SpiritsHandler,
-    texture_handler::TextureHandler,
+    map::TILE_SIZE_PX, metadata_handler::MetadataHandler, settings::SettingsHandler,
+    spirits_handler::SpiritsHandler, texture_handler::TextureHandler,
 };
 
 pub struct EnemiesHandler {
@@ -19,14 +19,20 @@ impl EnemiesHandler {
     }
 
     #[profiling::function]
-    pub fn spawn_enemies(&mut self, metadata_handler: &mut MetadataHandler) {
+    pub fn spawn_enemies(
+        &mut self,
+        metadata_handler: &mut MetadataHandler,
+        settings_handler: &SettingsHandler,
+    ) {
         self.enemies = HashMap::new();
         for i in 0..metadata_handler.enemies.len() {
             self.enemies.insert(
                 i as u8,
                 Enemy::new(Vector2::new(
-                    metadata_handler.enemies[i].position[0] as f32 * TILE_SIZE as f32,
-                    metadata_handler.enemies[i].position[1] as f32 * TILE_SIZE as f32,
+                    metadata_handler.enemies[i].position[0] as f32
+                        * (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32,
+                    metadata_handler.enemies[i].position[1] as f32
+                        * (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32,
                 )),
             );
         }
@@ -60,7 +66,12 @@ impl Enemy {
     }
 
     #[profiling::function]
-    pub fn draw(&self, rl: &mut RaylibDrawHandle, texture_handler: &TextureHandler) {
+    pub fn draw(
+        &self,
+        rl: &mut RaylibDrawHandle,
+        texture_handler: &TextureHandler,
+        settings_handler: &SettingsHandler,
+    ) {
         let source = Rectangle::new(
             ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,
             16.,
@@ -74,8 +85,8 @@ impl Enemy {
             Rectangle::new(
                 self.position.x as f32,
                 self.position.y as f32,
-                TILE_SIZE as f32,
-                TILE_SIZE as f32,
+                (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32,
+                (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32,
             ),
             Vector2::zero(),
             0.0,

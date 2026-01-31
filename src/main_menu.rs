@@ -5,7 +5,7 @@ use crate::{
     FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH,
     enemy_spirit::EnemiesHandler,
     level_transition::LevelTransition,
-    map::{Level, TILE_SCALE_DEFAULT},
+    map::Level,
     metadata_handler::MetadataHandler,
     save_handler::SaveHandler,
     scene::{Scene, SceneHandler},
@@ -25,7 +25,7 @@ pub struct MainMenuHandler {
 
 impl MainMenuHandler {
     #[profiling::function]
-    pub fn new() -> Self {
+    pub fn new(scale: f32) -> Self {
         let mut buttons = HashMap::new();
         for i in 0..4 {
             buttons.insert(
@@ -33,10 +33,11 @@ impl MainMenuHandler {
                 Button {
                     selected: false,
                     rect: Rectangle::new(
-                        (SCREEN_WIDTH / 2) as f32 - 32. * TILE_SCALE_DEFAULT as f32,
-                        (SCREEN_HEIGHT / 2) as f32 + 16. * (i as i32 * TILE_SCALE_DEFAULT) as f32,
-                        64. * TILE_SCALE_DEFAULT as f32,
-                        16. * TILE_SCALE_DEFAULT as f32,
+                        ((SCREEN_WIDTH * scale as i32) / 2) as f32 - 32. * scale,
+                        ((SCREEN_HEIGHT * scale as i32) / 2) as f32
+                            + 16. * (i as f32 * scale) as f32,
+                        64. * scale,
+                        16. * scale,
                     ),
                     offset: 0.,
                 },
@@ -70,8 +71,12 @@ impl MainMenuHandler {
             if button.rect.check_collision_point_rec(
                 rl.get_mouse_position()
                     - Vector2::new(
-                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        rl.get_screen_width() as f32 / 2.
+                            - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                        rl.get_screen_height() as f32 / 2.
+                            - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
                     ),
             ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
             {
@@ -89,9 +94,12 @@ impl MainMenuHandler {
                         *level_number = FIRST_LEVEL;
                         metadata_handler.load(*level_number);
                         level.load(*level_number, metadata_handler, rl);
-                        spirits_handler.spawn_spirits(metadata_handler);
-                        enemies_handler.spawn_enemies(metadata_handler);
-                        *ui_handler = UIHandler::new(FIRST_LEVEL as usize);
+                        spirits_handler.spawn_spirits(metadata_handler, settings_handler);
+                        enemies_handler.spawn_enemies(metadata_handler, settings_handler);
+                        *ui_handler = UIHandler::new(
+                            FIRST_LEVEL as usize,
+                            settings_handler.settings.pixel_scale as f32,
+                        );
                         *level_transition = LevelTransition::new();
                         scene_handler.set(Scene::Level);
                     }
@@ -118,6 +126,7 @@ impl MainMenuHandler {
         save_handler: &SaveHandler,
         texture_handler: &TextureHandler,
         rl: &mut RaylibDrawHandle,
+        settings_handler: &SettingsHandler,
     ) {
         rl.clear_background(Color::from_hex("0b8a8f").unwrap());
 
@@ -129,25 +138,27 @@ impl MainMenuHandler {
             }
         }
 
-        const LOGO_WIDTH: f32 = 96. * TILE_SCALE_DEFAULT as f32;
-        const LOGO_HEIGHT: f32 = 64. * TILE_SCALE_DEFAULT as f32;
+        let logo_width: f32 = 96. * settings_handler.settings.pixel_scale as f32;
+        let logo_height: f32 = 64. * settings_handler.settings.pixel_scale as f32;
 
         rl.draw_texture_ex(
             texture_handler.get_safe("main_menu_bg"),
             Vector2::zero(),
             0.0,
-            TILE_SCALE_DEFAULT as f32,
+            settings_handler.settings.pixel_scale as f32,
             Color::WHITE,
         );
 
         rl.draw_texture_ex(
             texture_handler.get_safe("logo"),
             Vector2::new(
-                (SCREEN_WIDTH / 2) as f32 - LOGO_WIDTH / 2.,
-                (SCREEN_HEIGHT / 4) as f32 - LOGO_HEIGHT / 2.,
+                ((SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) / 2) as f32
+                    - logo_width / 2.,
+                ((SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) / 4) as f32
+                    - logo_height / 2.,
             ),
             0.0,
-            TILE_SCALE_DEFAULT as f32,
+            settings_handler.settings.pixel_scale as f32,
             Color::WHITE,
         );
 
@@ -162,11 +173,15 @@ impl MainMenuHandler {
             let text_offset_y = if button.rect.check_collision_point_rec(
                 rl.get_mouse_position()
                     - Vector2::new(
-                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        rl.get_screen_width() as f32 / 2.
+                            - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                        rl.get_screen_height() as f32 / 2.
+                            - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
                     ),
             ) {
-                TILE_SCALE_DEFAULT as f32
+                settings_handler.settings.pixel_scale as f32
             } else {
                 0.
             };
@@ -178,8 +193,8 @@ impl MainMenuHandler {
             let text_dimensions = get_text_size(
                 font,
                 self.labels[label_num],
-                12. * TILE_SCALE_DEFAULT as f32,
-                1.25 * TILE_SCALE_DEFAULT as f32,
+                12. * settings_handler.settings.pixel_scale as f32,
+                1.25 * settings_handler.settings.pixel_scale as f32,
             );
 
             let texture_offset = if text_offset_y == 0. { 16. } else { 0. };
@@ -192,27 +207,18 @@ impl MainMenuHandler {
                 &Rectangle::new(0., texture_offset, 64., 16.),
                 text_dimensions,
                 &Color::RAYWHITE,
-                12. * TILE_SCALE_DEFAULT as f32,
-                1.25 * TILE_SCALE_DEFAULT as f32,
+                12. * settings_handler.settings.pixel_scale as f32,
+                1.25 * settings_handler.settings.pixel_scale as f32,
                 Vector2::new(0., -text_offset_y),
                 Vector2::new(0., 0.),
             );
-
-            // rl.draw_texture_pro(
-            //     texture_handler.get_safe("main_menu_buttons"),
-            //     Rectangle::new(64., 16. * i as f32, 64., 16.),
-            //     self.buttons.get(&(i as u8)).unwrap().rect,
-            //     Vector2::zero(),
-            //     0.0,
-            //     Color::WHITE,
-            // );
         }
 
         rl.draw_text_ex(
             font,
             format!("Версия {}", VERSION).as_str(),
-            Vector2::one() * TILE_SCALE_DEFAULT as f32,
-            6. * TILE_SCALE_DEFAULT as f32,
+            Vector2::one() * settings_handler.settings.pixel_scale as f32,
+            6. * settings_handler.settings.pixel_scale as f32,
             0.,
             Color::RAYWHITE,
         );

@@ -11,7 +11,7 @@ use crate::{
     level_selection::LevelSelector,
     level_transition::LevelTransition,
     main_menu::MainMenuHandler,
-    map::{Level, TILE_SCALE_DEFAULT, TILE_SIZE},
+    map::{Level, TILE_SIZE_PX},
     metadata_handler::MetadataHandler,
     music_handler::MusicHandler,
     order::OrderHandler,
@@ -54,8 +54,8 @@ mod ui;
 mod color;
 pub const FIRST_LEVEL: u8 = 0;
 
-const SCREEN_WIDTH: i32 = 16 * 16 * TILE_SCALE_DEFAULT;
-const SCREEN_HEIGHT: i32 = 9 * 16 * TILE_SCALE_DEFAULT;
+const SCREEN_WIDTH: i32 = 16 * 16;
+const SCREEN_HEIGHT: i32 = 9 * 16;
 
 fn main() {
     profiling::scope!("Initialization");
@@ -72,6 +72,8 @@ fn main() {
     let rl_audio = RaylibAudio::init_audio_device().unwrap();
     let music_handler = MusicHandler::new(&rl_audio);
     music_handler.music_play();
+    let mut settings_handler = SettingsHandler::new();
+    settings_handler.save();
 
     let font = rl
         .load_font_ex(
@@ -91,8 +93,8 @@ fn main() {
     // there's a safe variation - get_safe
     // also a common one - get
 
-    let mut main_menu = MainMenuHandler::new();
-    let mut settings_menu = SettingsMenuHandler::new();
+    let mut main_menu = MainMenuHandler::new(settings_handler.settings.pixel_scale as f32);
+    let mut settings_menu = SettingsMenuHandler::new(settings_handler.settings.pixel_scale as f32);
 
     let args: Vec<String> = std::env::args().collect();
 
@@ -113,17 +115,26 @@ fn main() {
     level.load(level_number, &mut metadata_handler, &mut rl);
 
     let mut spirits_handler = SpiritsHandler::new();
-    spirits_handler.spawn_spirits(&mut metadata_handler);
+    spirits_handler.spawn_spirits(&mut metadata_handler, &mut settings_handler);
 
     let mut enemies_handler = EnemiesHandler::new();
-    enemies_handler.spawn_enemies(&mut metadata_handler);
+    enemies_handler.spawn_enemies(&mut metadata_handler, &settings_handler);
 
     let mut order_handler = OrderHandler::new();
-    let mut ui_handler = UIHandler::new(level_number as usize);
-    let mut gameover_handler = GameOverHandler::new(gameover_handler::GameOverHandlerType::Level);
-    let mut gameend_handler = GameOverHandler::new(gameover_handler::GameOverHandlerType::Game);
+    let mut ui_handler = UIHandler::new(
+        level_number as usize,
+        settings_handler.settings.pixel_scale as f32,
+    );
+    let mut gameover_handler = GameOverHandler::new(
+        gameover_handler::GameOverHandlerType::Level,
+        settings_handler.settings.pixel_scale as f32,
+    );
+    let mut gameend_handler = GameOverHandler::new(
+        gameover_handler::GameOverHandlerType::Game,
+        settings_handler.settings.pixel_scale as f32,
+    );
     let mut level_transition = LevelTransition::new();
-    let mut level_selector = LevelSelector::new();
+    let mut level_selector = LevelSelector::new(settings_handler.settings.pixel_scale as i32);
 
     let mut should_close = false;
 
@@ -132,7 +143,11 @@ fn main() {
     let mut shader = rl.load_shader(&thread, None, Some("static/shaders/bloom.fs"));
 
     let mut target = rl
-        .load_render_texture(&thread, SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32)
+        .load_render_texture(
+            &thread,
+            SCREEN_WIDTH as u32 * settings_handler.settings.pixel_scale as u32,
+            SCREEN_HEIGHT as u32 * settings_handler.settings.pixel_scale as u32,
+        )
         .expect("Couldn't load render texture");
 
     let mut save_handler = SaveHandler::new();
@@ -143,15 +158,33 @@ fn main() {
     let mut dialogue_handler = DialogueHandler::new();
     dialogue_handler.load_dialogue(&format!("level_{level_number}"));
 
-    let mut settings_handler = SettingsHandler::new();
-    settings_handler.save();
+    rl.set_window_size(
+        SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32,
+        SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32,
+    );
 
     while !rl.window_should_close() && !should_close {
         profiling::scope!("Game frame");
+        if settings_menu.should_remade {
+            settings_menu.should_remade = false;
+            // settings_menu.change_resolution(settings_handler.settings.pixel_scale as f32);
+            settings_menu.rescale_ui(settings_handler.settings.pixel_scale as f32);
+
+            target = rl
+                .load_render_texture(
+                    &thread,
+                    SCREEN_WIDTH as u32 * settings_handler.settings.pixel_scale as u32,
+                    SCREEN_HEIGHT as u32 * settings_handler.settings.pixel_scale as u32,
+                )
+                .expect("Couldn't load render texture");
+        }
         if rl.is_key_pressed(KeyboardKey::KEY_F) {
             settings_handler.settings.fullscreen = !settings_handler.settings.fullscreen;
             if settings_handler.settings.fullscreen {
-                rl.set_window_size(SCREEN_WIDTH, SCREEN_HEIGHT);
+                rl.set_window_size(
+                    SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32,
+                    SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32,
+                );
             }
             rl.toggle_fullscreen();
         }
@@ -165,6 +198,7 @@ fn main() {
                 &mut level,
                 &mut spirits_handler,
                 &mut level_number,
+                &mut settings_handler,
             );
         }
 
@@ -180,6 +214,7 @@ fn main() {
                 &mut rl,
                 &mut scene_handler,
                 &mut dialogue_handler,
+                &mut settings_handler,
             );
         }
         // update stuff
@@ -257,6 +292,7 @@ fn main() {
                     &music_handler,
                     &mut hotkey_handler,
                     &mut should_close,
+                    &mut settings_handler,
                 );
             }
             Scene::GameOver => {
@@ -271,6 +307,7 @@ fn main() {
                     &music_handler,
                     &mut hotkey_handler,
                     &mut should_close,
+                    &mut settings_handler,
                 ) {
                     music_handler.music_resume();
                     reload_procedure(
@@ -280,6 +317,7 @@ fn main() {
                         &mut enemies_handler,
                         &mut spirits_handler,
                         &mut rl,
+                        &mut settings_handler,
                     );
                 }
             }
@@ -324,6 +362,7 @@ fn main() {
                         &mut enemies_handler,
                         &mut spirits_handler,
                         &mut rl,
+                        &mut settings_handler,
                     );
                 }
 
@@ -345,6 +384,7 @@ fn main() {
                 &mut hotkey_handler,
                 &mut ui_handler,
                 &mut dialogue_handler,
+                &mut settings_handler,
             ),
             Scene::LevelSelection => {
                 level_selector.update(
@@ -358,6 +398,7 @@ fn main() {
                     &mut scene_handler,
                     &mut dialogue_handler,
                     &mut rl,
+                    &mut settings_handler,
                 );
             }
             Scene::Settings => {
@@ -382,6 +423,7 @@ fn main() {
                     &mut order_handler,
                     &mut t,
                     &mut particles,
+                    &mut settings_handler,
                 );
             } else {
                 t.draw_shader_mode(&mut shader, |mut s| match scene_handler.get_current() {
@@ -394,6 +436,7 @@ fn main() {
                         &mut order_handler,
                         &mut s,
                         &mut particles,
+                        &mut settings_handler,
                     ),
                     _ => {}
                 });
@@ -401,53 +444,72 @@ fn main() {
 
             match scene_handler.get_current() {
                 Scene::MainMenu => {
-                    main_menu.draw(&font, &save_handler, &texture_handler, &mut t);
+                    main_menu.draw(
+                        &font,
+                        &save_handler,
+                        &texture_handler,
+                        &mut t,
+                        &settings_handler,
+                    );
                 }
                 Scene::Settings => {
-                    settings_menu.draw(&font, &texture_handler, &mut t);
+                    settings_menu.draw(&font, &texture_handler, &mut t, &mut settings_handler);
                 }
-                Scene::GameEnd => gameend_handler.draw_gameover(&font, &mut t),
-                Scene::GameOver => gameover_handler.draw_gameover(&font, &mut t),
+                Scene::GameEnd => {
+                    gameend_handler.draw_gameover(&font, &mut t, &mut settings_handler)
+                }
+                Scene::GameOver => {
+                    gameover_handler.draw_gameover(&font, &mut t, &mut settings_handler)
+                }
                 Scene::Level => draw_level_ui(
                     &mut level,
-                    level_number,
                     &texture_handler,
                     &mut ui_handler,
                     &mut dialogue_handler,
                     &font,
                     &mut t,
+                    &mut settings_handler,
                 ),
                 Scene::Transition => {
-                    level_transition.draw(&texture_handler, &font, &mut t);
+                    level_transition.draw(&texture_handler, &font, &mut t, &settings_handler);
                 }
                 Scene::LevelSelection => {
-                    level_selector.draw(&font, &texture_handler, &mut t);
+                    level_selector.draw(&font, &texture_handler, &mut t, &mut settings_handler);
                 }
             }
 
-            scene_handler.draw(&mut t);
+            scene_handler.draw(&mut t, &mut settings_handler);
         }
 
         let dest_rec = if d.is_window_fullscreen() {
             Rectangle::new(
-                monitor_width as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                monitor_height as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
-                SCREEN_WIDTH as f32,
-                SCREEN_HEIGHT as f32,
+                monitor_width as f32 / 2.
+                    - (SCREEN_WIDTH as f32 * settings_handler.settings.pixel_scale as f32) / 2.,
+                monitor_height as f32 / 2.
+                    - (SCREEN_HEIGHT as f32 * settings_handler.settings.pixel_scale as f32) / 2.,
+                SCREEN_WIDTH as f32 * settings_handler.settings.pixel_scale as f32,
+                SCREEN_HEIGHT as f32 * settings_handler.settings.pixel_scale as f32,
             )
         } else {
             Rectangle::new(
-                d.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                d.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
-                SCREEN_WIDTH as f32,
-                SCREEN_HEIGHT as f32,
+                d.get_screen_width() as f32 / 2.
+                    - (SCREEN_WIDTH as f32 * settings_handler.settings.pixel_scale as f32) / 2.,
+                d.get_screen_height() as f32 / 2.
+                    - (SCREEN_HEIGHT as f32 * settings_handler.settings.pixel_scale as f32) / 2.,
+                SCREEN_WIDTH as f32 * settings_handler.settings.pixel_scale as f32,
+                SCREEN_HEIGHT as f32 * settings_handler.settings.pixel_scale as f32,
             )
         };
 
         // we draw the texture in the middle of the screen
         d.draw_texture_pro(
             &target,
-            Rectangle::new(0., 0., SCREEN_WIDTH as f32, -SCREEN_HEIGHT as f32),
+            Rectangle::new(
+                0.,
+                0.,
+                SCREEN_WIDTH as f32 * settings_handler.settings.pixel_scale as f32,
+                -SCREEN_HEIGHT as f32 * settings_handler.settings.pixel_scale as f32,
+            ),
             dest_rec,
             Vector2::zero(),
             0.0,
@@ -464,6 +526,7 @@ fn main() {
                 &mut level,
                 &mut spirits_handler,
                 &mut rl,
+                &mut settings_handler,
             );
 
             save_handler.create_save_file(
@@ -471,6 +534,7 @@ fn main() {
                 &mut level,
                 &mut spirits_handler,
                 &mut level_number,
+                &mut settings_handler,
             );
         }
         Scene::GameEnd => {
@@ -480,6 +544,7 @@ fn main() {
                 &mut level,
                 &mut spirits_handler,
                 &mut rl,
+                &mut settings_handler,
             );
 
             save_handler.create_save_file(
@@ -487,6 +552,7 @@ fn main() {
                 &mut level,
                 &mut spirits_handler,
                 &mut level_number,
+                &mut settings_handler,
             );
         }
         Scene::Level => save_handler.create_save_file(
@@ -494,6 +560,7 @@ fn main() {
             &mut level,
             &mut spirits_handler,
             &mut level_number,
+            &mut settings_handler,
         ),
         _ => (),
     };
@@ -505,10 +572,11 @@ fn preparation_to_save(
     level: &mut Level,
     spirits_handler: &mut SpiritsHandler,
     rl: &mut RaylibHandle,
+    settings_handler: &mut SettingsHandler,
 ) {
     metadata_handler.load(*level_number);
     level.load(*level_number, metadata_handler, rl);
-    spirits_handler.spawn_spirits(metadata_handler);
+    spirits_handler.spawn_spirits(metadata_handler, settings_handler);
 }
 
 fn update_level<'a>(
@@ -531,8 +599,16 @@ fn update_level<'a>(
         if spirit.get_dead() {
             particles.push(Particle::new(
                 Vector2::new(
-                    spirit.get_position().x + TILE_SIZE as f32 / 2.,
-                    spirit.get_draw_position().y + TILE_SIZE as f32 / 2.,
+                    spirit.get_position().x
+                        + (settings_handler.settings.pixel_scale as i32
+                            * (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32))
+                            as f32
+                            / 2.,
+                    spirit.get_draw_position().y
+                        + (settings_handler.settings.pixel_scale as i32
+                            * (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32))
+                            as f32
+                            / 2.,
                 ),
                 16,
                 32.,
@@ -555,13 +631,24 @@ fn update_level<'a>(
         spirit.update_behaviour(level, music_handler, rl, settings_handler);
     }
 
-    order_handler.select_spirit(spirits_handler, level, rl, hotkey_handler);
-    order_handler.update_line(level, rl, hotkey_handler);
+    order_handler.select_spirit(spirits_handler, level, rl, hotkey_handler, settings_handler);
+    order_handler.update_line(level, rl, hotkey_handler, settings_handler);
 
-    ui_handler.build(level, rl, hotkey_handler, dialogue_handler);
+    ui_handler.build(
+        level,
+        rl,
+        hotkey_handler,
+        dialogue_handler,
+        settings_handler,
+    );
 
-    let (level_quit, level_restart, level_settings) =
-        ui_handler.update(hotkey_handler, scene_handler, dialogue_handler, rl);
+    let (level_quit, level_restart, level_settings) = ui_handler.update(
+        hotkey_handler,
+        scene_handler,
+        dialogue_handler,
+        rl,
+        settings_handler,
+    );
 
     if level_quit {
         save_handler.set_to_save();
@@ -592,36 +679,37 @@ fn draw_level(
     enemies_handler: &mut EnemiesHandler,
     order_handler: &mut OrderHandler,
     rl: &mut RaylibDrawHandle,
+    settings_handler: &mut SettingsHandler,
 ) {
     rl.clear_background(Color::from_hex("0b8a8f").unwrap());
 
-    level.draw(rl, texture_handler, level_number);
+    level.draw(rl, texture_handler, level_number, settings_handler);
     for spirit in spirits_handler.spirits.values() {
-        spirit.draw(rl, texture_handler);
+        spirit.draw(rl, texture_handler, settings_handler);
     }
     for enemy in enemies_handler.enemies.values() {
-        enemy.draw(rl, texture_handler);
+        enemy.draw(rl, texture_handler, settings_handler);
     }
 
-    order_handler.draw(spirits_handler, texture_handler, rl);
+    order_handler.draw(spirits_handler, texture_handler, rl, settings_handler);
 }
 
 fn draw_level_ui<'a>(
     level: &mut Level,
-    level_number: u8,
     texture_handler: &TextureHandler,
     ui_handler: &mut UIHandler,
     dialogue_handler: &mut DialogueHandler,
     font: &Font,
     rl: &mut RaylibDrawHandle,
+    settings_handler: &mut SettingsHandler,
 ) {
     ui_handler.draw(
         texture_handler,
         dialogue_handler,
         level,
-        level_number.into(),
         font,
         rl,
+        settings_handler,
     );
 }
 
@@ -637,6 +725,7 @@ fn update_transition(
     hotkey_handler: &mut HotkeyHandler,
     ui_handler: &mut UIHandler,
     dialogue_handler: &mut DialogueHandler,
+    settings_handler: &mut SettingsHandler,
 ) {
     if !hotkey_handler.check_pressed(rl, HotkeyCategory::Continue)
         && !rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
@@ -653,11 +742,14 @@ fn update_transition(
     level_transition.set_cards(*level_number as usize);
     metadata_handler.load(*level_number);
     level.load(*level_number, metadata_handler, rl);
-    spirits_handler.spawn_spirits(metadata_handler);
-    enemies_handler.spawn_enemies(metadata_handler);
+    spirits_handler.spawn_spirits(metadata_handler, settings_handler);
+    enemies_handler.spawn_enemies(metadata_handler, settings_handler);
     scene_handler.set(Scene::Level);
     dialogue_handler.load_dialogue(&format!("level_{}", *level_number + 1));
-    *ui_handler = UIHandler::new(level_number.clone() as usize);
+    *ui_handler = UIHandler::new(
+        level_number.clone() as usize,
+        settings_handler.settings.pixel_scale as f32,
+    );
 }
 
 fn reload_procedure(
@@ -667,14 +759,15 @@ fn reload_procedure(
     enemies_handler: &mut EnemiesHandler,
     spirits_handler: &mut SpiritsHandler,
     rl: &mut RaylibHandle,
+    settings_handler: &mut SettingsHandler,
 ) {
     *level = Level::new();
     *metadata_handler = MetadataHandler::new(current_level);
     level.load(current_level, metadata_handler, rl);
 
     *spirits_handler = SpiritsHandler::new();
-    spirits_handler.spawn_spirits(metadata_handler);
-    enemies_handler.spawn_enemies(metadata_handler);
+    spirits_handler.spawn_spirits(metadata_handler, settings_handler);
+    enemies_handler.spawn_enemies(metadata_handler, settings_handler);
 }
 
 fn level_texture(
@@ -686,6 +779,7 @@ fn level_texture(
     order_handler: &mut OrderHandler,
     rl: &mut RaylibDrawHandle,
     particles: &mut Vec<Particle>,
+    settings_handler: &mut SettingsHandler,
 ) {
     draw_level(
         level,
@@ -695,6 +789,7 @@ fn level_texture(
         enemies_handler,
         order_handler,
         rl,
+        settings_handler,
     );
     for particle in particles.iter_mut() {
         particle.draw(rl);

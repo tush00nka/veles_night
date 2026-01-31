@@ -1,9 +1,10 @@
+use std::cmp::max;
+
 use raylib::prelude::*;
 
 use crate::{
     SCREEN_HEIGHT, SCREEN_WIDTH,
     color::CustomColor,
-    map::TILE_SCALE_DEFAULT,
     scene::{Scene, SceneHandler},
     settings::{MAXIMUM_PIXEL_SCALE, Settings, SettingsHandler},
     texture_handler::TextureHandler,
@@ -32,6 +33,8 @@ const RULER_WIDTH_PX: u8 = 48;
 const RULER_PICKER_WIDTH_PX: u8 = 16;
 const SLIDER_TEXTURE_OFFSET: u8 = 16;
 const BUTTON_TEXTURE_WIDTH: f32 = 16.;
+const BUTTON_TEXTURE_HEIGHT: f32 = 16.;
+
 const UI_X_OFFSET: f32 = 128.;
 const UI_Y_OFFSET: f32 = 14.;
 const UI_SHIFT_SIZE: f32 = 20.;
@@ -224,15 +227,32 @@ pub struct Slider {
 }
 
 impl Slider {
-    pub fn new(slider_style: SliderStyle, start_position: Vector2) -> Self {
-        let rects =
-            SliderStyle::get_rects(&slider_style, TILE_SCALE_DEFAULT as usize, start_position);
+    pub fn new(slider_style: SliderStyle, start_position: Vector2, pixel_scale: usize) -> Self {
+        let rects = SliderStyle::get_rects(&slider_style, pixel_scale, start_position);
 
         Self {
             slider_value: 50,
             snap: SliderStyle::get_snap(&slider_style),
             slider_style,
             rects,
+        }
+    }
+
+    fn back_to_default(&mut self, scale: f32, position: Vector2) {
+        let need_special_size = SliderStyle::special_size_picker(&self.slider_style);
+
+        for index in 0..SliderStyle::get_sprite_parts_amount(&self.slider_style) {
+            let (width, height) = if need_special_size
+                && SliderStyle::get_picker_rect(&self.slider_style) == index as usize
+            {
+                SliderStyle::get_picker_size(&self.slider_style)
+            } else {
+                SliderStyle::get_dimensions(&self.slider_style)
+            };
+            self.rects[index as usize].x = position.x;
+            self.rects[index as usize].y = position.y;
+            self.rects[index as usize].width = width as f32 * scale;
+            self.rects[index as usize].height = height as f32 * scale;
         }
     }
 }
@@ -245,50 +265,33 @@ pub struct SettingsMenuHandler {
     ui_buttons: Vec<Button>,
     in_menu_settings: Settings,
     draw_warning: bool,
+    pub should_remade: bool,
 }
 impl SettingsMenuHandler {
-    pub fn new() -> Self {
+    pub fn new(scale: f32) -> Self {
         let mut buttons = Vec::new();
         let mut sliders = Vec::new();
         let mut buttons_utility = Vec::new();
 
-        for index in 0..BUTTONS_SETTINGS.len() {
+        for _ in 0..BUTTONS_SETTINGS.len() {
             buttons.push(Button {
                 selected: false,
-                rect: Rectangle {
-                    x: TILE_SCALE_DEFAULT as f32 * UI_X_OFFSET,
-                    y: (UI_Y_OFFSET + UI_Y_TOP_OFFSET + index as f32 * UI_SHIFT_SIZE)
-                        * TILE_SCALE_DEFAULT as f32,
-                    width: BUTTON_TEXTURE_WIDTH * TILE_SCALE_DEFAULT as f32,
-                    height: BUTTON_TEXTURE_WIDTH * TILE_SCALE_DEFAULT as f32,
-                },
+                rect: Rectangle::default(),
                 offset: 0.,
             });
         }
 
-        for index in 0..UTILITY_BUTTONS.len() {
+        for _ in 0..UTILITY_BUTTONS.len() {
             buttons_utility.push(Button {
                 selected: false,
-                rect: Rectangle {
-                    x: (TILE_SCALE_DEFAULT * UI_UTILITY_X_OFFSET as i32) as f32 * index as f32,
-                    y: index as f32 * (UI_UTILITY_Y_OFFSET as i32 * TILE_SCALE_DEFAULT) as f32,
-                    width: (UI_UTILITY_WIDTH as i32 * TILE_SCALE_DEFAULT) as f32,
-                    height: (UI_UTILITY_HEIGHT as i32 * TILE_SCALE_DEFAULT) as f32,
-                },
+                rect: Rectangle::default(),
                 offset: 0.,
             });
         }
-        for index in 0..WARNING_BUTTONS_TEXT.len() {
+        for _ in 0..WARNING_BUTTONS_TEXT.len() {
             buttons_utility.push(Button {
                 selected: false,
-                rect: Rectangle {
-                    x: (TILE_SCALE_DEFAULT * UI_WARNING_X_OFFSET as i32) as f32
-                        + (UI_WARNING_X_SHIFT as usize * TILE_SCALE_DEFAULT as usize * index)
-                            as f32,
-                    y: (TILE_SCALE_DEFAULT * UI_WARNING_Y_OFFSET as i32) as f32,
-                    width: (UI_WARNING_WIDTH as i32 * TILE_SCALE_DEFAULT) as f32,
-                    height: (UI_WARNING_HEIGHT as i32 * TILE_SCALE_DEFAULT) as f32,
-                },
+                rect: Rectangle::default(),
                 offset: 0.,
             });
         }
@@ -297,16 +300,17 @@ impl SettingsMenuHandler {
             sliders.push(Slider::new(
                 *slider_type,
                 Vector2::new(
-                    UI_X_OFFSET * TILE_SCALE_DEFAULT as f32,
+                    UI_X_OFFSET * scale as f32,
                     (UI_Y_OFFSET
                         + UI_Y_TOP_OFFSET
                         + (index + BUTTONS_SETTINGS.len()) as f32 * UI_SHIFT_SIZE)
-                        * TILE_SCALE_DEFAULT as f32,
+                        * scale as f32,
                 ) + SliderStyle::get_sprite_offset(slider_type)
-                    * Vector2::new(TILE_SCALE_DEFAULT as f32, TILE_SCALE_DEFAULT as f32),
+                    * Vector2::new(scale as f32, scale as f32),
+                scale as usize,
             ));
         }
-
+        Self::set_ui_to_default(&mut buttons, &mut buttons_utility, &mut sliders, scale);
         return Self {
             picked_element: None,
             previous_scene: None,
@@ -315,7 +319,58 @@ impl SettingsMenuHandler {
             sliders,
             in_menu_settings: Settings::default(),
             draw_warning: false,
+            should_remade: false,
         };
+    }
+    pub fn rescale_ui(&mut self, new_scale: f32) {
+        Self::set_ui_to_default(
+            &mut self.buttons,
+            &mut self.ui_buttons,
+            &mut self.sliders,
+            new_scale,
+        );
+    }
+
+    fn set_ui_to_default(
+        common_buttons: &mut Vec<Button>,
+        utility_buttons: &mut Vec<Button>,
+        sliders: &mut Vec<Slider>,
+        new_scale: f32,
+    ) {
+        for (index, button) in common_buttons.iter_mut().enumerate() {
+            button.rect.x = new_scale * UI_X_OFFSET;
+            button.rect.y =
+                (UI_Y_OFFSET + UI_Y_TOP_OFFSET + index as f32 * UI_SHIFT_SIZE) * new_scale;
+            button.rect.width = BUTTON_TEXTURE_WIDTH * new_scale;
+            button.rect.height = BUTTON_TEXTURE_HEIGHT * new_scale;
+        }
+        for index in 0..UTILITY_BUTTONS.len() {
+            utility_buttons[index].rect.x = new_scale * UI_UTILITY_X_OFFSET as f32 * index as f32;
+            utility_buttons[index].rect.y = index as f32 * UI_UTILITY_Y_OFFSET as f32 * new_scale;
+            utility_buttons[index].rect.width = UI_UTILITY_WIDTH as f32 * new_scale;
+            utility_buttons[index].rect.height = UI_UTILITY_HEIGHT as f32 * new_scale;
+        }
+        for index in UTILITY_BUTTONS.len()..UTILITY_BUTTONS.len() + WARNING_BUTTONS_TEXT.len() {
+            utility_buttons[index].rect.x = new_scale * UI_WARNING_X_OFFSET as f32
+                + UI_WARNING_X_SHIFT as f32 * new_scale * (index - UTILITY_BUTTONS.len()) as f32;
+            utility_buttons[index].rect.y = new_scale * UI_WARNING_Y_OFFSET as f32;
+            utility_buttons[index].rect.width = UI_WARNING_WIDTH as f32 * new_scale;
+            utility_buttons[index].rect.height = UI_WARNING_HEIGHT as f32 * new_scale;
+        }
+
+        for (index, slider) in sliders.iter_mut().enumerate() {
+            slider.back_to_default(
+                new_scale,
+                Vector2::new(
+                    UI_X_OFFSET * new_scale,
+                    (UI_Y_OFFSET
+                        + UI_Y_TOP_OFFSET
+                        + (index + BUTTONS_SETTINGS.len()) as f32 * UI_SHIFT_SIZE)
+                        * new_scale,
+                ) + SliderStyle::get_sprite_offset(&slider.slider_style)
+                    * Vector2::new(new_scale, new_scale),
+            );
+        }
     }
 
     fn set_setting_button(settings: &mut Settings, settings_option: SettingsOptions, value: bool) {
@@ -396,8 +451,14 @@ impl SettingsMenuHandler {
                 && button.rect.check_collision_point_rec(
                     rl.get_mouse_position()
                         - Vector2::new(
-                            rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                            rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                            rl.get_screen_width() as f32 / 2.
+                                - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
+                                    as f32
+                                    / 2.,
+                            rl.get_screen_height() as f32 / 2.
+                                - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
+                                    as f32
+                                    / 2.,
                         ),
                 )
             {
@@ -421,6 +482,15 @@ impl SettingsMenuHandler {
                         if warning {
                             continue;
                         }
+                        self.in_menu_settings.pixel_scale = self.in_menu_settings.pixel_scale
+                            / PIXEL_SCALE_TO_SLIDER_VALUE as u8
+                            + 1;
+                        self.should_remade = true;
+                        rl.set_window_size(
+                            SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32,
+                            SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32,
+                        );
+
                         settings_handler.set_settings(&self.in_menu_settings);
                         settings_handler.save();
                     }
@@ -449,8 +519,14 @@ impl SettingsMenuHandler {
                 if button.rect.check_collision_point_rec(
                     rl.get_mouse_position()
                         - Vector2::new(
-                            rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                            rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                            rl.get_screen_width() as f32 / 2.
+                                - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
+                                    as f32
+                                    / 2.,
+                            rl.get_screen_height() as f32 / 2.
+                                - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
+                                    as f32
+                                    / 2.,
                         ),
                 ) {
                     button.selected = !button.selected;
@@ -484,8 +560,12 @@ impl SettingsMenuHandler {
             if slider.rects[outline_rect_n].check_collision_point_rec(
                 rl.get_mouse_position()
                     - Vector2::new(
-                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        rl.get_screen_width() as f32 / 2.
+                            - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                        rl.get_screen_height() as f32 / 2.
+                            - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
                     ),
             ) && self.picked_element.is_none()
                 && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
@@ -502,17 +582,20 @@ impl SettingsMenuHandler {
             };
             let mouse_cords = rl.get_mouse_position()
                 - Vector2::new(
-                    rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                    rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                    rl.get_screen_width() as f32 / 2.
+                        - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32 / 2.,
+                    rl.get_screen_height() as f32 / 2.
+                        - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                            / 2.,
                 );
-            let maxlen = (SLIDER_WIDTH_PX as i32 * TILE_SCALE_DEFAULT) as f32;
+            let maxlen = SLIDER_WIDTH_PX * settings_handler.settings.pixel_scale;
             let slider_value = if mouse_cords.x < slider.rects[outline_rect_n].x {
                 0.
             } else {
-                if (slider.rects[outline_rect_n].x + maxlen) < mouse_cords.x {
+                if (slider.rects[outline_rect_n].x + maxlen as f32) < mouse_cords.x {
                     100.
                 } else {
-                    (mouse_cords.x - slider.rects[outline_rect_n].x) * 100. / maxlen
+                    (mouse_cords.x - slider.rects[outline_rect_n].x) * 100. / maxlen as f32
                 }
             };
 
@@ -531,6 +614,7 @@ impl SettingsMenuHandler {
         font: &Font,
         texture_handler: &TextureHandler,
         rl: &mut RaylibDrawHandle,
+        settings_handler: &mut SettingsHandler,
     ) {
         rl.clear_background(Color::from_hex(BACKGROUND_COLOR_HEX).unwrap());
 
@@ -538,7 +622,7 @@ impl SettingsMenuHandler {
             texture_handler.get_safe(BACKGROUND_IMAGE),
             Vector2::zero(),
             0.0,
-            TILE_SCALE_DEFAULT as f32,
+            settings_handler.settings.pixel_scale as f32,
             Color::WHITE,
         );
 
@@ -548,8 +632,12 @@ impl SettingsMenuHandler {
             let texture_offset = if button.rect.check_collision_point_rec(
                 rl.get_mouse_position()
                     - Vector2::new(
-                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        rl.get_screen_width() as f32 / 2.
+                            - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                        rl.get_screen_height() as f32 / 2.
+                            - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
                     ),
             ) && mouse_down
                 && self.picked_element.is_none()
@@ -592,14 +680,14 @@ impl SettingsMenuHandler {
                 font,
                 BUTTONS_SETTINGS[button_num],
                 Vector2::new(
-                    TEXT_X_OFFSET * TILE_SCALE_DEFAULT as f32,
+                    TEXT_X_OFFSET * settings_handler.settings.pixel_scale as f32,
                     (UI_Y_OFFSET + UI_Y_TOP_OFFSET + button_num as f32 * UI_SHIFT_SIZE)
-                        * TILE_SCALE_DEFAULT as f32,
+                        * settings_handler.settings.pixel_scale as f32,
                 ),
                 Vector2::zero(),
                 0.,
-                TEXT_SIZE * TILE_SCALE_DEFAULT as f32,
-                TEXT_SPACING * TILE_SCALE_DEFAULT as f32,
+                TEXT_SIZE * settings_handler.settings.pixel_scale as f32,
+                TEXT_SPACING * settings_handler.settings.pixel_scale as f32,
                 Color::RAYWHITE,
             );
         }
@@ -634,17 +722,18 @@ impl SettingsMenuHandler {
                         (x, y) = SliderStyle::get_picker_pressed_texture(&slider.slider_style);
                     }
 
-                    slider.rects[i].x = slider.rects
-                        [SliderStyle::get_outline_rect(&slider.slider_style)]
-                    .x + (picker_offset as i32 * TILE_SCALE_DEFAULT) as f32
-                        + (SLIDER_WIDTH_PX as f32 * new_val / 100.).floor()
-                            * TILE_SCALE_DEFAULT as f32;
+                    slider.rects[i].x =
+                        slider.rects[SliderStyle::get_outline_rect(&slider.slider_style)].x
+                            + picker_offset * settings_handler.settings.pixel_scale as f32
+                            + (SLIDER_WIDTH_PX as f32 * new_val / 100.).floor()
+                                * settings_handler.settings.pixel_scale as f32;
                 } else if i == picker {
                     width = ((SLIDER_WIDTH_PX as f32 * slider.slider_value as f32 / 100.).floor()
-                        + picker_offset * TILE_SCALE_DEFAULT as f32)
+                        + picker_offset * settings_handler.settings.pixel_scale as f32)
                         as usize;
 
-                    slider.rects[i].width = width as f32 * TILE_SCALE_DEFAULT as f32;
+                    slider.rects[i].width =
+                        width as f32 * settings_handler.settings.pixel_scale as f32;
                 }
 
                 rl.draw_texture_pro(
@@ -661,16 +750,16 @@ impl SettingsMenuHandler {
                 font,
                 SLIDERS_SETTINGS[slider_num],
                 Vector2::new(
-                    TEXT_X_OFFSET * TILE_SCALE_DEFAULT as f32,
+                    TEXT_X_OFFSET * settings_handler.settings.pixel_scale as f32,
                     (UI_Y_OFFSET
                         + UI_Y_TOP_OFFSET
                         + (slider_num + BUTTONS_SETTINGS.len()) as f32 * UI_SHIFT_SIZE)
-                        * TILE_SCALE_DEFAULT as f32,
+                        * settings_handler.settings.pixel_scale as f32,
                 ),
                 Vector2::zero(),
                 0.,
-                TEXT_SIZE * TILE_SCALE_DEFAULT as f32,
-                TEXT_SPACING * TILE_SCALE_DEFAULT as f32,
+                TEXT_SIZE * settings_handler.settings.pixel_scale as f32,
+                TEXT_SPACING * settings_handler.settings.pixel_scale as f32,
                 Color::RAYWHITE,
             );
         }
@@ -680,8 +769,14 @@ impl SettingsMenuHandler {
                 if self.ui_buttons[i].rect.check_collision_point_rec(
                     rl.get_mouse_position()
                         - Vector2::new(
-                            rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                            rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                            rl.get_screen_width() as f32 / 2.
+                                - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
+                                    as f32
+                                    / 2.,
+                            rl.get_screen_height() as f32 / 2.
+                                - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
+                                    as f32
+                                    / 2.,
                         ),
                 ) && self.picked_element.is_none()
                     && !self.draw_warning
@@ -689,14 +784,17 @@ impl SettingsMenuHandler {
                     self.ui_buttons[i].selected = true;
                     (0., 0.)
                 } else {
-                    (UI_UTILITY_HEIGHT as f32, TILE_SCALE_DEFAULT as f32)
+                    (
+                        UI_UTILITY_HEIGHT as f32,
+                        settings_handler.settings.pixel_scale as f32,
+                    )
                 };
 
             let text_dimensions = get_text_size(
                 font,
                 UTILITY_BUTTONS[i],
-                TEXT_SIZE * TILE_SCALE_DEFAULT as f32,
-                TEXT_SPACING * TILE_SCALE_DEFAULT as f32,
+                TEXT_SIZE * settings_handler.settings.pixel_scale as f32,
+                TEXT_SPACING * settings_handler.settings.pixel_scale as f32,
             );
 
             self.ui_buttons[i].draw_with_text_middle(
@@ -712,10 +810,10 @@ impl SettingsMenuHandler {
                 ),
                 text_dimensions,
                 &Color::RAYWHITE,
-                TEXT_SIZE * TILE_SCALE_DEFAULT as f32,
-                TEXT_SPACING * TILE_SCALE_DEFAULT as f32,
+                TEXT_SIZE * settings_handler.settings.pixel_scale as f32,
+                TEXT_SPACING * settings_handler.settings.pixel_scale as f32,
                 Vector2::new(0., text_offset),
-                Vector2::new(0., -TILE_SCALE_DEFAULT as f32),
+                Vector2::new(0., -(settings_handler.settings.pixel_scale as f32)),
             );
         }
 
@@ -726,11 +824,11 @@ impl SettingsMenuHandler {
         rl.draw_texture_ex(
             texture_handler.get_safe(SETTINGS_UI_TEXTURE),
             Vector2::new(
-                64. * TILE_SCALE_DEFAULT as f32,
-                26. * TILE_SCALE_DEFAULT as f32,
+                64. * settings_handler.settings.pixel_scale as f32,
+                26. * settings_handler.settings.pixel_scale as f32,
             ),
             0.0,
-            TILE_SCALE_DEFAULT as f32,
+            settings_handler.settings.pixel_scale as f32,
             Color::WHITE,
         );
 
@@ -738,21 +836,23 @@ impl SettingsMenuHandler {
             let text_size = get_text_size(
                 font,
                 WARNING_TEXT[i],
-                TEXT_SIZE * TILE_SCALE_DEFAULT as f32,
-                TEXT_SPACING * TILE_SCALE_DEFAULT as f32,
+                TEXT_SIZE * settings_handler.settings.pixel_scale as f32,
+                TEXT_SPACING * settings_handler.settings.pixel_scale as f32,
             );
 
             rl.draw_text_pro(
                 font,
                 WARNING_TEXT[i],
                 Vector2::new(
-                    128. * TILE_SCALE_DEFAULT as f32 - text_size.x / 2.,
-                    text_size.y + 26. * TILE_SCALE_DEFAULT as f32 + text_size.y * i as f32,
+                    128. * settings_handler.settings.pixel_scale as f32 - text_size.x / 2.,
+                    text_size.y
+                        + 26. * settings_handler.settings.pixel_scale as f32
+                        + text_size.y * i as f32,
                 ),
                 Vector2::zero(),
                 0.,
-                TEXT_SIZE * TILE_SCALE_DEFAULT as f32,
-                TEXT_SPACING * TILE_SCALE_DEFAULT as f32,
+                TEXT_SIZE * settings_handler.settings.pixel_scale as f32,
+                TEXT_SPACING * settings_handler.settings.pixel_scale as f32,
                 CustomColor::BLACK_TEXT,
             );
         }
@@ -763,8 +863,14 @@ impl SettingsMenuHandler {
                 .check_collision_point_rec(
                     rl.get_mouse_position()
                         - Vector2::new(
-                            rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                            rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                            rl.get_screen_width() as f32 / 2.
+                                - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
+                                    as f32
+                                    / 2.,
+                            rl.get_screen_height() as f32 / 2.
+                                - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
+                                    as f32
+                                    / 2.,
                         ),
                 )
                 && self.picked_element.is_none()
@@ -772,14 +878,17 @@ impl SettingsMenuHandler {
                 self.ui_buttons[i + UTILITY_BUTTONS.len()].selected = true;
                 (0., 0.)
             } else {
-                (UI_UTILITY_HEIGHT as f32, TILE_SCALE_DEFAULT as f32)
+                (
+                    UI_UTILITY_HEIGHT as f32,
+                    settings_handler.settings.pixel_scale as f32,
+                )
             };
 
             let text_size = get_text_size(
                 font,
                 WARNING_BUTTONS_TEXT[i],
-                TEXT_SIZE * TILE_SCALE_DEFAULT as f32,
-                TEXT_SPACING * TILE_SCALE_DEFAULT as f32,
+                TEXT_SIZE * settings_handler.settings.pixel_scale as f32,
+                TEXT_SPACING * settings_handler.settings.pixel_scale as f32,
             );
 
             self.ui_buttons[i + WARNING_BUTTONS_TEXT.len()].draw_with_text_middle(
@@ -795,10 +904,10 @@ impl SettingsMenuHandler {
                 ),
                 text_size,
                 &Color::RAYWHITE,
-                TEXT_SIZE * TILE_SCALE_DEFAULT as f32,
-                TEXT_SPACING * TILE_SCALE_DEFAULT as f32,
+                TEXT_SIZE * settings_handler.settings.pixel_scale as f32,
+                TEXT_SPACING * settings_handler.settings.pixel_scale as f32,
                 Vector2::new(0., text_offset),
-                Vector2::new(0., -TILE_SCALE_DEFAULT as f32),
+                Vector2::new(0., -(settings_handler.settings.pixel_scale as f32)),
             );
         }
     }

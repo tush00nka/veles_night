@@ -5,7 +5,10 @@ use std::{
     io::BufWriter,
 };
 
-use crate::{map::TILE_SIZE, save_handler::SAVE_PATH, spirits_handler::SpiritsHandler};
+use crate::{
+    map::TILE_SIZE_PX, save_handler::SAVE_PATH, settings::SettingsHandler,
+    spirits_handler::SpiritsHandler,
+};
 
 const METADATA_PATH: &str = "static/metadata/";
 const METADATA_EXTENSION: &str = ".json";
@@ -160,7 +163,11 @@ impl MetadataHandler {
     }
 
     #[profiling::function]
-    pub fn change_spirits(&mut self, spirits_handler: &SpiritsHandler) {
+    pub fn change_spirits(
+        &mut self,
+        spirits_handler: &SpiritsHandler,
+        settings_handler: &SettingsHandler,
+    ) {
         self.spirits = Vec::new();
 
         for spirit in spirits_handler.spirits.values() {
@@ -169,8 +176,12 @@ impl MetadataHandler {
             }
 
             let position = [
-                (spirit.get_position().x / TILE_SIZE as f32).floor() as u8,
-                (spirit.get_position().y / TILE_SIZE as f32).floor() as u8,
+                (spirit.get_position().x
+                    / (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32)
+                    .floor() as u8,
+                (spirit.get_position().y
+                    / (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32)
+                    .floor() as u8,
             ];
             let direction = [
                 spirit.get_direction().x.floor() as i8,

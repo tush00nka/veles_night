@@ -10,6 +10,7 @@ use crate::{
     map_loader::MapLoader,
     metadata_handler::MetadataHandler,
     scene::{Scene, SceneHandler},
+    settings::SettingsHandler,
     spirits_handler::SpiritsHandler,
     ui::UIHandler,
 };
@@ -95,16 +96,20 @@ impl SaveHandler {
         rl: &mut RaylibHandle,
         scene_handler: &mut SceneHandler,
         dialogue_handler: &mut DialogueHandler,
+        settings_handler: &mut SettingsHandler,
     ) {
         metadata_handler.load_save();
 
         *level_number = SaveHandler::get_level_number();
         level_transition.set_cards(*level_number as usize);
         level.load_save(level_number.clone(), metadata_handler, rl); //need other function call
-        spirits_handler.spawn_spirits(metadata_handler);
-        enemies_handler.spawn_enemies(metadata_handler);
+        spirits_handler.spawn_spirits(metadata_handler, settings_handler);
+        enemies_handler.spawn_enemies(metadata_handler, settings_handler);
         scene_handler.set(Scene::Level);
-        *ui_handler = UIHandler::new(level_number.clone() as usize);
+        *ui_handler = UIHandler::new(
+            level_number.clone() as usize,
+            settings_handler.settings.pixel_scale as f32,
+        );
         dialogue_handler.load_dialogue(&format!("level_{}", *level_number + 1));
         self.should_load = false;
     }
@@ -116,9 +121,10 @@ impl SaveHandler {
         level: &mut Level,
         spirits_handler: &mut SpiritsHandler,
         level_number: &mut u8,
+        settings_handler: &mut SettingsHandler,
     ) {
         MapLoader::save_map(*level_number, level, metadata_handler);
-        metadata_handler.change_spirits(spirits_handler);
+        metadata_handler.change_spirits(spirits_handler, settings_handler);
         metadata_handler.save(*level_number);
         self.should_save = false;
     }
