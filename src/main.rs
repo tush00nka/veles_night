@@ -54,8 +54,8 @@ mod ui;
 mod color;
 pub const FIRST_LEVEL: u8 = 0;
 
-const SCREEN_WIDTH: i32 = 16 * 16;
-const SCREEN_HEIGHT: i32 = 9 * 16;
+const SCREEN_WIDTH: i32 = 640; //256;
+const SCREEN_HEIGHT: i32 = 360; //144
 
 fn main() {
     profiling::scope!("Initialization");
