@@ -1,6 +1,6 @@
 use raylib::prelude::*;
 
-use crate::{SCREEN_HEIGHT, SCREEN_WIDTH};
+use crate::{SCREEN_HEIGHT, SCREEN_WIDTH, settings::SettingsHandler};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Scene {
@@ -10,8 +10,10 @@ pub enum Scene {
     GameOver,
     GameEnd,
     LevelSelection,
+    Settings,
 }
 
+#[derive(Debug)]
 pub struct SceneHandler {
     current: Scene,
     next: Option<Scene>,
@@ -21,6 +23,7 @@ pub struct SceneHandler {
 }
 
 impl SceneHandler {
+    #[profiling::function]
     pub fn new() -> Self {
         Self {
             current: Scene::MainMenu,
@@ -31,10 +34,12 @@ impl SceneHandler {
         }
     }
 
+    #[profiling::function]
     pub fn get_current(&self) -> Scene {
         self.current
     }
 
+    #[profiling::function]
     pub fn set(&mut self, scene: Scene) {
         if self.initiated {
             return;
@@ -45,6 +50,7 @@ impl SceneHandler {
         self.next = Some(scene);
     }
 
+    #[profiling::function]
     pub fn get_next(&self) -> Scene {
         match self.current {
             Scene::Level => Scene::Transition,
@@ -57,6 +63,7 @@ impl SceneHandler {
 
     const FADE_SPEED: f32 = 4.;
 
+    #[profiling::function]
     pub fn update(&mut self, rl: &mut RaylibHandle) {
         if self.fade_in {
             if let Some(next) = self.next {
@@ -78,10 +85,14 @@ impl SceneHandler {
         }
     }
 
-    pub fn draw(&self, rl: &mut RaylibDrawHandle) {
+    #[profiling::function]
+    pub fn draw(&self, rl: &mut RaylibDrawHandle, settings_handler: &SettingsHandler) {
         rl.draw_rectangle_v(
             Vector2::zero(),
-            Vector2::new(SCREEN_WIDTH as f32, SCREEN_HEIGHT as f32),
+            Vector2::new(
+                (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32,
+                (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32,
+            ),
             Color::BLACK.alpha(self.progress),
         );
     }

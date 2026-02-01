@@ -5,6 +5,7 @@ use crate::{
     hotkey_handler::{HotkeyCategory, HotkeyHandler},
     music_handler::MusicHandler,
     scene::{Scene, SceneHandler},
+    settings::SettingsHandler,
     ui::Button,
 };
 use raylib::{ffi::CheckCollisionPointRec, prelude::*};
@@ -31,7 +32,7 @@ pub enum GameOverHandlerType {
 }
 
 impl GameOverHandler {
-    pub fn new(window_type: GameOverHandlerType) -> Self {
+    pub fn new(window_type: GameOverHandlerType, scale: f32) -> Self {
         let mut restart_buttons = HashMap::new();
         let mut restart_text = HashMap::new();
 
@@ -45,20 +46,20 @@ impl GameOverHandler {
                 text[i].to_string(),
                 Button {
                     rect: Rectangle::new(
-                        SCREEN_WIDTH as f32 / 2. - 75.,
-                        (SCREEN_HEIGHT / 2 + 64) as f32 + i as f32 * 96.,
+                        SCREEN_WIDTH as f32 * scale / 2. - 75.,
+                        SCREEN_HEIGHT as f32 / 2. * scale as f32 + (64 + i * 96) as f32,
                         150.,
                         64.,
                     ),
-					offset: 0.,
+                    offset: 0.,
                     selected: false,
                 },
             );
             restart_text.insert(
                 text[i].to_string(),
                 Vector2::new(
-                    SCREEN_WIDTH as f32 / 2. - 70.,
-                    (SCREEN_HEIGHT / 2 + 64) as f32 + i as f32 * 96. + 5.,
+                    (SCREEN_WIDTH * scale as i32) as f32 / 2. - 70.,
+                    (SCREEN_HEIGHT * scale as i32 / 2 + 64) as f32 + i as f32 * 96. + 5.,
                 ),
             );
         }
@@ -70,15 +71,25 @@ impl GameOverHandler {
         }
     }
 
-    pub fn draw_gameover(&self, font: &Font, rl: &mut RaylibDrawHandle) {
+    #[profiling::function]
+    pub fn draw_gameover(
+        &self,
+        font: &Font,
+        rl: &mut RaylibDrawHandle,
+        settings_handler: &mut SettingsHandler,
+    ) {
         rl.clear_background(Color::from_hex("0b8a8f").unwrap());
         for (name, button) in self.restart_buttons.iter() {
             let color = if unsafe {
                 CheckCollisionPointRec(
                     (rl.get_mouse_position()
                         - Vector2::new(
-                            rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                            rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                            rl.get_screen_width() as f32 / 2.
+                                - SCREEN_WIDTH as f32 / 2.
+                                    * settings_handler.settings.pixel_scale as f32,
+                            rl.get_screen_height() as f32 / 2.
+                                - SCREEN_HEIGHT as f32 / 2.
+                                    * settings_handler.settings.pixel_scale as f32,
                         ))
                     .into(),
                     button.rect.into(),
@@ -104,7 +115,10 @@ impl GameOverHandler {
             rl.draw_text_pro(
                 font,
                 main_text,
-                Vector2::new((128.) as f32, (SCREEN_HEIGHT / 6) as f32),
+                Vector2::new(
+                    (128.) as f32,
+                    (SCREEN_HEIGHT / 6) as f32 * settings_handler.settings.pixel_scale as f32,
+                ),
                 Vector2::zero(),
                 0.0,
                 48.,
@@ -126,6 +140,7 @@ impl GameOverHandler {
         }
     }
 
+    #[profiling::function]
     pub fn update_gameover(
         &mut self,
         level_number: &mut u8,
@@ -134,6 +149,7 @@ impl GameOverHandler {
         music_handler: &MusicHandler,
         hotkeys: &mut HotkeyHandler,
         should_close: &mut bool,
+        settings_handler: &mut SettingsHandler,
     ) -> bool {
         let mut scene = crate::scene::Scene::Level;
         let mut check = false;
@@ -167,8 +183,12 @@ impl GameOverHandler {
                     CheckCollisionPointRec(
                         (rl.get_mouse_position()
                             - Vector2::new(
-                                rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                                rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                                rl.get_screen_width() as f32 / 2.
+                                    - SCREEN_WIDTH as f32 / 2.
+                                        * settings_handler.settings.pixel_scale as f32,
+                                rl.get_screen_height() as f32 / 2.
+                                    - SCREEN_HEIGHT as f32 / 2.
+                                        * settings_handler.settings.pixel_scale as f32,
                             ))
                         .into(),
                         button.rect.into(),

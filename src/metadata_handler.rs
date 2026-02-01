@@ -5,7 +5,10 @@ use std::{
     io::BufWriter,
 };
 
-use crate::{map::TILE_SIZE, save_handler::SAVE_PATH, spirits_handler::SpiritsHandler};
+use crate::{
+    map::TILE_SIZE_PX, save_handler::SAVE_PATH, settings::SettingsHandler,
+    spirits_handler::SpiritsHandler,
+};
 
 const METADATA_PATH: &str = "static/metadata/";
 const METADATA_EXTENSION: &str = ".json";
@@ -44,10 +47,11 @@ pub struct MetadataHandler {
 }
 
 impl MetadataHandler {
+    #[profiling::function]
     pub fn new(level_number: u8) -> Self {
         let path =
             METADATA_PATH.to_string() + &level_number.to_string() + &METADATA_EXTENSION.to_string();
-        println!("{path}");
+        //println!("{path}");
         let Ok(string_json) = fs::read_to_string(path) else {
             panic!("COULDN'T LOAD JSON FOR LEVEL {level_number}");
         };
@@ -58,6 +62,7 @@ impl MetadataHandler {
         return level_metadata;
     } //todo add option to load by path
 
+    #[profiling::function]
     pub fn load(&mut self, level_number: u8) {
         let path =
             METADATA_PATH.to_string() + &level_number.to_string() + &METADATA_EXTENSION.to_string();
@@ -77,9 +82,11 @@ impl MetadataHandler {
         self.bonfires = level_metadata.bonfires;
     }
 
+    #[profiling::function]
     pub fn get_survive(&self) -> usize {
         self.survive
     }
+    #[profiling::function]
     pub fn load_save(&mut self) {
         let filenames = fs::read_dir(SAVE_PATH).unwrap();
         let mut path = "-1".to_string();
@@ -120,6 +127,7 @@ impl MetadataHandler {
         self.bonfires = level_metadata.bonfires;
     }
 
+    #[profiling::function]
     pub fn save(&self, level_number: u8) {
         let Ok(filenames) = fs::read_dir(SAVE_PATH) else {
             panic!("COULDN'T EMPTY THE SAVE FOLDER TO SAVE")
@@ -154,7 +162,12 @@ impl MetadataHandler {
         };
     }
 
-    pub fn change_spirits(&mut self, spirits_handler: &SpiritsHandler) {
+    #[profiling::function]
+    pub fn change_spirits(
+        &mut self,
+        spirits_handler: &SpiritsHandler,
+        settings_handler: &SettingsHandler,
+    ) {
         self.spirits = Vec::new();
 
         for spirit in spirits_handler.spirits.values() {
@@ -163,8 +176,12 @@ impl MetadataHandler {
             }
 
             let position = [
-                (spirit.get_position().x / TILE_SIZE as f32).floor() as u8,
-                (spirit.get_position().y / TILE_SIZE as f32).floor() as u8,
+                (spirit.get_position().x
+                    / (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32)
+                    .floor() as u8,
+                (spirit.get_position().y
+                    / (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32)
+                    .floor() as u8,
             ];
             let direction = [
                 spirit.get_direction().x.floor() as i8,
@@ -179,6 +196,7 @@ impl MetadataHandler {
         }
     }
 
+    #[profiling::function]
     pub fn change_bonfires(
         &mut self,
         fire_td: HashMap<[u8; 2], bool>,

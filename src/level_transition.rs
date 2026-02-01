@@ -4,10 +4,8 @@ use raylib::prelude::*;
 use serde::Deserialize;
 
 use crate::{
-    SCREEN_HEIGHT, SCREEN_WIDTH,
-    map::{TILE_SCALE, TILE_SIZE_PX},
-    map_loader::MAP_PATH,
-    texture_handler::TextureHandler,
+    SCREEN_HEIGHT, SCREEN_WIDTH, map::TILE_SIZE_PX, map_loader::MAP_PATH,
+    settings::SettingsHandler, texture_handler::TextureHandler,
 };
 
 pub enum CardContentType {
@@ -48,6 +46,7 @@ pub struct LevelTransition {
 }
 
 impl LevelTransition {
+    #[profiling::function]
     pub fn new() -> Self {
         let path = "static/unlocks.json";
         let Ok(string_json) = fs::read_to_string(path) else {
@@ -78,12 +77,15 @@ impl LevelTransition {
 
         new_transition
     }
-
-    pub fn set_cards(&mut self, level_completed: usize) {
-        for card in self.cards.iter_mut() {
-            card.stage = 0;
+    fn reset_stage(&mut self) {
+        for i in self.cards.iter_mut() {
+            i.stage = 0;
         }
+    }
 
+    #[profiling::function]
+    pub fn set_cards(&mut self, level_completed: usize) {
+        self.reset_stage();
         self.cards[0].content =
             CardContentType::Image(self.unlock_wrapper.unlocks[level_completed].texture.clone());
         self.cards[1].content =
@@ -95,34 +97,50 @@ impl LevelTransition {
         );
     }
 
-    const CARD_SIZE: i32 = 64 * TILE_SCALE;
+    pub const CARD_SIZE_DEFAULT: f32 = 64.;
 
+    #[profiling::function]
     pub fn draw(
         &mut self,
         texture_handler: &TextureHandler,
         font: &Font,
         rl: &mut RaylibDrawHandle,
+        settings_handler: &SettingsHandler,
     ) {
         rl.clear_background(Color::BROWN);
 
         let cards = [
             Rectangle::new(
-                (SCREEN_WIDTH / 2 - Self::CARD_SIZE / 2 - Self::CARD_SIZE - 20) as f32,
-                (SCREEN_HEIGHT / 2 - Self::CARD_SIZE / 2) as f32,
-                Self::CARD_SIZE as f32,
-                Self::CARD_SIZE as f32,
+                ((SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32 / 2.
+                    - Self::CARD_SIZE_DEFAULT * settings_handler.settings.pixel_scale as f32 / 2.
+                    - Self::CARD_SIZE_DEFAULT
+                    - 20.) as f32,
+                ((SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32 / 2.
+                    - Self::CARD_SIZE_DEFAULT * settings_handler.settings.pixel_scale as f32 / 2.)
+                    as f32,
+                Self::CARD_SIZE_DEFAULT * settings_handler.settings.pixel_scale as f32,
+                Self::CARD_SIZE_DEFAULT * settings_handler.settings.pixel_scale as f32,
             ),
             Rectangle::new(
-                (SCREEN_WIDTH / 2 - Self::CARD_SIZE / 2) as f32,
-                (SCREEN_HEIGHT / 2 - Self::CARD_SIZE / 2) as f32,
-                Self::CARD_SIZE as f32,
-                Self::CARD_SIZE as f32,
+                ((SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32 / 2.
+                    - Self::CARD_SIZE_DEFAULT * settings_handler.settings.pixel_scale as f32 / 2.)
+                    as f32,
+                ((SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32 / 2.
+                    - Self::CARD_SIZE_DEFAULT * settings_handler.settings.pixel_scale as f32 / 2.)
+                    as f32,
+                Self::CARD_SIZE_DEFAULT * settings_handler.settings.pixel_scale as f32,
+                Self::CARD_SIZE_DEFAULT * settings_handler.settings.pixel_scale as f32,
             ),
             Rectangle::new(
-                (SCREEN_WIDTH / 2 - Self::CARD_SIZE / 2 + Self::CARD_SIZE + 20) as f32,
-                (SCREEN_HEIGHT / 2 - Self::CARD_SIZE / 2) as f32,
-                Self::CARD_SIZE as f32,
-                Self::CARD_SIZE as f32,
+                ((SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32 / 2.
+                    - Self::CARD_SIZE_DEFAULT * settings_handler.settings.pixel_scale as f32 / 2.
+                    + Self::CARD_SIZE_DEFAULT * settings_handler.settings.pixel_scale as f32
+                    + 20.) as f32,
+                ((SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32 / 2.
+                    - Self::CARD_SIZE_DEFAULT * settings_handler.settings.pixel_scale as f32 / 2.)
+                    as f32,
+                Self::CARD_SIZE_DEFAULT * settings_handler.settings.pixel_scale as f32,
+                Self::CARD_SIZE_DEFAULT * settings_handler.settings.pixel_scale as f32,
             ),
         ];
 
@@ -132,7 +150,11 @@ impl LevelTransition {
                 offset = 64. * 5.;
             } else {
                 offset = self.cards[i].stage as f32 * 64.;
-                self.cards[i].stage = ((rl.get_time() * 8.) % 6.).floor() as usize;
+                self.cards[i].stage = ((rl.get_time() * 8.) % 6.).floor() as usize; //wtf this shit
+                //is
+                //how it works
+                //if i understand it correctly, this is pitfall where level transition cards are
+                //buged
             };
 
             rl.draw_texture_pro(
@@ -158,12 +180,20 @@ impl LevelTransition {
                         TILE_SIZE_PX as f32,
                     ),
                     Rectangle::new(
-                        cards[i].x + Self::CARD_SIZE as f32 / 2.
-                            - (TILE_SIZE_PX * TILE_SCALE / 2) as f32,
-                        cards[i].y + Self::CARD_SIZE as f32 / 2.
-                            - (TILE_SIZE_PX * TILE_SCALE / 2) as f32,
-                        (TILE_SIZE_PX * TILE_SCALE) as f32,
-                        (TILE_SIZE_PX * TILE_SCALE) as f32,
+                        cards[i].x
+                            + Self::CARD_SIZE_DEFAULT
+                                * settings_handler.settings.pixel_scale as f32
+                                / 2.
+                            - (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32 / 2)
+                                as f32,
+                        cards[i].y
+                            + Self::CARD_SIZE_DEFAULT
+                                * settings_handler.settings.pixel_scale as f32
+                                / 2.
+                            - (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32 / 2)
+                                as f32,
+                        (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32,
+                        (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32,
                     ),
                     Vector2::zero(),
                     0.0,
@@ -176,13 +206,18 @@ impl LevelTransition {
                         font,
                         text.as_str(),
                         Vector2::new(
-                            cards[i].x + 8. * TILE_SCALE as f32,
-                            cards[i].y + Self::CARD_SIZE as f32 / 2.
-                                - (line_count + 1.) * 3. * TILE_SCALE as f32,
+                            cards[i].x + 8. * settings_handler.settings.pixel_scale as f32,
+                            cards[i].y
+                                + Self::CARD_SIZE_DEFAULT
+                                    * settings_handler.settings.pixel_scale as f32
+                                    / 2.
+                                - (line_count + 1.)
+                                    * 3.
+                                    * settings_handler.settings.pixel_scale as f32,
                         ),
                         Vector2::zero(),
                         0.0,
-                        6. * TILE_SCALE as f32,
+                        6. * settings_handler.settings.pixel_scale as f32,
                         0.0,
                         Color::BLACK,
                     )
@@ -195,10 +230,13 @@ impl LevelTransition {
             &font,
             text,
             Vector2::new(
-                (SCREEN_WIDTH / 2 - text.chars().count() as i32 * 3 / 2 * TILE_SCALE) as f32,
-                (SCREEN_HEIGHT - 24 * TILE_SCALE) as f32,
+                ((SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) / 2
+                    - text.chars().count() as i32 * 3 / 2
+                        * settings_handler.settings.pixel_scale as i32) as f32,
+                ((SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
+                    - 24 * settings_handler.settings.pixel_scale as i32) as f32,
             ),
-            8. * TILE_SCALE as f32,
+            8. * settings_handler.settings.pixel_scale as f32,
             0.,
             Color::RAYWHITE.alpha((rl.get_time() * 2.).sin().abs() as f32),
         );

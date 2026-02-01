@@ -37,6 +37,7 @@ pub enum KeyboardKeyString {
     KeyMinus,
 }
 impl HotkeyCategory {
+    #[profiling::function]
     pub fn from_bonfire(value: &str) -> HotkeyCategory {
         match value {
             x if x == "fire_td" => HotkeyCategory::PickBuilding1,
@@ -47,6 +48,7 @@ impl HotkeyCategory {
     }
 
     #[allow(unused)]
+    #[profiling::function]
     pub fn from_u8(value: u8) -> HotkeyCategory {
         match value {
             x if x == HotkeyCategory::Exit as u8 => HotkeyCategory::Exit,
@@ -75,12 +77,12 @@ pub struct HotkeyHandler {
 }
 
 impl HotkeyLoaderStruct {
+    #[profiling::function]
     pub fn new() -> Self {
         let path = HOTKEYS_PATH.to_string();
         let Ok(string_hotkeys) = fs::read_to_string(path) else {
             panic!("COULDN'T LOAD HOTKEYS");
         };
-        println!("{}", string_hotkeys);
         let Ok(hotkeys) = serde_json::from_str(&string_hotkeys) else {
             panic!("COULDN'T PARSE HOTKEYS JSON");
         };
@@ -90,6 +92,7 @@ impl HotkeyLoaderStruct {
 }
 
 impl HotkeyHandler {
+    #[profiling::function]
     pub fn new(hotkeys_raw: HotkeyLoaderStruct) -> Self {
         let mut hotkeys = HashMap::new();
 
@@ -122,16 +125,19 @@ impl HotkeyHandler {
             last_pressed_hotkey: None,
         }
     }
+    #[profiling::function]
     pub fn get_last_key(&self) -> KeyboardKey {
         return self
             .last_pressed_hotkey
             .unwrap_or(KeyboardKey::KEY_NUM_LOCK);
     }
 
+    #[profiling::function]
     pub fn clear_last(&mut self) {
         self.last_pressed_hotkey = None;
     }
 
+    #[profiling::function]
     pub fn check_down(&mut self, rl: &RaylibHandle, target_intent: HotkeyCategory) -> bool {
         for (intent, keys) in self.hotkeys.iter() {
             if *intent != target_intent {
@@ -148,6 +154,7 @@ impl HotkeyHandler {
         return false;
     }
 
+    #[profiling::function]
     pub fn check_pressed(&mut self, rl: &RaylibHandle, target_intent: HotkeyCategory) -> bool {
         for (intent, keys) in self.hotkeys.iter() {
             if *intent != target_intent {

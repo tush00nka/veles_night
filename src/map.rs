@@ -5,15 +5,15 @@ use crate::{
     metadata_handler::MetadataHandler,
     music_handler::MusicHandler,
     scene::{Scene, SceneHandler},
+    settings::SettingsHandler,
     texture_handler::TextureHandler,
 };
 
-pub const TILE_SCALE: i32 = 6;
+pub const TILE_SCALE_DEFAULT: i32 = 3;
 
 pub const LEVEL_WIDTH_TILES: usize = 16;
 pub const LEVEL_HEIGHT_TILES: usize = 9;
 pub const TILE_SIZE_PX: i32 = 16;
-pub const TILE_SIZE: i32 = TILE_SIZE_PX * TILE_SCALE;
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum TileType {
@@ -34,6 +34,7 @@ pub struct Level {
 }
 
 impl Level {
+    #[profiling::function]
     pub fn new() -> Self {
         Self {
             tiles: [[TileType::Air; LEVEL_HEIGHT_TILES]; LEVEL_WIDTH_TILES],
@@ -51,6 +52,7 @@ impl Level {
         self.light_bonfires(metadata_handler);
     }
 
+    #[profiling::function]
     pub fn load(
         &mut self,
         level_number: u8,
@@ -61,6 +63,7 @@ impl Level {
         self.set_load_data(metadata_handler);
     }
 
+    #[profiling::function]
     pub fn load_save(
         &mut self,
         level_number: u8,
@@ -91,6 +94,7 @@ impl Level {
         self.survived += 1;
     }
 
+    #[profiling::function]
     pub fn connect_swamps(&mut self, metadata_handler: &mut MetadataHandler) {
         for i in metadata_handler.swamps.iter() {
             match self.tiles[i.swamp[0] as usize][i.swamp[1] as usize] {
@@ -106,16 +110,17 @@ impl Level {
                     // );
                 }
                 _ => {
-                    println!(
-                        "{} - {} - {} - {}",
-                        i.swamp[0], i.swamp[1], i.teleport[0], i.teleport[1]
-                    );
+                    //  println!(
+                    //     "{} - {} - {} - {}",
+                    //   i.swamp[0], i.swamp[1], i.teleport[0], i.teleport[1]
+                    //);
                     panic!("COULDN'T PAIR METADATA WITH LOADED MAP");
                 }
             }
         }
     }
 
+    #[profiling::function]
     pub fn light_bonfires(&mut self, metadata_handler: &mut MetadataHandler) {
         for bonfire in metadata_handler.bonfires.iter_mut() {
             match self.tiles[bonfire.position[0] as usize][bonfire.position[1] as usize] {
@@ -157,34 +162,38 @@ impl Level {
         }
     }
 
+    #[profiling::function]
     pub fn update(
         &self,
         scene_handler: &mut SceneHandler,
         left_amount: u8,
         music_handler: &MusicHandler,
+        settings_handler: &SettingsHandler,
     ) {
         if self.completed() && left_amount == 0 {
             scene_handler.set(Scene::Transition);
         } else if left_amount == 0 {
-            music_handler.play("death");
+            music_handler.play("death", &settings_handler.get_settings());
             scene_handler.set(Scene::GameOver);
         }
     }
 
+    #[profiling::function]
     pub fn draw(
         &self,
         rl: &mut RaylibDrawHandle,
         texture_handler: &TextureHandler,
         level_number: u8,
+        settings_handler: &SettingsHandler,
     ) {
         for x in 0..LEVEL_WIDTH_TILES {
             for y in 0..LEVEL_HEIGHT_TILES {
                 let stage_offset = if level_number < 10 {
                     0.
                 } else if level_number < 20 {
-					TILE_SIZE_PX as f32
+                    TILE_SIZE_PX as f32
                 } else {
-                    TILE_SIZE_PX as f32 * 2. 
+                    TILE_SIZE_PX as f32 * 2.
                 };
 
                 // let source = Rectangle::new(((x + y) % 3) as f32 * 16., 0., 16., 16.);
@@ -194,10 +203,12 @@ impl Level {
                     texture_handler.get_safe("grass"),
                     source,
                     Rectangle::new(
-                        (x as i32 * TILE_SIZE) as f32,
-                        (y as i32 * TILE_SIZE) as f32,
-                        TILE_SIZE as f32,
-                        TILE_SIZE as f32,
+                        (x as i32 * TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32)
+                            as f32,
+                        (y as i32 * TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32)
+                            as f32,
+                        TILE_SIZE_PX as f32 * settings_handler.settings.pixel_scale as f32,
+                        TILE_SIZE_PX as f32 * settings_handler.settings.pixel_scale as f32,
                     ),
                     Vector2::zero(),
                     0.0,
@@ -223,10 +234,16 @@ impl Level {
                             texture_handler.get_safe("fire_stop"),
                             source,
                             Rectangle::new(
-                                (x as i32 * TILE_SIZE) as f32,
-                                (y as i32 * TILE_SIZE) as f32,
-                                TILE_SIZE as f32,
-                                TILE_SIZE as f32,
+                                (x as i32
+                                    * TILE_SIZE_PX
+                                    * settings_handler.settings.pixel_scale as i32)
+                                    as f32,
+                                (y as i32
+                                    * TILE_SIZE_PX
+                                    * settings_handler.settings.pixel_scale as i32)
+                                    as f32,
+                                TILE_SIZE_PX as f32 * settings_handler.settings.pixel_scale as f32,
+                                TILE_SIZE_PX as f32 * settings_handler.settings.pixel_scale as f32,
                             ),
                             Vector2::zero(),
                             0.0,
@@ -259,10 +276,16 @@ impl Level {
                             texture_handler.get_safe("trees"),
                             source,
                             Rectangle::new(
-                                (x as i32 * TILE_SIZE) as f32,
-                                (y as i32 * TILE_SIZE) as f32,
-                                TILE_SIZE as f32,
-                                TILE_SIZE as f32,
+                                (x as i32
+                                    * TILE_SIZE_PX
+                                    * settings_handler.settings.pixel_scale as i32)
+                                    as f32,
+                                (y as i32
+                                    * TILE_SIZE_PX
+                                    * settings_handler.settings.pixel_scale as i32)
+                                    as f32,
+                                TILE_SIZE_PX as f32 * settings_handler.settings.pixel_scale as f32,
+                                TILE_SIZE_PX as f32 * settings_handler.settings.pixel_scale as f32,
                             ),
                             Vector2::zero(),
                             0.0,
@@ -287,10 +310,16 @@ impl Level {
                             texture_handler.get_safe("fire_td"),
                             source,
                             Rectangle::new(
-                                (x as i32 * TILE_SIZE) as f32,
-                                (y as i32 * TILE_SIZE) as f32,
-                                TILE_SIZE as f32,
-                                TILE_SIZE as f32,
+                                (x as i32
+                                    * TILE_SIZE_PX
+                                    * settings_handler.settings.pixel_scale as i32)
+                                    as f32,
+                                (y as i32
+                                    * TILE_SIZE_PX
+                                    * settings_handler.settings.pixel_scale as i32)
+                                    as f32,
+                                TILE_SIZE_PX as f32 * settings_handler.settings.pixel_scale as f32,
+                                TILE_SIZE_PX as f32 * settings_handler.settings.pixel_scale as f32,
                             ),
                             Vector2::zero(),
                             0.0,
@@ -315,10 +344,16 @@ impl Level {
                             texture_handler.get_safe("fire_lr"),
                             source,
                             Rectangle::new(
-                                (x as i32 * TILE_SIZE) as f32,
-                                (y as i32 * TILE_SIZE) as f32,
-                                TILE_SIZE as f32,
-                                TILE_SIZE as f32,
+                                (x as i32
+                                    * TILE_SIZE_PX
+                                    * settings_handler.settings.pixel_scale as i32)
+                                    as f32,
+                                (y as i32
+                                    * TILE_SIZE_PX
+                                    * settings_handler.settings.pixel_scale as i32)
+                                    as f32,
+                                TILE_SIZE_PX as f32 * settings_handler.settings.pixel_scale as f32,
+                                TILE_SIZE_PX as f32 * settings_handler.settings.pixel_scale as f32,
                             ),
                             Vector2::zero(),
                             0.0,
@@ -347,10 +382,16 @@ impl Level {
                             texture_handler.get_safe("exit"),
                             source,
                             Rectangle::new(
-                                (x as i32 * TILE_SIZE) as f32,
-                                (y as i32 * TILE_SIZE) as f32,
-                                TILE_SIZE as f32,
-                                TILE_SIZE as f32,
+                                (x as i32
+                                    * TILE_SIZE_PX
+                                    * settings_handler.settings.pixel_scale as i32)
+                                    as f32,
+                                (y as i32
+                                    * TILE_SIZE_PX
+                                    * settings_handler.settings.pixel_scale as i32)
+                                    as f32,
+                                TILE_SIZE_PX as f32 * settings_handler.settings.pixel_scale as f32,
+                                TILE_SIZE_PX as f32 * settings_handler.settings.pixel_scale as f32,
                             ),
                             Vector2::zero(),
                             0.0,
@@ -371,10 +412,16 @@ impl Level {
                             texture_handler.get_safe("swamp"),
                             source,
                             Rectangle::new(
-                                (x as i32 * TILE_SIZE) as f32,
-                                (y as i32 * TILE_SIZE) as f32,
-                                TILE_SIZE as f32,
-                                TILE_SIZE as f32,
+                                (x as i32
+                                    * TILE_SIZE_PX
+                                    * settings_handler.settings.pixel_scale as i32)
+                                    as f32,
+                                (y as i32
+                                    * TILE_SIZE_PX
+                                    * settings_handler.settings.pixel_scale as i32)
+                                    as f32,
+                                TILE_SIZE_PX as f32 * settings_handler.settings.pixel_scale as f32,
+                                TILE_SIZE_PX as f32 * settings_handler.settings.pixel_scale as f32,
                             ),
                             Vector2::zero(),
                             0.0,

@@ -1,91 +1,214 @@
-use std::{cmp::min, collections::HashMap};
+use std::{cmp::min, ffi::CString};
 
-use raylib::{ffi::CheckCollisionPointRec, prelude::*};
+use raylib::{
+    ffi::{CheckCollisionPointRec, MeasureTextEx},
+    prelude::*,
+};
 
 use crate::{
     SCREEN_HEIGHT, SCREEN_WIDTH,
     color::CustomColor,
     dialogue::DialogueHandler,
     hotkey_handler::{HotkeyCategory, HotkeyHandler},
-    map::{Level, TILE_SCALE, TILE_SIZE, TileType},
+    map::{Level, TILE_SIZE_PX, TileType},
     scene::{Scene, SceneHandler},
+    settings::SettingsHandler,
     texture_handler::TextureHandler,
 };
+
+const STATISTICS_BAR_TEXTURE: &str = "stat_bar";
+const STATISTICS_TEXT_X_OFFSET: f32 = 16.;
+const STATISTICS_TEXT_Y_OFFSET: f32 = 1.5;
+const STATISTICS_TEXT_SHIFT: f32 = 12.;
+
+const DIALOGUE_BOX_TEXTURE: &str = "dialogue_box";
+
+const BAR_TEXT_SIZE: f32 = 8.;
+const BAR_TEXT_SPACING: f32 = 1.;
+const BAR_X_OFFSET: f32 = 6.;
+const BAR_Y_OFFSET: f32 = 5.;
+
+const SPIRIT_ICON_TEXTURE: &str = "spirit_icon";
+const WOOD_ICON_TEXTURE: &str = "wood_icon";
+const WOOD_ICON_OFFSET_Y: f32 = 12.;
+
+const BUTTON_LABELS: [&str; 3] = ["fire_td", "fire_lr", "fire_stop"];
+const PAUSE_BUTTON_LABELS: [&str; 3] = ["Заново", "Настройки", "Выйти"];
+
+const BUTTONS_X_OFFSET: f32 = BUTTON_TEXTURE_WIDTH / 2.;
+const BUTTONS_Y_OFFSET: f32 = -BUTTON_TEXTURE_HEIGHT / 4.;
+const BUTTON_TEXTURE_WIDTH: f32 = 16.;
+const BUTTON_TEXTURE_HEIGHT: f32 = 16.;
+
+const PAUSE_BUTTON_TEXTURE: &str = "game_buttons";
+const PAUSE_BUTTON_Y_OFFSET: f32 = 3.;
+const PAUSE_BUTTON_TEXTURE_WIDTH: f32 = 64.;
+const PAUSE_BUTTON_TEXTURE_HEIGHT: f32 = 16.;
+
+const PAUSE_TEXT_SIZE: f32 = 12.;
+const PAUSE_TEXT_SPACING: f32 = 1.05;
+
+const PANEL_TEXTURE: &str = "pause_menu";
+const PANEL_WIDTH: f32 = 128.;
+const PANEL_HEIGHT: f32 = 96.;
+const PANEL_TEXT_Y_OFFSET: f32 = 7.;
+
+pub fn get_text_size(
+    font: &Font,
+    text: &str,
+    text_size_basic: f32,
+    text_space_basic: f32,
+) -> raylib::ffi::Vector2 {
+    let ctext = CString::new(text).unwrap();
+    return unsafe { MeasureTextEx(**font, ctext.as_ptr(), text_size_basic, text_space_basic) };
+}
 
 pub struct Button {
     pub rect: Rectangle,
     pub offset: f32,
     pub selected: bool,
 }
+impl Default for Button {
+    fn default() -> Self {
+        Self {
+            rect: Rectangle::default(),
+            offset: 0.,
+            selected: false,
+        }
+    }
+}
+impl Button {
+    pub fn draw_with_text_middle(
+        &self,
+        rl: &mut RaylibDrawHandle,
+        text: &str,
+        font: &Font,
+        texture: &Texture2D,
+        texture_rectangle: &Rectangle,
+        text_dimensions: raylib::ffi::Vector2,
+        color: &Color,
+        text_size: f32,
+        text_spacing: f32,
+        text_offset_pressed: Vector2,
+        texture_offset: Vector2,
+    ) {
+        rl.draw_texture_pro(
+            texture,
+            texture_rectangle,
+            self.rect,
+            Vector2::zero(),
+            0.0,
+            Color::WHITE,
+        );
 
+        rl.draw_text_pro(
+            font,
+            text,
+            Vector2::new(
+                self.rect.x
+                    + (self.rect.width - text_dimensions.x) / 2.
+                    + text_offset_pressed.x
+                    + texture_offset.x,
+                self.rect.y
+                    + (self.rect.height - text_dimensions.y) / 2.
+                    + text_offset_pressed.y
+                    + texture_offset.y,
+            ),
+            Vector2::zero(),
+            0.,
+            text_size,
+            text_spacing,
+            color,
+        );
+    }
+}
 pub struct UIHandler {
-    build_buttons: HashMap<String, Button>,
+    build_buttons: Vec<Button>,
+    pause_buttons: Vec<Button>,
     quitting: bool,
-    pause_button_recs: Vec<Rectangle>,
-    // dialogue_accumulator: String,
-    // dialogure_iterator: Option<Chars<'a>>,
-    // current_dialogue: usize,
 }
 
 impl UIHandler {
-    pub fn new(level_number: usize) -> Self {
-        let mut buttons = HashMap::new();
+    #[profiling::function]
+    pub fn new(level_number: usize, scale: f32) -> Self {
+        let mut build_buttons = Vec::new();
 
-        let labels = ["fire_td", "fire_lr", "fire_stop"];
-
-        for i in 0..min(labels.len(), level_number) {
-            buttons.insert(
-                labels[i].to_string(),
-                Button {
-                    rect: Rectangle::new(
-                        i as f32 * 20. * TILE_SCALE as f32 + (SCREEN_WIDTH / 2) as f32
-                            - 10. * TILE_SCALE as f32 * min(labels.len(), level_number) as f32,
-                        SCREEN_HEIGHT as f32 - 10. - 16. * TILE_SCALE as f32,
-                        16. * TILE_SCALE as f32,
-                        16. * TILE_SCALE as f32,
-                    ),
-                    offset: 0.,
-                    selected: false,
-                },
-            );
+        let len = min(BUTTON_LABELS.len(), level_number);
+        for _ in 0..len {
+            build_buttons.push(Button::default());
         }
 
+        let mut pause_buttons: Vec<Button> = Vec::new();
+        for _ in 0..PAUSE_BUTTON_LABELS.len() {
+            pause_buttons.push(Button::default());
+        }
+
+        Self::set_default(&mut build_buttons, &mut pause_buttons, scale);
         Self {
-            build_buttons: buttons,
+            build_buttons,
             quitting: false,
-            pause_button_recs: vec![
-                Rectangle::new(
-                    SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6. - 32. * TILE_SCALE as f32,
-                    SCREEN_HEIGHT as f32 / 3. + 30.,
-                    64. * TILE_SCALE as f32,
-                    16. * TILE_SCALE as f32,
-                ),
-                Rectangle::new(
-                    SCREEN_WIDTH as f32 / 3. + SCREEN_WIDTH as f32 / 6. - 32. * TILE_SCALE as f32,
-                    SCREEN_HEIGHT as f32 / 3. + 150.,
-                    64. * TILE_SCALE as f32,
-                    16. * TILE_SCALE as f32,
-                ),
-            ],
+            pause_buttons,
+        }
+    }
+    pub fn rescale_ui(&mut self, new_scale: f32) {
+        Self::set_default(&mut self.build_buttons, &mut self.pause_buttons, new_scale);
+    }
+    fn set_default(build_buttons: &mut Vec<Button>, pause_buttons: &mut Vec<Button>, scale: f32) {
+        let len = build_buttons.len();
+        let is_len_odd = len % 2 != 0;
+
+        for i in 0..len {
+            let x = if is_len_odd {
+                (SCREEN_WIDTH as f32 - BUTTON_TEXTURE_WIDTH) / 2. * scale
+                    + (i as isize - (len - 1) as isize / 2) as f32
+                        * scale
+                        * (BUTTON_TEXTURE_WIDTH + BUTTONS_X_OFFSET)
+            } else {
+                let offset_from_center = if i < len / 2 {
+                    -BUTTONS_X_OFFSET
+                } else {
+                    BUTTONS_X_OFFSET
+                };
+                (SCREEN_WIDTH as f32 / 2. + offset_from_center) * scale
+                    + (i as isize - len as isize / 2) as f32 * scale * BUTTON_TEXTURE_WIDTH
+            };
+
+            build_buttons[i].rect.x = x;
+            build_buttons[i].rect.y =
+                (SCREEN_HEIGHT as f32 - BUTTON_TEXTURE_HEIGHT + BUTTONS_Y_OFFSET) * scale;
+            build_buttons[i].rect.width = BUTTON_TEXTURE_WIDTH * scale;
+            build_buttons[i].rect.height = BUTTON_TEXTURE_HEIGHT * scale;
+        }
+
+        for i in 0..pause_buttons.len() {
+            pause_buttons[i].rect.x =
+                (SCREEN_WIDTH as f32 - PAUSE_BUTTON_TEXTURE_WIDTH) / 2. * scale;
+            pause_buttons[i].rect.y = (SCREEN_HEIGHT as f32 / 2.
+                + (PAUSE_BUTTON_Y_OFFSET + BUTTON_TEXTURE_HEIGHT) * (i as f32 - 1.))
+                * scale;
+            pause_buttons[i].rect.width = PAUSE_BUTTON_TEXTURE_WIDTH * scale;
+            pause_buttons[i].rect.height = PAUSE_BUTTON_TEXTURE_HEIGHT * scale;
         }
     }
 
+    #[profiling::function]
     pub fn build(
         &mut self,
         level: &mut Level,
         rl: &mut RaylibHandle,
         hotkey_h: &mut HotkeyHandler,
         dialogue_h: &mut DialogueHandler,
+        settings_handler: &mut SettingsHandler,
     ) {
         let dialoging = dialogue_h.current_phrase < dialogue_h.dialogue.len();
 
         let mut intent: HotkeyCategory;
-        for (title, button) in self.build_buttons.iter_mut() {
+        for (label_index, button) in self.build_buttons.iter_mut().enumerate() {
             if dialoging {
                 break;
             }
 
-            intent = HotkeyCategory::from_bonfire(title);
+            intent = HotkeyCategory::from_bonfire(BUTTON_LABELS[label_index]);
 
             if hotkey_h.check_pressed(rl, intent) {
                 button.selected = true;
@@ -96,8 +219,14 @@ impl UIHandler {
                     CheckCollisionPointRec(
                         (rl.get_mouse_position()
                             - Vector2::new(
-                                rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                                rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                                rl.get_screen_width() as f32 / 2.
+                                    - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
+                                        as f32
+                                        / 2.,
+                                rl.get_screen_height() as f32 / 2.
+                                    - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
+                                        as f32
+                                        / 2.,
                             ))
                         .into(),
                         button.rect.into(),
@@ -128,10 +257,15 @@ impl UIHandler {
             if button.selected && level.get_wood() > 0 {
                 let pos = (rl.get_mouse_position()
                     - Vector2::new(
-                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        rl.get_screen_width() as f32 / 2.
+                            - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                        rl.get_screen_height() as f32 / 2.
+                            - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
                     ))
-                    / (Vector2::one() * TILE_SIZE as f32);
+                    / (Vector2::one()
+                        * (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32);
                 let (x, y) = (pos.x as usize, pos.y as usize);
 
                 if level.tiles[x][y] != TileType::Air {
@@ -139,7 +273,7 @@ impl UIHandler {
                     continue;
                 }
 
-                let tile = match title.as_str() {
+                let tile = match BUTTON_LABELS[label_index] {
                     "fire_td" => TileType::FireTD {
                         active: false,
                         selected: false,
@@ -164,13 +298,15 @@ impl UIHandler {
         }
     }
 
+    #[profiling::function]
     pub fn update(
         &mut self,
         hotkey_h: &mut HotkeyHandler,
         scene_h: &mut SceneHandler,
         dialogue_h: &mut DialogueHandler,
         rl: &mut RaylibHandle,
-    ) -> (bool, bool) {
+        settings_handler: &mut SettingsHandler,
+    ) -> (bool, bool, bool) {
         if hotkey_h.check_pressed(rl, HotkeyCategory::Exit) {
             self.quitting = !self.quitting;
         }
@@ -188,49 +324,71 @@ impl UIHandler {
         }
 
         if !self.quitting {
-            return (false, false);
+            return (false, false, false);
         }
 
-        if self.pause_button_recs[1].check_collision_point_rec(
+        if self.pause_buttons[2].rect.check_collision_point_rec(
             rl.get_mouse_position()
                 - Vector2::new(
-                    rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                    rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                    rl.get_screen_width() as f32 / 2.
+                        - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32 / 2.,
+                    rl.get_screen_height() as f32 / 2.
+                        - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                            / 2.,
                 ),
         ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
         {
             scene_h.set(Scene::MainMenu);
             self.quitting = false;
-            return (true, false);
+            return (true, false, false);
         };
 
-        if self.pause_button_recs[0].check_collision_point_rec(
+        if self.pause_buttons[0].rect.check_collision_point_rec(
             rl.get_mouse_position()
                 - Vector2::new(
-                    rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                    rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                    rl.get_screen_width() as f32 / 2.
+                        - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32 / 2.,
+                    rl.get_screen_height() as f32 / 2.
+                        - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                            / 2.,
                 ),
         ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
         {
             self.quitting = false;
-            return (false, true);
+            return (false, true, false);
         };
 
-        return (false, false);
+        if self.pause_buttons[1].rect.check_collision_point_rec(
+            rl.get_mouse_position()
+                - Vector2::new(
+                    rl.get_screen_width() as f32 / 2.
+                        - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32 / 2.,
+                    rl.get_screen_height() as f32 / 2.
+                        - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                            / 2.,
+                ),
+        ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+        {
+            self.quitting = false;
+            return (false, false, true);
+        };
+
+        return (false, false, false);
     }
 
+    #[profiling::function]
     pub fn draw(
         &mut self,
         texture_handler: &TextureHandler,
         dialogue_h: &mut DialogueHandler,
         level: &mut Level,
-        _level_number: usize,
         font: &Font,
         rl: &mut RaylibDrawHandle,
+        settings_handler: &mut SettingsHandler,
     ) {
         let dialoging = dialogue_h.current_phrase < dialogue_h.dialogue.len();
 
-        for (tex_name, button) in self.build_buttons.iter_mut() {
+        for (label_index, button) in self.build_buttons.iter_mut().enumerate() {
             if dialoging {
                 break;
             }
@@ -238,23 +396,26 @@ impl UIHandler {
             let target_offset = if button.rect.check_collision_point_rec(
                 rl.get_mouse_position()
                     - Vector2::new(
-                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        rl.get_screen_width() as f32 / 2.
+                            - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                        rl.get_screen_height() as f32 / 2.
+                            - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
                     ),
             ) {
-                6. * TILE_SCALE as f32
+                6. * settings_handler.settings.pixel_scale as f32
             } else {
-                2. * TILE_SCALE as f32
+                2. * settings_handler.settings.pixel_scale as f32
             };
 
             button.offset = lerp(button.offset, target_offset, 10. * rl.get_frame_time());
 
-            // rl.draw_rectangle_rec(button.rect, color);
             rl.draw_texture_ex(
                 texture_handler.get("pedestal"),
                 Vector2::new(button.rect.x, button.rect.y),
                 0.0,
-                TILE_SCALE as f32,
+                settings_handler.settings.pixel_scale as f32,
                 Color::WHITE,
             );
 
@@ -263,12 +424,12 @@ impl UIHandler {
                 offset_rect.y -= button.offset;
 
                 rl.draw_texture_pro(
-                    texture_handler.get(tex_name),
+                    texture_handler.get(BUTTON_LABELS[label_index]),
                     Rectangle::new(
-                        ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,
-                        16.,
-                        16.,
-                        16.,
+                        ((rl.get_time() * 8.) % 4.).floor() as f32 * BUTTON_TEXTURE_WIDTH,
+                        BUTTON_TEXTURE_HEIGHT,
+                        BUTTON_TEXTURE_WIDTH,
+                        BUTTON_TEXTURE_HEIGHT,
                     ),
                     offset_rect,
                     Vector2::zero(),
@@ -277,28 +438,42 @@ impl UIHandler {
                 );
             } else {
                 rl.draw_texture_pro(
-                    texture_handler.get_safe(tex_name),
+                    texture_handler.get_safe(BUTTON_LABELS[label_index]),
                     Rectangle::new(
-                        ((rl.get_time() * 8.) % 4.).floor() as f32 * 16.,
-                        16.,
-                        16.,
-                        16.,
+                        ((rl.get_time() * 8.) % 4.).floor() as f32 * BUTTON_TEXTURE_WIDTH,
+                        BUTTON_TEXTURE_HEIGHT,
+                        BUTTON_TEXTURE_WIDTH,
+                        BUTTON_TEXTURE_HEIGHT,
                     ),
                     Rectangle::new(
                         (rl.get_mouse_position()
                             - Vector2::new(
-                                rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                                rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                                rl.get_screen_width() as f32 / 2.
+                                    - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
+                                        as f32
+                                        / 2.,
+                                rl.get_screen_height() as f32 / 2.
+                                    - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
+                                        as f32
+                                        / 2.,
                             ))
-                        .x - (TILE_SIZE / 2) as f32,
+                        .x - ((TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) / 2)
+                            as f32,
                         (rl.get_mouse_position()
                             - Vector2::new(
-                                rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                                rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                                rl.get_screen_width() as f32 / 2.
+                                    - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
+                                        as f32
+                                        / 2.,
+                                rl.get_screen_height() as f32 / 2.
+                                    - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
+                                        as f32
+                                        / 2.,
                             ))
-                        .y - (TILE_SIZE / 2) as f32,
-                        TILE_SIZE as f32,
-                        TILE_SIZE as f32,
+                        .y - ((TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) / 2)
+                            as f32,
+                        (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32,
+                        (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32,
                     ),
                     Vector2::zero(),
                     0.0,
@@ -307,104 +482,90 @@ impl UIHandler {
             }
         }
 
-        // rl.draw_rectangle(
-        //     5,
-        //     5,
-        //     64 * TILE_SCALE,
-        //     18 * TILE_SCALE,
-        //     Color::BLACK.alpha(0.5),
-        // );
-
         rl.draw_texture_ex(
-            texture_handler.get("stat_bar"),
-            Vector2::one() * TILE_SCALE as f32,
+            texture_handler.get(STATISTICS_BAR_TEXTURE),
+            Vector2::one() * settings_handler.settings.pixel_scale as f32,
             0.0,
-            TILE_SCALE as f32,
+            settings_handler.settings.pixel_scale as f32,
             Color::WHITE,
         );
 
-        let bar_offset = Vector2::new(6. * TILE_SCALE as f32, 5. * TILE_SCALE as f32);
+        let bar_offset = Vector2::new(
+            BAR_X_OFFSET * settings_handler.settings.pixel_scale as f32,
+            BAR_Y_OFFSET * settings_handler.settings.pixel_scale as f32,
+        );
 
         rl.draw_texture_ex(
-            texture_handler.get("spirit_icon"),
+            texture_handler.get(SPIRIT_ICON_TEXTURE),
             bar_offset,
             0.0,
-            TILE_SCALE as f32,
+            settings_handler.settings.pixel_scale as f32,
             Color::WHITE,
         );
 
         rl.draw_text_ex(
             font,
             format!("{}/{}", level.survived, level.survive).as_str(),
-            bar_offset + Vector2::new(16. * TILE_SCALE as f32, 10.),
-            8. * TILE_SCALE as f32,
-            1.0,
+            bar_offset
+                + Vector2::new(
+                    STATISTICS_TEXT_X_OFFSET * settings_handler.settings.pixel_scale as f32,
+                    STATISTICS_TEXT_Y_OFFSET * settings_handler.settings.pixel_scale as f32,
+                ),
+            BAR_TEXT_SIZE * settings_handler.settings.pixel_scale as f32,
+            BAR_TEXT_SPACING * settings_handler.settings.pixel_scale as f32,
             CustomColor::BLACK_TEXT,
         );
 
         rl.draw_texture_ex(
-            texture_handler.get("wood_icon"),
-            bar_offset + Vector2::new(0., 12. * TILE_SCALE as f32),
+            texture_handler.get(WOOD_ICON_TEXTURE),
+            bar_offset
+                + Vector2::new(
+                    0.,
+                    WOOD_ICON_OFFSET_Y * settings_handler.settings.pixel_scale as f32,
+                ),
             0.0,
-            TILE_SCALE as f32,
+            settings_handler.settings.pixel_scale as f32,
             Color::WHITE,
         );
 
         rl.draw_text_ex(
             font,
             format!("{}", level.get_wood()).as_str(),
-            bar_offset + Vector2::new(16. * TILE_SCALE as f32, 10. + 12. * TILE_SCALE as f32),
-            8. * TILE_SCALE as f32,
-            1.0,
+            bar_offset
+                + Vector2::new(
+                    STATISTICS_TEXT_X_OFFSET * settings_handler.settings.pixel_scale as f32,
+                    STATISTICS_TEXT_Y_OFFSET * settings_handler.settings.pixel_scale as f32
+                        + STATISTICS_TEXT_SHIFT * settings_handler.settings.pixel_scale as f32,
+                ),
+            BAR_TEXT_SIZE * settings_handler.settings.pixel_scale as f32,
+            BAR_TEXT_SPACING * settings_handler.settings.pixel_scale as f32,
             CustomColor::BLACK_TEXT,
         );
-
-        // let hint_text = if level_number == 0 {
-        //     "Перетащите духа\nна дерево"
-        // } else if level_number == 1 {
-        //     "Установите костёр,\nперетащив\nпиктограмму"
-        // } else {
-        //     "R для перезапуска"
-        // };
-
-        // let height = hint_text.chars().filter(|&c| c == '\n').count();
-
-        // rl.draw_rectangle(
-        //     5,
-        //     30 * TILE_SCALE,
-        //     64 * TILE_SCALE,
-        //     9 * (height + 1) as i32 * TILE_SCALE,
-        //     Color::BLACK.alpha(0.5),
-        // );
-
-        // rl.draw_text_ex(
-        //     font,
-        //     hint_text,
-        //     Vector2::new(10., 28. * TILE_SCALE as f32 + 18.),
-        //     8. * TILE_SCALE as f32,
-        //     1.0,
-        //     Color::RAYWHITE,
-        // );
 
         if dialoging {
             let (speaker, line) = &mut dialogue_h.dialogue[dialogue_h.current_phrase];
 
             rl.draw_texture_ex(
                 texture_handler.get_safe(speaker),
-                Vector2::new(0., SCREEN_HEIGHT as f32 - 48. * TILE_SCALE as f32),
+                Vector2::new(
+                    0.,
+                    (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                        - 48. * settings_handler.settings.pixel_scale as f32,
+                ),
                 0.0,
-                TILE_SCALE as f32,
+                settings_handler.settings.pixel_scale as f32,
                 Color::WHITE,
             );
 
             rl.draw_texture_ex(
-                texture_handler.get("dialogue_box"),
+                texture_handler.get(DIALOGUE_BOX_TEXTURE),
                 Vector2::new(
-                    32. * TILE_SCALE as f32,
-                    SCREEN_HEIGHT as f32 - 48. * TILE_SCALE as f32,
+                    32. * settings_handler.settings.pixel_scale as f32,
+                    (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                        - 48. * settings_handler.settings.pixel_scale as f32,
                 ),
                 0.0,
-                TILE_SCALE as f32,
+                settings_handler.settings.pixel_scale as f32,
                 Color::WHITE,
             );
 
@@ -422,10 +583,12 @@ impl UIHandler {
                 font,
                 &temp_line.rev().collect::<String>(),
                 Vector2::new(
-                    32. * TILE_SCALE as f32 + 64.,
-                    SCREEN_HEIGHT as f32 - 3. * 8. * TILE_SCALE as f32 - 20.,
+                    32. * settings_handler.settings.pixel_scale as f32 + 64.,
+                    (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                        - 3. * 8. * settings_handler.settings.pixel_scale as f32
+                        - 20.,
                 ),
-                8. * TILE_SCALE as f32,
+                8. * settings_handler.settings.pixel_scale as f32,
                 0.,
                 CustomColor::BLACK_TEXT,
             );
@@ -435,10 +598,12 @@ impl UIHandler {
                     font,
                     "Далее...",
                     Vector2::new(
-                        SCREEN_WIDTH as f32 - 32. * TILE_SCALE as f32,
-                        SCREEN_HEIGHT as f32 - 12. * TILE_SCALE as f32,
+                        (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
+                            - 32. * settings_handler.settings.pixel_scale as f32,
+                        (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                            - 12. * settings_handler.settings.pixel_scale as f32,
                     ),
-                    8. * TILE_SCALE as f32,
+                    8. * settings_handler.settings.pixel_scale as f32,
                     0.,
                     Color::RAYWHITE.alpha((rl.get_time() * 2.).sin().abs() as f32),
                 )
@@ -449,75 +614,91 @@ impl UIHandler {
             return;
         }
 
-        let screen_width = rl.get_screen_width();
-        let screen_height = rl.get_screen_height();
-
-        // panel
         let panel_position = Vector2::new(
-            (screen_width / 2) as f32 - 64. * TILE_SCALE as f32,
-            (screen_height / 2) as f32 - 48. * TILE_SCALE as f32,
+            (SCREEN_WIDTH as f32 - PANEL_WIDTH) * settings_handler.settings.pixel_scale as f32 / 2.,
+            (SCREEN_HEIGHT as f32 - PANEL_HEIGHT) * settings_handler.settings.pixel_scale as f32
+                / 2.,
         );
 
         rl.draw_texture_ex(
-            texture_handler.get("pause_menu"),
+            texture_handler.get(PANEL_TEXTURE),
             panel_position,
             0.0,
-            TILE_SCALE as f32,
+            settings_handler.settings.pixel_scale as f32,
             Color::WHITE,
+        );
+
+        let text_size = get_text_size(
+            font,
+            "Меню",
+            PAUSE_TEXT_SIZE * settings_handler.settings.pixel_scale as f32,
+            PAUSE_TEXT_SPACING * settings_handler.settings.pixel_scale as f32,
         );
 
         rl.draw_text_ex(
             font,
             "Меню",
-            Vector2::new(
-                screen_width as f32 / 2. - 50.,
-                (screen_height / 2) as f32 - 48. * TILE_SCALE as f32 + 12.,
-            ),
-            64.,
-            2.,
+            panel_position
+                + Vector2::new(
+                    settings_handler.settings.pixel_scale as f32 * PAUSE_BUTTON_TEXTURE_WIDTH
+                        - text_size.x / 2.,
+                    settings_handler.settings.pixel_scale as f32 * PANEL_TEXT_Y_OFFSET
+                        - text_size.y / 2.,
+                ),
+            settings_handler.settings.pixel_scale as f32 * 12.,
+            PAUSE_TEXT_SPACING * settings_handler.settings.pixel_scale as f32,
             CustomColor::BLACK_TEXT,
         );
 
-        for (index, button_rect) in self.pause_button_recs.iter().enumerate() {
-            let mouse_over = button_rect.check_collision_point_rec(
+        for (index, button_rect) in self.pause_buttons.iter().enumerate() {
+            let mouse_over = button_rect.rect.check_collision_point_rec(
                 rl.get_mouse_position()
                     - Vector2::new(
-                        rl.get_screen_width() as f32 / 2. - SCREEN_WIDTH as f32 / 2.,
-                        rl.get_screen_height() as f32 / 2. - SCREEN_HEIGHT as f32 / 2.,
+                        rl.get_screen_width() as f32 / 2.
+                            - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                        rl.get_screen_height() as f32 / 2.
+                            - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
                     ),
             );
 
-            let texture_offset = if mouse_over { 16. } else { 0. };
-            let source = Rectangle::new(0., texture_offset, 64., 16.);
-            rl.draw_texture_pro(
-                texture_handler.get("game_buttons"),
-                source,
-                button_rect,
-                Vector2::zero(),
-                0.0,
-                Color::WHITE,
+            let (texture_offset, text_offset) =
+                if mouse_over && rl.is_mouse_button_up(MouseButton::MOUSE_BUTTON_LEFT) {
+                    (PAUSE_BUTTON_TEXTURE_HEIGHT, -2.)
+                } else {
+                    (0., 0.)
+                };
+
+            let source = Rectangle::new(
+                0.,
+                texture_offset,
+                PAUSE_BUTTON_TEXTURE_WIDTH,
+                PAUSE_BUTTON_TEXTURE_HEIGHT,
             );
 
-            // rl.draw_rectangle_rec(
-            //     button_rect,
-            //     if mouse_over {
-            //         Color::from_hex("30e1b9").unwrap()
-            //     } else {
-            //         Color::from_hex("0b8a8f").unwrap()
-            //     },
-            // );
-
-            rl.draw_text_ex(
+            let text_size_button = get_text_size(
                 font,
-                if index <= 0 {
-                    "Заново"
-                } else {
-                    "Выйти"
-                },
-                Vector2::new(button_rect.x + button_rect.x / 2. - 160., button_rect.y + 16. - texture_offset / 16. * 2. * TILE_SCALE as f32),
-                64.,
-                2.,
-                CustomColor::BLACK_TEXT,
+                PAUSE_BUTTON_LABELS[index],
+                PAUSE_TEXT_SIZE * settings_handler.settings.pixel_scale as f32,
+                PAUSE_TEXT_SPACING * settings_handler.settings.pixel_scale as f32,
+            );
+
+            button_rect.draw_with_text_middle(
+                rl,
+                PAUSE_BUTTON_LABELS[index],
+                font,
+                texture_handler.get_safe(PAUSE_BUTTON_TEXTURE),
+                &source,
+                text_size_button,
+                &CustomColor::BLACK_TEXT,
+                PAUSE_TEXT_SIZE * settings_handler.settings.pixel_scale as f32,
+                PAUSE_TEXT_SPACING * settings_handler.settings.pixel_scale as f32,
+                Vector2::new(
+                    0.,
+                    text_offset * settings_handler.settings.pixel_scale as f32,
+                ),
+                Vector2::zero(),
             );
         }
     }
