@@ -174,6 +174,7 @@ fn main() {
             settings_menu.rescale_ui(settings_handler.settings.pixel_scale as f32);
             main_menu.rescale_ui(settings_handler.settings.pixel_scale as f32);
             ui_handler.rescale_ui(settings_handler.settings.pixel_scale as f32);
+            level_selector.rescale_ui(settings_handler.settings.pixel_scale as f32);
 
             spirits_handler.rescale_ui(
                 prev_scale as f32,
