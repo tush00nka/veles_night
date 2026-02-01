@@ -171,6 +171,7 @@ fn main() {
             settings_menu.should_remade = false;
             settings_menu.rescale_ui(settings_handler.settings.pixel_scale as f32);
             main_menu.rescale_ui(settings_handler.settings.pixel_scale as f32);
+            ui_handler.rescale_ui(settings_handler.settings.pixel_scale as f32);
 
             rl.set_window_size(
                 SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32,

@@ -1,4 +1,4 @@
-use std::{cmp::min, collections::HashMap, ffi::CString};
+use std::{cmp::min, ffi::CString};
 
 use raylib::{
     ffi::{CheckCollisionPointRec, MeasureTextEx},
@@ -68,6 +68,15 @@ pub struct Button {
     pub offset: f32,
     pub selected: bool,
 }
+impl Default for Button {
+    fn default() -> Self {
+        Self {
+            rect: Rectangle::default(),
+            offset: 0.,
+            selected: false,
+        }
+    }
+}
 impl Button {
     pub fn draw_with_text_middle(
         &self,
@@ -114,80 +123,38 @@ impl Button {
     }
 }
 pub struct UIHandler {
-    build_buttons: HashMap<String, Button>,
-    quitting: bool,
+    build_buttons: Vec<Button>,
     pause_buttons: Vec<Button>,
-    pause_button_labels: Vec<&'static str>,
+    quitting: bool,
 }
 
 impl UIHandler {
     #[profiling::function]
     pub fn new(level_number: usize, scale: f32) -> Self {
-        let mut build_buttons = HashMap::new();
+        let mut build_buttons = Vec::new();
 
         let len = min(BUTTON_LABELS.len(), level_number);
-        let is_len_odd = len % 2 != 0;
-        for i in 0..len {
-            let x = if is_len_odd {
-                (SCREEN_WIDTH as f32 - BUTTON_TEXTURE_WIDTH) / 2. * scale
-                    + (i as isize - (len - 1) as isize / 2) as f32
-                        * scale
-                        * (BUTTON_TEXTURE_WIDTH + BUTTONS_X_OFFSET)
-            } else {
-                let offset_from_center = if i < len / 2 {
-                    -BUTTONS_X_OFFSET
-                } else {
-                    BUTTONS_X_OFFSET
-                };
-                (SCREEN_WIDTH as f32 / 2. + offset_from_center) * scale
-                    + (i as isize - len as isize / 2) as f32 * scale * BUTTON_TEXTURE_WIDTH
-            };
-
-            build_buttons.insert(
-                BUTTON_LABELS[i].to_string(),
-                Button {
-                    rect: Rectangle::new(
-                        x,
-                        (SCREEN_HEIGHT as f32 - BUTTON_TEXTURE_HEIGHT + BUTTONS_Y_OFFSET) * scale,
-                        BUTTON_TEXTURE_WIDTH * scale,
-                        BUTTON_TEXTURE_HEIGHT * scale,
-                    ),
-                    offset: 0.,
-                    selected: false,
-                },
-            );
+        for _ in 0..len {
+            build_buttons.push(Button::default());
         }
 
         let mut pause_buttons: Vec<Button> = Vec::new();
-        for i in 0..PAUSE_BUTTON_LABELS.len() {
-            pause_buttons.push(Button {
-                rect: Rectangle::new(
-                    (SCREEN_WIDTH as f32 - PAUSE_BUTTON_TEXTURE_WIDTH) / 2. * scale,
-                    (SCREEN_HEIGHT as f32 / 2.
-                        + (PAUSE_BUTTON_Y_OFFSET + BUTTON_TEXTURE_HEIGHT) * (i as f32 - 1.))
-                        * scale,
-                    64. * scale,
-                    16. * scale,
-                ),
-                offset: 0.,
-                selected: false,
-            });
+        for _ in 0..PAUSE_BUTTON_LABELS.len() {
+            pause_buttons.push(Button::default());
         }
 
+        Self::set_default(&mut build_buttons, &mut pause_buttons, scale);
         Self {
             build_buttons,
             quitting: false,
             pause_buttons,
-            pause_button_labels: PAUSE_BUTTON_LABELS.into(),
         }
     }
-    pub fn rescale_ui(
-        build_buttons: &mut HashMap<String, Button>,
-        pause_buttons: &mut Vec<Button>,
-        level_number: usize,
-        scale: f32,
-    ) {
-        let len = min(BUTTON_LABELS.len(), level_number);
+    pub fn rescale_ui(&mut self, new_scale: f32) {
+        Self::set_default(&mut self.build_buttons, &mut self.pause_buttons, new_scale);
+    }
+    fn set_default(build_buttons: &mut Vec<Button>, pause_buttons: &mut Vec<Button>, scale: f32) {
+        let len = build_buttons.len();
         let is_len_odd = len % 2 != 0;
 
         for i in 0..len {
@@ -206,36 +173,24 @@ impl UIHandler {
                     + (i as isize - len as isize / 2) as f32 * scale * BUTTON_TEXTURE_WIDTH
             };
 
-            build_buttons.insert(
-                BUTTON_LABELS[i].to_string(),
-                Button {
-                    rect: Rectangle::new(
-                        x,
-                        (SCREEN_HEIGHT as f32 - BUTTON_TEXTURE_HEIGHT + BUTTONS_Y_OFFSET) * scale,
-                        BUTTON_TEXTURE_WIDTH * scale,
-                        BUTTON_TEXTURE_HEIGHT * scale,
-                    ),
-                    offset: 0.,
-                    selected: false,
-                },
-            );
+            build_buttons[i].rect.x = x;
+            build_buttons[i].rect.y =
+                (SCREEN_HEIGHT as f32 - BUTTON_TEXTURE_HEIGHT + BUTTONS_Y_OFFSET) * scale;
+            build_buttons[i].rect.width = BUTTON_TEXTURE_WIDTH * scale;
+            build_buttons[i].rect.height = BUTTON_TEXTURE_HEIGHT * scale;
         }
 
-        for i in 0..PAUSE_BUTTON_LABELS.len() {
-            pause_buttons.push(Button {
-                rect: Rectangle::new(
-                    (SCREEN_WIDTH as f32 - PAUSE_BUTTON_TEXTURE_WIDTH) / 2. * scale,
-                    (SCREEN_HEIGHT as f32 / 2.
-                        + (PAUSE_BUTTON_Y_OFFSET + BUTTON_TEXTURE_HEIGHT) * (i as f32 - 1.))
-                        * scale,
-                    64. * scale,
-                    16. * scale,
-                ),
-                offset: 0.,
-                selected: false,
-            });
+        for i in 0..pause_buttons.len() {
+            pause_buttons[i].rect.x =
+                (SCREEN_WIDTH as f32 - PAUSE_BUTTON_TEXTURE_WIDTH) / 2. * scale;
+            pause_buttons[i].rect.y = (SCREEN_HEIGHT as f32 / 2.
+                + (PAUSE_BUTTON_Y_OFFSET + BUTTON_TEXTURE_HEIGHT) * (i as f32 - 1.))
+                * scale;
+            pause_buttons[i].rect.width = PAUSE_BUTTON_TEXTURE_WIDTH * scale;
+            pause_buttons[i].rect.height = PAUSE_BUTTON_TEXTURE_HEIGHT * scale;
         }
     }
+
     #[profiling::function]
     pub fn build(
         &mut self,
@@ -248,12 +203,12 @@ impl UIHandler {
         let dialoging = dialogue_h.current_phrase < dialogue_h.dialogue.len();
 
         let mut intent: HotkeyCategory;
-        for (title, button) in self.build_buttons.iter_mut() {
+        for (label_index, button) in self.build_buttons.iter_mut().enumerate() {
             if dialoging {
                 break;
             }
 
-            intent = HotkeyCategory::from_bonfire(title);
+            intent = HotkeyCategory::from_bonfire(BUTTON_LABELS[label_index]);
 
             if hotkey_h.check_pressed(rl, intent) {
                 button.selected = true;
@@ -318,7 +273,7 @@ impl UIHandler {
                     continue;
                 }
 
-                let tile = match title.as_str() {
+                let tile = match BUTTON_LABELS[label_index] {
                     "fire_td" => TileType::FireTD {
                         active: false,
                         selected: false,
@@ -433,7 +388,7 @@ impl UIHandler {
     ) {
         let dialoging = dialogue_h.current_phrase < dialogue_h.dialogue.len();
 
-        for (tex_name, button) in self.build_buttons.iter_mut() {
+        for (label_index, button) in self.build_buttons.iter_mut().enumerate() {
             if dialoging {
                 break;
             }
@@ -456,7 +411,6 @@ impl UIHandler {
 
             button.offset = lerp(button.offset, target_offset, 10. * rl.get_frame_time());
 
-            // rl.draw_rectangle_rec(button.rect, color);
             rl.draw_texture_ex(
                 texture_handler.get("pedestal"),
                 Vector2::new(button.rect.x, button.rect.y),
@@ -470,7 +424,7 @@ impl UIHandler {
                 offset_rect.y -= button.offset;
 
                 rl.draw_texture_pro(
-                    texture_handler.get(tex_name),
+                    texture_handler.get(BUTTON_LABELS[label_index]),
                     Rectangle::new(
                         ((rl.get_time() * 8.) % 4.).floor() as f32 * BUTTON_TEXTURE_WIDTH,
                         BUTTON_TEXTURE_HEIGHT,
@@ -484,7 +438,7 @@ impl UIHandler {
                 );
             } else {
                 rl.draw_texture_pro(
-                    texture_handler.get_safe(tex_name),
+                    texture_handler.get_safe(BUTTON_LABELS[label_index]),
                     Rectangle::new(
                         ((rl.get_time() * 8.) % 4.).floor() as f32 * BUTTON_TEXTURE_WIDTH,
                         BUTTON_TEXTURE_HEIGHT,
@@ -725,16 +679,16 @@ impl UIHandler {
 
             let text_size_button = get_text_size(
                 font,
-                &self.pause_button_labels[index],
+                PAUSE_BUTTON_LABELS[index],
                 PAUSE_TEXT_SIZE * settings_handler.settings.pixel_scale as f32,
                 PAUSE_TEXT_SPACING * settings_handler.settings.pixel_scale as f32,
             );
 
             button_rect.draw_with_text_middle(
                 rl,
-                &self.pause_button_labels[index],
+                PAUSE_BUTTON_LABELS[index],
                 font,
-                texture_handler.get(PAUSE_BUTTON_TEXTURE),
+                texture_handler.get_safe(PAUSE_BUTTON_TEXTURE),
                 &source,
                 text_size_button,
                 &CustomColor::BLACK_TEXT,
