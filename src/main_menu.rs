@@ -23,6 +23,17 @@ pub struct MainMenuHandler {
     labels: Vec<&'static str>,
 }
 
+const BUTTON_TEXTURE_WIDTH: f32 = 64.;
+const BUTTON_TEXTURE_HEIGHT: f32 = 16.;
+const BUTTON_OFFSET_Y: f32 = 16.;
+const LOGO_WIDTH: f32 = 96.;
+const LOGO_HEIGHT: f32 = 64.;
+
+const BACKGROUND_IMAGE_NAME: &str = "main_menu_bg";
+const LOGO_NAME: &str = "logo";
+
+const BUTTON_LABELS: [&str; 5] = ["Продолжить", "Начать", "Настройки", "Выйти", "Уровни"];
+
 impl MainMenuHandler {
     #[profiling::function]
     pub fn new(scale: f32) -> Self {
@@ -33,27 +44,35 @@ impl MainMenuHandler {
                 Button {
                     selected: false,
                     rect: Rectangle::new(
-                        ((SCREEN_WIDTH * scale as i32) / 2) as f32 - 32. * scale,
+                        (SCREEN_WIDTH as f32 - BUTTON_TEXTURE_WIDTH) / 2. * scale,
                         ((SCREEN_HEIGHT * scale as i32) / 2) as f32
-                            + 16. * (i as f32 * scale) as f32,
-                        64. * scale,
-                        16. * scale,
+                            + BUTTON_OFFSET_Y * (i as f32 * scale) as f32,
+                        BUTTON_TEXTURE_WIDTH * scale,
+                        BUTTON_TEXTURE_HEIGHT * scale,
                     ),
                     offset: 0.,
-                    recoil: None,
                 },
             );
         }
 
-        let labels = vec!["Продолжить", "Начать", "Настройки", "Выйти", "Уровни"];
+        let labels: Vec<&str> = BUTTON_LABELS.into();
         assert_eq!(labels.len(), buttons.len() + 1);
 
         Self { buttons, labels }
     }
-
+    pub fn rescale_ui(&mut self, new_scale: f32) {
+        for i in 0..BUTTON_LABELS.len() - 1 {
+            let button = self.buttons.get_mut(&(i as u8)).unwrap();
+            button.rect.x = (SCREEN_WIDTH as f32 - BUTTON_TEXTURE_WIDTH) / 2. * new_scale;
+            button.rect.y = ((SCREEN_HEIGHT * new_scale as i32) / 2) as f32
+                + BUTTON_OFFSET_Y * (i as f32 * new_scale) as f32;
+            button.rect.width = BUTTON_TEXTURE_WIDTH * new_scale;
+            button.rect.height = BUTTON_TEXTURE_HEIGHT * new_scale;
+        }
+    }
     #[profiling::function]
     pub fn update(
-        &self,
+        &mut self,
         scene_handler: &mut SceneHandler,
         should_close: &mut bool,
         rl: &mut RaylibHandle,
@@ -68,7 +87,7 @@ impl MainMenuHandler {
         level_transition: &mut LevelTransition,
         settings_menu: &mut SettingsMenuHandler,
     ) {
-        for (key, button) in self.buttons.iter() {
+        for (key, button) in self.buttons.iter_mut() {
             if button.rect.check_collision_point_rec(
                 rl.get_mouse_position()
                     - Vector2::new(
@@ -139,11 +158,11 @@ impl MainMenuHandler {
             }
         }
 
-        let logo_width: f32 = 96. * settings_handler.settings.pixel_scale as f32;
-        let logo_height: f32 = 64. * settings_handler.settings.pixel_scale as f32;
+        let logo_width: f32 = LOGO_WIDTH * settings_handler.settings.pixel_scale as f32;
+        let logo_height: f32 = LOGO_HEIGHT * settings_handler.settings.pixel_scale as f32;
 
         rl.draw_texture_ex(
-            texture_handler.get_safe("main_menu_bg"),
+            texture_handler.get_safe(BACKGROUND_IMAGE_NAME),
             Vector2::zero(),
             0.0,
             settings_handler.settings.pixel_scale as f32,
@@ -151,7 +170,7 @@ impl MainMenuHandler {
         );
 
         rl.draw_texture_ex(
-            texture_handler.get_safe("logo"),
+            texture_handler.get_safe(LOGO_NAME),
             Vector2::new(
                 ((SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) / 2) as f32
                     - logo_width / 2.,
@@ -169,7 +188,7 @@ impl MainMenuHandler {
             }
 
             let mut label_num = i;
-            let button = self.buttons.get(&(i as u8)).unwrap();
+            let button = self.buttons.get_mut(&(i as u8)).unwrap();
 
             let text_offset_y = if button.rect.check_collision_point_rec(
                 rl.get_mouse_position()
@@ -181,7 +200,8 @@ impl MainMenuHandler {
                             - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
                                 / 2.,
                     ),
-            ) {
+            ) && rl.is_mouse_button_up(MouseButton::MOUSE_BUTTON_LEFT)
+            {
                 settings_handler.settings.pixel_scale as f32
             } else {
                 0.

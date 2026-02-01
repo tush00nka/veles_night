@@ -1,5 +1,3 @@
-use std::cmp::max;
-
 use raylib::prelude::*;
 
 use crate::{
@@ -43,8 +41,7 @@ const TEXT_X_OFFSET: f32 = 32.;
 const TEXT_SIZE: f32 = 12.;
 const TEXT_SPACING: f32 = 1.25;
 
-const UI_UTILITY_X_OFFSET: u8 = 112;
-const UI_UTILITY_Y_OFFSET: u8 = 128;
+const UI_UTILITY_Y_OFFSET_SAVE_BUTTON: u8 = 124;
 const UI_UTILITY_WIDTH: u8 = 64;
 const UI_UTILITY_HEIGHT: u8 = 16;
 
@@ -71,7 +68,7 @@ const SLIDERS_SETTINGS: [&str; 4] = [
 const WARNING_TEXT: [&str; 3] = ["Вы хотите выйти", "без сохранения", "настроек?"];
 const WARNING_BUTTONS_TEXT: [&str; 2] = ["Да", "Нет"];
 
-const UTILITY_BUTTONS: [&str; 2] = ["Выйти", "Сохранить"];
+const UTILITY_BUTTONS: [&str; 2] = ["Назад", "Сохранить"];
 const UTILITY_BUTTONS_TEXTURE: &str = "main_menu_buttons";
 
 const SETTINGS_OPTIONS: [SettingsOptions; BUTTONS_SETTINGS.len() + SLIDERS_SETTINGS.len()] = [
@@ -278,7 +275,6 @@ impl SettingsMenuHandler {
                 selected: false,
                 rect: Rectangle::default(),
                 offset: 0.,
-                recoil: None,
             });
         }
 
@@ -287,7 +283,6 @@ impl SettingsMenuHandler {
                 selected: false,
                 rect: Rectangle::default(),
                 offset: 0.,
-                recoil: None,
             });
         }
         for _ in 0..WARNING_BUTTONS_TEXT.len() {
@@ -295,7 +290,6 @@ impl SettingsMenuHandler {
                 selected: false,
                 rect: Rectangle::default(),
                 offset: 0.,
-                recoil: None,
             });
         }
 
@@ -348,8 +342,15 @@ impl SettingsMenuHandler {
             button.rect.height = BUTTON_TEXTURE_HEIGHT * new_scale;
         }
         for index in 0..UTILITY_BUTTONS.len() {
-            utility_buttons[index].rect.x = new_scale * UI_UTILITY_X_OFFSET as f32 * index as f32;
-            utility_buttons[index].rect.y = index as f32 * UI_UTILITY_Y_OFFSET as f32 * new_scale;
+            let additional_offset = Vector2::new(1., 1.) * new_scale;
+            let additional_multiplier = if index == 0 { 1. } else { 0. };
+
+            utility_buttons[index].rect.x =
+                new_scale * (SCREEN_WIDTH - UI_UTILITY_WIDTH as i32) as f32 * index as f32 / 2.
+                    + additional_multiplier * additional_offset.x;
+            utility_buttons[index].rect.y =
+                index as f32 * UI_UTILITY_Y_OFFSET_SAVE_BUTTON as f32 * new_scale
+                    + additional_multiplier * additional_offset.y;
             utility_buttons[index].rect.width = UI_UTILITY_WIDTH as f32 * new_scale;
             utility_buttons[index].rect.height = UI_UTILITY_HEIGHT as f32 * new_scale;
         }
@@ -469,7 +470,6 @@ impl SettingsMenuHandler {
                         ),
                 )
             {
-                button.set_recoil(rl.get_time() as f32);
                 let warning = self.draw_warning;
                 button.selected = false;
                 match i {
@@ -782,7 +782,6 @@ impl SettingsMenuHandler {
         }
 
         for i in 0..UTILITY_BUTTONS.len() {
-            let recoil_check = self.ui_buttons[i].check_recoil(rl.get_time() as f32);
             let (texture_offset, text_offset) =
                 if self.ui_buttons[i].rect.check_collision_point_rec(
                     rl.get_mouse_position()
@@ -798,7 +797,7 @@ impl SettingsMenuHandler {
                         ),
                 ) && self.picked_element.is_none()
                     && !self.draw_warning
-                    && !recoil_check
+                    && rl.is_mouse_button_up(MouseButton::MOUSE_BUTTON_LEFT)
                 {
                     self.ui_buttons[i].selected = true;
                     (0., 0.)
@@ -808,9 +807,6 @@ impl SettingsMenuHandler {
                         settings_handler.settings.pixel_scale as f32,
                     )
                 };
-            if recoil_check {
-                self.ui_buttons[i].remove_recoil();
-            }
 
             let text_dimensions = get_text_size(
                 font,
@@ -880,8 +876,6 @@ impl SettingsMenuHandler {
         }
 
         for i in 0..WARNING_BUTTONS_TEXT.len() {
-            let recoil_check =
-                self.ui_buttons[i + UTILITY_BUTTONS.len()].check_recoil(rl.get_time() as f32);
             let (texture_offset, text_offset) = if self.ui_buttons[i + UTILITY_BUTTONS.len()]
                 .rect
                 .check_collision_point_rec(
@@ -898,7 +892,7 @@ impl SettingsMenuHandler {
                         ),
                 )
                 && self.picked_element.is_none()
-                && !recoil_check
+                && rl.is_mouse_button_up(MouseButton::MOUSE_BUTTON_LEFT)
             {
                 self.ui_buttons[i + UTILITY_BUTTONS.len()].selected = true;
                 (0., 0.)
@@ -908,10 +902,6 @@ impl SettingsMenuHandler {
                     settings_handler.settings.pixel_scale as f32,
                 )
             };
-
-            if recoil_check {
-                self.ui_buttons[i].remove_recoil();
-            }
 
             let text_size = get_text_size(
                 font,
