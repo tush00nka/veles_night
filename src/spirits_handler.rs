@@ -15,6 +15,11 @@ impl SpiritsHandler {
             spirits: HashMap::new(),
         }
     }
+    pub fn rescale_ui(&mut self, prev_scale: f32, new_scale: f32) {
+        for (_, spirit) in self.spirits.iter_mut() {
+            spirit.rescale(prev_scale, new_scale);
+        }
+    }
     #[profiling::function]
     pub fn spawn_spirits(
         &mut self,

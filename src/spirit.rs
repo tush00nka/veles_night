@@ -53,7 +53,13 @@ impl Spirit {
         }
     }
 
-    #[allow(unused)]
+    pub fn rescale(&mut self, prev_scale: f32, new_scale: f32) {
+        self.position.x = self.position.x / prev_scale * new_scale;
+        self.position.y = self.position.y / prev_scale * new_scale;
+        self.draw_position.x = self.draw_position.x / prev_scale * new_scale;
+        self.draw_position.x = self.draw_position.y / prev_scale * new_scale;
+    }
+
     #[profiling::function]
     pub fn get_direction(&self) -> Vector2 {
         self.direction

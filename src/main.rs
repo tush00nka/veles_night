@@ -164,14 +164,27 @@ fn main() {
     );
 
     let mut fullscreen = settings_handler.settings.fullscreen;
+    let mut prev_scale = settings_handler.settings.pixel_scale;
 
     while !rl.window_should_close() && !should_close {
         profiling::scope!("Game frame");
         if settings_menu.should_remade {
             settings_menu.should_remade = false;
+
             settings_menu.rescale_ui(settings_handler.settings.pixel_scale as f32);
             main_menu.rescale_ui(settings_handler.settings.pixel_scale as f32);
             ui_handler.rescale_ui(settings_handler.settings.pixel_scale as f32);
+
+            spirits_handler.rescale_ui(
+                prev_scale as f32,
+                settings_handler.settings.pixel_scale as f32,
+            );
+            enemies_handler.rescale_ui(
+                prev_scale as f32,
+                settings_handler.settings.pixel_scale as f32,
+            );
+
+            prev_scale = settings_handler.settings.pixel_scale;
 
             rl.set_window_size(
                 SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32,

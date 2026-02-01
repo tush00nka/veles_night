@@ -37,6 +37,11 @@ impl EnemiesHandler {
             );
         }
     }
+    pub fn rescale_ui(&mut self, prev_scale: f32, new_scale: f32) {
+        for (_, enemy) in self.enemies.iter_mut() {
+            enemy.rescale(prev_scale, new_scale);
+        }
+    }
 }
 
 pub struct Enemy {
@@ -46,6 +51,10 @@ pub struct Enemy {
 impl Enemy {
     pub fn new(position: Vector2) -> Self {
         Self { position }
+    }
+
+    fn rescale(&mut self, prev_scale: f32, new_scale: f32) {
+        self.position = self.position / prev_scale * new_scale;
     }
 
     #[profiling::function]
