@@ -247,7 +247,7 @@ impl OrderHandler {
             || hotkey_handler.check_down(rl, HotkeyCategory::PickNearest)
         {
             match level.tiles[tile_x][tile_y] {
-                TileType::Air
+                TileType::Air { selected: _ }
                 | TileType::Swamp {
                     teleport_position: _,
                 }

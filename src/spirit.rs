@@ -337,7 +337,7 @@ impl Spirit {
         if self.position.distance_to(target)
             <= ((settings_handler.settings.pixel_scale as i32 * TILE_SIZE_PX) / 10) as f32
         {
-            level.tiles[x][y] = TileType::Air;
+            level.tiles[x][y] = TileType::Air { selected: false };
             level.add_wood();
             self.dead = true;
             music_handler.play("foom", &settings_handler.get_settings());

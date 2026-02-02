@@ -243,10 +243,32 @@ impl UIHandler {
                 button.selected = false;
                 continue;
             }
+            let pos = (rl.get_mouse_position()
+                - Vector2::new(
+                    rl.get_screen_width() as f32 / 2.
+                        - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32 / 2.,
+                    rl.get_screen_height() as f32 / 2.
+                        - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                            / 2.,
+                ))
+                / (Vector2::one()
+                    * (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32);
+            let (x, y) = (pos.x as usize, pos.y as usize);
 
             if !rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT)
                 && keyboard_last == KeyboardKey::KEY_NUM_LOCK
+                && button.selected
             {
+                if x >= level.tiles.len() || y >= level.tiles[0].len() {
+                    continue;
+                }
+                match &mut level.tiles[x][y] {
+                    TileType::Air { selected: value } => {
+                        *value = true;
+                    }
+                    _ => {}
+                };
+
                 continue;
             }
 
@@ -255,23 +277,13 @@ impl UIHandler {
             }
 
             if button.selected && level.get_wood() > 0 {
-                let pos = (rl.get_mouse_position()
-                    - Vector2::new(
-                        rl.get_screen_width() as f32 / 2.
-                            - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
-                                / 2.,
-                        rl.get_screen_height() as f32 / 2.
-                            - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
-                                / 2.,
-                    ))
-                    / (Vector2::one()
-                        * (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32);
-                let (x, y) = (pos.x as usize, pos.y as usize);
-
-                if level.tiles[x][y] != TileType::Air {
-                    button.selected = false;
-                    continue;
-                }
+                match level.tiles[x][y] {
+                    TileType::Air { selected: _ } => {}
+                    _ => {
+                        button.selected = false;
+                        continue;
+                    }
+                };
 
                 let tile = match BUTTON_LABELS[label_index] {
                     "fire_td" => TileType::FireTD {
@@ -437,6 +449,19 @@ impl UIHandler {
                     Color::WHITE,
                 );
             } else {
+                let mut mouse_pos = rl.get_mouse_position()
+                    - Vector2::new(
+                        rl.get_screen_width() as f32 / 2.
+                            - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                        rl.get_screen_height() as f32 / 2.
+                            - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                    );
+
+                mouse_pos /= TILE_SIZE_PX as f32;
+                mouse_pos *= TILE_SIZE_PX as f32;
+
                 rl.draw_texture_pro(
                     texture_handler.get_safe(BUTTON_LABELS[label_index]),
                     Rectangle::new(
@@ -446,32 +471,8 @@ impl UIHandler {
                         BUTTON_TEXTURE_HEIGHT,
                     ),
                     Rectangle::new(
-                        (rl.get_mouse_position()
-                            - Vector2::new(
-                                rl.get_screen_width() as f32 / 2.
-                                    - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
-                                        as f32
-                                        / 2.,
-                                rl.get_screen_height() as f32 / 2.
-                                    - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
-                                        as f32
-                                        / 2.,
-                            ))
-                        .x - ((TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) / 2)
-                            as f32,
-                        (rl.get_mouse_position()
-                            - Vector2::new(
-                                rl.get_screen_width() as f32 / 2.
-                                    - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
-                                        as f32
-                                        / 2.,
-                                rl.get_screen_height() as f32 / 2.
-                                    - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
-                                        as f32
-                                        / 2.,
-                            ))
-                        .y - ((TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) / 2)
-                            as f32,
+                        mouse_pos.x,
+                        mouse_pos.y,
                         (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32,
                         (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32,
                     ),

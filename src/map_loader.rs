@@ -40,7 +40,7 @@ impl MapLoader {
 
         for tile in level_str.chars().into_iter() {
             // clear map beforehand
-            level_map.tiles[x][y] = TileType::Air;
+            level_map.tiles[x][y] = TileType::Air { selected: false };
             // debug
             // print!("{tile}");
             match tile {
@@ -112,7 +112,7 @@ impl MapLoader {
         for y in 0..LEVEL_HEIGHT_TILES {
             for x in 0..LEVEL_WIDTH_TILES {
                 match level_map.tiles[x][y] {
-                    TileType::Air => map += ".",
+                    TileType::Air { selected: _ } => map += ".",
                     TileType::Tree {
                         chance: _,
                         selected: _,

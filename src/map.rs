@@ -17,7 +17,7 @@ pub const TILE_SIZE_PX: i32 = 16;
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum TileType {
-    Air,
+    Air { selected: bool },
     FireTD { active: bool, selected: bool },
     FireLR { active: bool, selected: bool },
     FireStop { active: bool, selected: bool },
@@ -37,7 +37,7 @@ impl Level {
     #[profiling::function]
     pub fn new() -> Self {
         Self {
-            tiles: [[TileType::Air; LEVEL_HEIGHT_TILES]; LEVEL_WIDTH_TILES],
+            tiles: [[TileType::Air { selected: false }; LEVEL_HEIGHT_TILES]; LEVEL_WIDTH_TILES],
             wood: 0,
             survived: 0,
             survive: 0,
@@ -180,7 +180,7 @@ impl Level {
 
     #[profiling::function]
     pub fn draw(
-        &self,
+        &mut self,
         rl: &mut RaylibDrawHandle,
         texture_handler: &TextureHandler,
         level_number: u8,
@@ -195,9 +195,25 @@ impl Level {
                 } else {
                     TILE_SIZE_PX as f32 * 2.
                 };
-
                 // let source = Rectangle::new(((x + y) % 3) as f32 * 16., 0., 16., 16.);
-                let source = Rectangle::new(((x + y) % 3) as f32 * 16., stage_offset, 16., 16.);
+                let selection_offset = match &mut self.tiles[x][y] {
+                    TileType::Air { selected: val } => {
+                        if *val == false {
+                            0
+                        } else {
+                            *val = false;
+                            3
+                        }
+                    }
+                    _ => 0,
+                };
+
+                let source = Rectangle::new(
+                    ((x + y) % 3 + selection_offset) as f32 * 16.,
+                    stage_offset,
+                    16.,
+                    16.,
+                );
 
                 rl.draw_texture_pro(
                     texture_handler.get_safe("grass"),
