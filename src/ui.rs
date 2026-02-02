@@ -22,6 +22,13 @@ const STATISTICS_TEXT_Y_OFFSET: f32 = 1.5;
 const STATISTICS_TEXT_SHIFT: f32 = 12.;
 
 const DIALOGUE_BOX_TEXTURE: &str = "dialogue_box";
+const DIALOGUE_BOX_HEIGHT: f32 = 48.;
+const DIALOGUE_BOX_TEXTURE_TRANSPARENT_TOP: f32 = 12.;
+const DIALOGUE_TEXT_SIZE: f32 = 8.;
+const DIALOGUE_TEXT_SPACING: f32 = 0.5;
+
+const SPEAKER_TEXTURE_WIDTH: f32 = 32.;
+const SPEAKER_TEXTURE_HEIGHT: f32 = 48.;
 
 const BAR_TEXT_SIZE: f32 = 8.;
 const BAR_TEXT_SPACING: f32 = 1.;
@@ -149,6 +156,9 @@ impl UIHandler {
             quitting: false,
             pause_buttons,
         }
+    }
+    pub fn is_pause(&self) -> bool {
+        return self.quitting;
     }
     pub fn rescale_ui(&mut self, new_scale: f32) {
         Self::set_default(&mut self.build_buttons, &mut self.pause_buttons, new_scale);
@@ -323,7 +333,12 @@ impl UIHandler {
             self.quitting = !self.quitting;
         }
 
-        if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
+        if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+            && rl.get_mouse_y() as f32
+                > (SCREEN_HEIGHT as f32 - DIALOGUE_BOX_HEIGHT
+                    + DIALOGUE_BOX_TEXTURE_TRANSPARENT_TOP)
+                    * settings_handler.settings.pixel_scale as f32
+        {
             if dialogue_h.dialogue.len() <= 0 {
                 dialogue_h.current_phrase += 1;
             } else if dialogue_h.current_phrase + 1 < dialogue_h.dialogue.len() {
@@ -333,6 +348,7 @@ impl UIHandler {
             } else if dialogue_h.current_phrase == dialogue_h.dialogue.len() - 1 {
                 dialogue_h.current_phrase += 1;
             }
+            return (false, false, false);
         }
 
         if !self.quitting {
@@ -415,7 +431,8 @@ impl UIHandler {
                             - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
                                 / 2.,
                     ),
-            ) {
+            ) && !self.quitting
+            {
                 6. * settings_handler.settings.pixel_scale as f32
             } else {
                 2. * settings_handler.settings.pixel_scale as f32
@@ -449,7 +466,7 @@ impl UIHandler {
                     Color::WHITE,
                 );
             } else {
-                let mut mouse_pos = rl.get_mouse_position()
+                let mouse_pos = (rl.get_mouse_position()
                     - Vector2::new(
                         rl.get_screen_width() as f32 / 2.
                             - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
@@ -457,10 +474,13 @@ impl UIHandler {
                         rl.get_screen_height() as f32 / 2.
                             - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
                                 / 2.,
-                    );
+                    ))
+                    / (Vector2::one()
+                        * (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32);
 
-                mouse_pos /= TILE_SIZE_PX as f32;
-                mouse_pos *= TILE_SIZE_PX as f32;
+                // snap to grid
+                //mouse_pos.x = mouse_pos.x.trunc();
+                //mouse_pos.y = mouse_pos.y.trunc();
 
                 rl.draw_texture_pro(
                     texture_handler.get_safe(BUTTON_LABELS[label_index]),
@@ -471,8 +491,12 @@ impl UIHandler {
                         BUTTON_TEXTURE_HEIGHT,
                     ),
                     Rectangle::new(
-                        mouse_pos.x,
-                        mouse_pos.y,
+                        mouse_pos.x
+                            * settings_handler.settings.pixel_scale as f32
+                            * TILE_SIZE_PX as f32,
+                        mouse_pos.y
+                            * settings_handler.settings.pixel_scale as f32
+                            * TILE_SIZE_PX as f32,
                         (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32,
                         (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32,
                     ),
@@ -551,7 +575,7 @@ impl UIHandler {
                 Vector2::new(
                     0.,
                     (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
-                        - 48. * settings_handler.settings.pixel_scale as f32,
+                        - SPEAKER_TEXTURE_HEIGHT * settings_handler.settings.pixel_scale as f32,
                 ),
                 0.0,
                 settings_handler.settings.pixel_scale as f32,
@@ -561,9 +585,9 @@ impl UIHandler {
             rl.draw_texture_ex(
                 texture_handler.get(DIALOGUE_BOX_TEXTURE),
                 Vector2::new(
-                    32. * settings_handler.settings.pixel_scale as f32,
+                    SPEAKER_TEXTURE_WIDTH * settings_handler.settings.pixel_scale as f32,
                     (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
-                        - 48. * settings_handler.settings.pixel_scale as f32,
+                        - DIALOGUE_BOX_HEIGHT * settings_handler.settings.pixel_scale as f32,
                 ),
                 0.0,
                 settings_handler.settings.pixel_scale as f32,
@@ -584,13 +608,13 @@ impl UIHandler {
                 font,
                 &temp_line.rev().collect::<String>(),
                 Vector2::new(
-                    32. * settings_handler.settings.pixel_scale as f32 + 64.,
+                    SPEAKER_TEXTURE_WIDTH * settings_handler.settings.pixel_scale as f32
+                        + 8. * settings_handler.settings.pixel_scale as f32,
                     (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
-                        - 3. * 8. * settings_handler.settings.pixel_scale as f32
-                        - 20.,
+                        - 28. * settings_handler.settings.pixel_scale as f32,
                 ),
-                8. * settings_handler.settings.pixel_scale as f32,
-                0.,
+                DIALOGUE_TEXT_SIZE * settings_handler.settings.pixel_scale as f32,
+                DIALOGUE_TEXT_SPACING * settings_handler.settings.pixel_scale as f32,
                 CustomColor::BLACK_TEXT,
             );
 
