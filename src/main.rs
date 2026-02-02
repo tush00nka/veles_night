@@ -54,8 +54,8 @@ mod ui;
 mod color;
 pub const FIRST_LEVEL: u8 = 0;
 
-const SCREEN_WIDTH: i32 = 640; //256;
-const SCREEN_HEIGHT: i32 = 360; //144
+const SCREEN_WIDTH: i32 = 320; //256;
+const SCREEN_HEIGHT: i32 = 180; //144
 
 fn main() {
     profiling::scope!("Initialization");
@@ -618,6 +618,48 @@ fn update_level<'a>(
     settings_menu: &mut SettingsMenuHandler,
     settings_handler: &mut SettingsHandler,
 ) -> bool {
+    let (level_quit, level_restart, level_settings) = ui_handler.update(
+        hotkey_handler,
+        scene_handler,
+        dialogue_handler,
+        rl,
+        settings_handler,
+    );
+
+    if level_quit {
+        save_handler.set_to_save();
+    };
+
+    level.update(
+        scene_handler,
+        spirits_handler.spirits.len() as u8,
+        music_handler,
+        settings_handler,
+    );
+
+    if hotkey_handler.check_pressed(rl, HotkeyCategory::Reset) || level_restart {
+        return true;
+    }
+
+    if level_settings {
+        settings_menu.set_scene(Scene::Level);
+    }
+
+    if ui_handler.is_pause() {
+        return false;
+    }
+
+    order_handler.select_spirit(spirits_handler, level, rl, hotkey_handler, settings_handler);
+    order_handler.update_line(level, rl, hotkey_handler, settings_handler);
+
+    ui_handler.build(
+        level,
+        rl,
+        hotkey_handler,
+        dialogue_handler,
+        settings_handler,
+    );
+
     for spirit in spirits_handler.spirits.values() {
         if spirit.get_dead() {
             particles.push(Particle::new(
@@ -654,43 +696,6 @@ fn update_level<'a>(
         spirit.update_behaviour(level, music_handler, rl, settings_handler);
     }
 
-    order_handler.select_spirit(spirits_handler, level, rl, hotkey_handler, settings_handler);
-    order_handler.update_line(level, rl, hotkey_handler, settings_handler);
-
-    ui_handler.build(
-        level,
-        rl,
-        hotkey_handler,
-        dialogue_handler,
-        settings_handler,
-    );
-
-    let (level_quit, level_restart, level_settings) = ui_handler.update(
-        hotkey_handler,
-        scene_handler,
-        dialogue_handler,
-        rl,
-        settings_handler,
-    );
-
-    if level_quit {
-        save_handler.set_to_save();
-    };
-
-    level.update(
-        scene_handler,
-        spirits_handler.spirits.len() as u8,
-        music_handler,
-        settings_handler,
-    );
-
-    if hotkey_handler.check_pressed(rl, HotkeyCategory::Reset) || level_restart {
-        return true;
-    }
-
-    if level_settings {
-        settings_menu.set_scene(Scene::Level);
-    }
     return false;
 }
 
