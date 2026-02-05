@@ -16,6 +16,13 @@ pub enum HotkeyCategory {
     Skip = 7,
     VolumeUp = 8,
     VolumeDown = 9,
+    Cancel = 10,
+    PickButton1 = 11,
+    PickButton2 = 12,
+    PickButton3 = 13,
+    PickButton4 = 14,
+    PickButton5 = 15,
+    PickButton6 = 16,
     ERROR = 255,
 }
 
@@ -28,9 +35,13 @@ pub enum KeyboardKeyString {
     KeyQ,
     KeyR,
     KeyP,
+    KeyC,
     Key1,
     Key2,
     Key3,
+    Key4,
+    Key5,
+    Key6,
     KeyU,
     KeyI,
     KeyPlus,
@@ -46,10 +57,10 @@ impl HotkeyCategory {
             _ => HotkeyCategory::ERROR,
         }
     }
-
-    #[allow(unused)]
+}
+impl From<u8> for HotkeyCategory {
     #[profiling::function]
-    pub fn from_u8(value: u8) -> HotkeyCategory {
+    fn from(value: u8) -> Self {
         match value {
             x if x == HotkeyCategory::Exit as u8 => HotkeyCategory::Exit,
             x if x == HotkeyCategory::Reset as u8 => HotkeyCategory::Reset,
@@ -61,6 +72,13 @@ impl HotkeyCategory {
             x if x == HotkeyCategory::Skip as u8 => HotkeyCategory::Skip,
             x if x == HotkeyCategory::VolumeUp as u8 => HotkeyCategory::VolumeUp,
             x if x == HotkeyCategory::VolumeDown as u8 => HotkeyCategory::VolumeDown,
+            x if x == HotkeyCategory::Cancel as u8 => HotkeyCategory::Cancel,
+            x if x == HotkeyCategory::PickButton1 as u8 => HotkeyCategory::PickButton1,
+            x if x == HotkeyCategory::PickButton2 as u8 => HotkeyCategory::PickButton2,
+            x if x == HotkeyCategory::PickButton3 as u8 => HotkeyCategory::PickButton3,
+            x if x == HotkeyCategory::PickButton4 as u8 => HotkeyCategory::PickButton4,
+            x if x == HotkeyCategory::PickButton5 as u8 => HotkeyCategory::PickButton5,
+            x if x == HotkeyCategory::PickButton6 as u8 => HotkeyCategory::PickButton6,
             _ => HotkeyCategory::ERROR,
         }
     }
@@ -109,10 +127,14 @@ impl HotkeyHandler {
                     KeyboardKeyString::Key1 => KeyboardKey::KEY_ONE,
                     KeyboardKeyString::Key2 => KeyboardKey::KEY_TWO,
                     KeyboardKeyString::Key3 => KeyboardKey::KEY_THREE,
+                    KeyboardKeyString::Key4 => KeyboardKey::KEY_FOUR,
+                    KeyboardKeyString::Key5 => KeyboardKey::KEY_FIVE,
+                    KeyboardKeyString::Key6 => KeyboardKey::KEY_SIX,
                     KeyboardKeyString::KeyS => KeyboardKey::KEY_S,
                     KeyboardKeyString::KeyMinus => KeyboardKey::KEY_MINUS,
                     KeyboardKeyString::KeyPlus => KeyboardKey::KEY_EQUAL,
                     KeyboardKeyString::KeyU => KeyboardKey::KEY_U,
+                    KeyboardKeyString::KeyC => KeyboardKey::KEY_C,
                     KeyboardKeyString::KeyI => KeyboardKey::KEY_I,
                 };
                 vec.push(key);
@@ -142,6 +164,17 @@ impl HotkeyHandler {
         for key in self.hotkeys.get(&target_intent).unwrap().iter() {
             if rl.is_key_down(*key) {
                 self.last_pressed_hotkey = Some(*key);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    #[profiling::function]
+    pub fn check_released(&mut self, rl: &RaylibHandle, target_intent: HotkeyCategory) -> bool {
+        for key in self.hotkeys.get(&target_intent).unwrap().iter() {
+            if rl.is_key_released(*key) {
                 return true;
             }
         }
