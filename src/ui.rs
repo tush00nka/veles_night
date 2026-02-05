@@ -129,10 +129,12 @@ impl Button {
         );
     }
 }
+
 pub struct UIHandler {
     build_buttons: Vec<Button>,
     pause_buttons: Vec<Button>,
     quitting: bool,
+    last_picked_bonfire_index: Option<usize>,
 }
 
 impl UIHandler {
@@ -155,6 +157,7 @@ impl UIHandler {
             build_buttons,
             quitting: false,
             pause_buttons,
+            last_picked_bonfire_index: None,
         }
     }
     pub fn is_pause(&self) -> bool {
@@ -211,113 +214,123 @@ impl UIHandler {
         settings_handler: &mut SettingsHandler,
     ) {
         let dialoging = dialogue_h.current_phrase < dialogue_h.dialogue.len();
+        if dialoging {
+            return;
+        }
 
         let mut intent: HotkeyCategory;
-        for (label_index, button) in self.build_buttons.iter_mut().enumerate() {
-            if dialoging {
-                break;
-            }
-
+        for label_index in 0..self.build_buttons.len() {
             intent = HotkeyCategory::from_bonfire(BUTTON_LABELS[label_index]);
+            let collision = unsafe {
+                CheckCollisionPointRec(
+                    (rl.get_mouse_position()
+                        - Vector2::new(
+                            rl.get_screen_width() as f32 / 2.
+                                - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
+                                    as f32
+                                    / 2.,
+                            rl.get_screen_height() as f32 / 2.
+                                - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
+                                    as f32
+                                    / 2.,
+                        ))
+                    .into(),
+                    self.build_buttons[label_index].rect.into(),
+                )
+            };
 
-            if hotkey_h.check_pressed(rl, intent) {
-                button.selected = true;
-            }
-
-            if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
-                if unsafe {
-                    CheckCollisionPointRec(
-                        (rl.get_mouse_position()
-                            - Vector2::new(
-                                rl.get_screen_width() as f32 / 2.
-                                    - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
-                                        as f32
-                                        / 2.,
-                                rl.get_screen_height() as f32 / 2.
-                                    - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
-                                        as f32
-                                        / 2.,
-                            ))
-                        .into(),
-                        button.rect.into(),
-                    )
-                } {
-                    button.selected = true;
-                }
-                hotkey_h.clear_last();
-            }
-
-            let keyboard_last = hotkey_h.get_last_key();
-
-            if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_RIGHT) {
-                button.selected = false;
-                continue;
-            }
-            let pos = (rl.get_mouse_position()
-                - Vector2::new(
-                    rl.get_screen_width() as f32 / 2.
-                        - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32 / 2.,
-                    rl.get_screen_height() as f32 / 2.
-                        - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
-                            / 2.,
-                ))
-                / (Vector2::one()
-                    * (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32);
-            let (x, y) = (pos.x as usize, pos.y as usize);
-
-            if !rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT)
-                && keyboard_last == KeyboardKey::KEY_NUM_LOCK
-                && button.selected
+            if (hotkey_h.check_pressed(rl, intent)
+                || (rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) && collision))
+                && (self.last_picked_bonfire_index.is_none()
+                    || self
+                        .last_picked_bonfire_index
+                        .is_some_and(|b| HotkeyCategory::from_bonfire(BUTTON_LABELS[b]) != intent))
             {
-                if x >= level.tiles.len() || y >= level.tiles[0].len() {
-                    continue;
+                if self.last_picked_bonfire_index.is_some() {
+                    self.build_buttons[self.last_picked_bonfire_index.unwrap()].selected = false;
                 }
-                match &mut level.tiles[x][y] {
-                    TileType::Air { selected: value } => {
-                        *value = true;
-                    }
-                    _ => {}
-                };
-
-                continue;
+                self.last_picked_bonfire_index = Some(label_index);
+                self.build_buttons[label_index].selected = true;
+                return;
             }
-
-            if keyboard_last != KeyboardKey::KEY_NUM_LOCK && !rl.is_key_released(keyboard_last) {
-                continue;
-            }
-
-            if button.selected && level.get_wood() > 0 {
-                match level.tiles[x][y] {
-                    TileType::Air { selected: _ } => {}
-                    _ => {
-                        button.selected = false;
-                        continue;
-                    }
-                };
-
-                let tile = match BUTTON_LABELS[label_index] {
-                    "fire_td" => TileType::FireTD {
-                        active: false,
-                        selected: false,
-                    },
-                    "fire_lr" => TileType::FireLR {
-                        active: false,
-                        selected: false,
-                    },
-                    "fire_stop" => TileType::FireStop {
-                        active: false,
-                        selected: false,
-                    },
-                    _ => {
-                        panic!("wait how")
-                    }
-                };
-
-                level.tiles[x][y] = tile;
-                level.remove_wood();
-            }
-            button.selected = false;
         }
+
+        if self.last_picked_bonfire_index.is_none() {
+            return;
+        }
+
+        if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_RIGHT)
+            || hotkey_h.check_pressed(rl, HotkeyCategory::Skip)
+        {
+            self.build_buttons[self.last_picked_bonfire_index.unwrap()].selected = false;
+            return;
+        }
+
+        let pos = (rl.get_mouse_position()
+            - Vector2::new(
+                rl.get_screen_width() as f32 / 2.
+                    - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32 / 2.,
+                rl.get_screen_height() as f32 / 2.
+                    - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32 / 2.,
+            ))
+            / (Vector2::one()
+                * (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32);
+        let (x, y) = (pos.x as usize, pos.y as usize);
+
+        if !rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+            && !hotkey_h.check_pressed(
+                rl,
+                HotkeyCategory::from_bonfire(
+                    BUTTON_LABELS[self.last_picked_bonfire_index.unwrap()],
+                ),
+            )
+        {
+            if x >= level.tiles.len() || y >= level.tiles[0].len() {
+                return;
+            }
+            match &mut level.tiles[x][y] {
+                TileType::Air { selected: value } => {
+                    *value = true;
+                }
+                _ => {}
+            };
+            return;
+        }
+        hotkey_h.clear_last();
+
+        let button_index = self.last_picked_bonfire_index.unwrap();
+        if self.build_buttons[button_index].selected && level.get_wood() > 0 {
+            match level.tiles[x][y] {
+                TileType::Air { selected: _ } => {}
+                _ => {
+                    self.build_buttons[button_index].selected = false;
+                    return;
+                }
+            };
+
+            let tile = match BUTTON_LABELS[button_index] {
+                "fire_td" => TileType::FireTD {
+                    active: false,
+                    selected: false,
+                },
+                "fire_lr" => TileType::FireLR {
+                    active: false,
+                    selected: false,
+                },
+                "fire_stop" => TileType::FireStop {
+                    active: false,
+                    selected: false,
+                },
+                _ => {
+                    panic!("wait how")
+                }
+            };
+
+            level.tiles[x][y] = tile;
+            level.remove_wood();
+        }
+        self.build_buttons[self.last_picked_bonfire_index.unwrap()].selected = false;
+        self.last_picked_bonfire_index = None;
     }
 
     #[profiling::function]

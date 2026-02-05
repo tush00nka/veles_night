@@ -139,35 +139,25 @@ impl HotkeyHandler {
 
     #[profiling::function]
     pub fn check_down(&mut self, rl: &RaylibHandle, target_intent: HotkeyCategory) -> bool {
-        for (intent, keys) in self.hotkeys.iter() {
-            if *intent != target_intent {
-                continue;
-            }
-
-            for key in keys.iter() {
-                if rl.is_key_down(*key) {
-                    self.last_pressed_hotkey = Some(*key);
-                    return true;
-                }
+        for key in self.hotkeys.get(&target_intent).unwrap().iter() {
+            if rl.is_key_down(*key) {
+                self.last_pressed_hotkey = Some(*key);
+                return true;
             }
         }
+
         return false;
     }
 
     #[profiling::function]
     pub fn check_pressed(&mut self, rl: &RaylibHandle, target_intent: HotkeyCategory) -> bool {
-        for (intent, keys) in self.hotkeys.iter() {
-            if *intent != target_intent {
-                continue;
-            }
-
-            for key in keys.iter() {
-                if rl.is_key_pressed(*key) {
-                    self.last_pressed_hotkey = Some(*key);
-                    return true;
-                }
+        for key in self.hotkeys.get(&target_intent).unwrap().iter() {
+            if rl.is_key_pressed(*key) {
+                self.last_pressed_hotkey = Some(*key);
+                return true;
             }
         }
+
         return false;
     }
 }

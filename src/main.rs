@@ -436,7 +436,7 @@ fn main() {
         // we draw to the texture
         {
             let mut t = d.begin_texture_mode(&thread, &mut target);
-            if !settings_handler.settings.shader {
+            if !settings_handler.settings.shader && Scene::Level == scene_handler.get_current() {
                 level_texture(
                     &mut level,
                     level_number,
