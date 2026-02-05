@@ -1,28 +1,60 @@
 {
-    "hotkeys": {
-        "Exit":[
-            "KeyEsc",
-            "KeyQ"
-        ],
-        "Continue": [
-            "KeyEnter", 
-            "KeySpace"
-        ],
-        "PickNearest": [
-            "KeyP"
-        ],
-        "PickBuilding1": [
-            "Key1"
-        ],
-        "PickBuilding2": [
-            "Key2"
-        ],
-        "PickBuilding3": [
-            "Key3"
-        ],
-        "Reset": ["KeyR"],
-        "Skip": ["KeyS"],
-        "VolumeUp": ["KeyPlus","KeyU"],
-        "VolumeDown": ["KeyMinus","KeyI"]
-    }
+       "hotkeys": {
+              "Exit": [
+                     "KeyEsc",
+                     "KeyQ"
+              ],
+              "Continue": [
+                     "KeyEnter",
+                     "KeySpace"
+              ],
+              "PickNearest": [
+                     "KeyP"
+              ],
+              "PickBuilding1": [
+                     "Key1"
+              ],
+              "PickBuilding2": [
+                     "Key2"
+              ],
+              "PickBuilding3": [
+                     "Key3"
+              ],
+              "Reset": [
+                     "KeyR"
+              ],
+              "Skip": [
+                     "KeyS"
+              ],
+              "Cancel": [
+                     "KeyC",
+                     "KeyS"
+              ],
+              "VolumeUp": [
+                     "KeyPlus",
+                     "KeyU"
+              ],
+              "VolumeDown": [
+                     "KeyMinus",
+                     "KeyI"
+              ],
+              "PickButton1": [
+                     "Key1"
+              ],
+              "PickButton2": [
+                     "Key2"
+              ],
+              "PickButton3": [
+                     "Key3"
+              ],
+              "PickButton4": [
+                     "Key4"
+              ],
+              "PickButton5": [
+                     "Key5"
+              ],
+              "PickButton6": [
+                     "Key6"
+              ]
+       }
 }

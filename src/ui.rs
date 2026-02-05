@@ -260,9 +260,10 @@ impl UIHandler {
         }
 
         if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_RIGHT)
-            || hotkey_h.check_pressed(rl, HotkeyCategory::Skip)
+            || hotkey_h.check_pressed(rl, HotkeyCategory::Cancel)
         {
             self.build_buttons[self.last_picked_bonfire_index.unwrap()].selected = false;
+            self.last_picked_bonfire_index = None;
             return;
         }
 
@@ -277,8 +278,8 @@ impl UIHandler {
                 * (TILE_SIZE_PX * settings_handler.settings.pixel_scale as i32) as f32);
         let (x, y) = (pos.x as usize, pos.y as usize);
 
-        if !rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
-            && !hotkey_h.check_pressed(
+        if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT)
+            || hotkey_h.check_down(
                 rl,
                 HotkeyCategory::from_bonfire(
                     BUTTON_LABELS[self.last_picked_bonfire_index.unwrap()],
@@ -346,11 +347,12 @@ impl UIHandler {
             self.quitting = !self.quitting;
         }
 
-        if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
-            && rl.get_mouse_y() as f32
-                > (SCREEN_HEIGHT as f32 - DIALOGUE_BOX_HEIGHT
-                    + DIALOGUE_BOX_TEXTURE_TRANSPARENT_TOP)
-                    * settings_handler.settings.pixel_scale as f32
+        if hotkey_h.check_pressed(rl, HotkeyCategory::Skip)
+            || (rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+                && rl.get_mouse_y() as f32
+                    > (SCREEN_HEIGHT as f32 - DIALOGUE_BOX_HEIGHT
+                        + DIALOGUE_BOX_TEXTURE_TRANSPARENT_TOP)
+                        * settings_handler.settings.pixel_scale as f32)
         {
             if dialogue_h.dialogue.len() <= 0 {
                 dialogue_h.current_phrase += 1;
@@ -368,47 +370,53 @@ impl UIHandler {
             return (false, false, false);
         }
 
-        if self.pause_buttons[2].rect.check_collision_point_rec(
-            rl.get_mouse_position()
-                - Vector2::new(
-                    rl.get_screen_width() as f32 / 2.
-                        - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32 / 2.,
-                    rl.get_screen_height() as f32 / 2.
-                        - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
-                            / 2.,
-                ),
-        ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+        if hotkey_h.check_pressed(rl, HotkeyCategory::PickButton3)
+            || (self.pause_buttons[2].rect.check_collision_point_rec(
+                rl.get_mouse_position()
+                    - Vector2::new(
+                        rl.get_screen_width() as f32 / 2.
+                            - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                        rl.get_screen_height() as f32 / 2.
+                            - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                    ),
+            ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT))
         {
             scene_h.set(Scene::MainMenu);
             self.quitting = false;
             return (true, false, false);
         };
 
-        if self.pause_buttons[0].rect.check_collision_point_rec(
-            rl.get_mouse_position()
-                - Vector2::new(
-                    rl.get_screen_width() as f32 / 2.
-                        - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32 / 2.,
-                    rl.get_screen_height() as f32 / 2.
-                        - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
-                            / 2.,
-                ),
-        ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+        if hotkey_h.check_pressed(rl, HotkeyCategory::PickButton1)
+            || (self.pause_buttons[0].rect.check_collision_point_rec(
+                rl.get_mouse_position()
+                    - Vector2::new(
+                        rl.get_screen_width() as f32 / 2.
+                            - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                        rl.get_screen_height() as f32 / 2.
+                            - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                    ),
+            ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT))
         {
             self.quitting = false;
             return (false, true, false);
         };
 
-        if self.pause_buttons[1].rect.check_collision_point_rec(
-            rl.get_mouse_position()
-                - Vector2::new(
-                    rl.get_screen_width() as f32 / 2.
-                        - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32 / 2.,
-                    rl.get_screen_height() as f32 / 2.
-                        - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
-                            / 2.,
-                ),
-        ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+        if hotkey_h.check_pressed(rl, HotkeyCategory::PickButton2)
+            || (self.pause_buttons[1].rect.check_collision_point_rec(
+                rl.get_mouse_position()
+                    - Vector2::new(
+                        rl.get_screen_width() as f32 / 2.
+                            - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                        rl.get_screen_height() as f32 / 2.
+                            - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
+                                / 2.,
+                    ),
+            ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT))
         {
             self.quitting = false;
             return (false, false, true);
@@ -641,7 +649,7 @@ impl UIHandler {
                         (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
                             - 12. * settings_handler.settings.pixel_scale as f32,
                     ),
-                    8. * settings_handler.settings.pixel_scale as f32,
+                    12. * settings_handler.settings.pixel_scale as f32,
                     0.,
                     Color::RAYWHITE.alpha((rl.get_time() * 2.).sin().abs() as f32),
                 )

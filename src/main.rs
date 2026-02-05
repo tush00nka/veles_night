@@ -303,6 +303,7 @@ fn main() {
                     &mut ui_handler,
                     &mut level_transition,
                     &mut settings_menu,
+                    &mut hotkey_handler,
                 );
             }
             Scene::GameEnd => {
@@ -422,10 +423,16 @@ fn main() {
                     &mut dialogue_handler,
                     &mut rl,
                     &mut settings_handler,
+                    &mut hotkey_handler,
                 );
             }
             Scene::Settings => {
-                settings_menu.update(&mut scene_handler, &mut rl, &mut settings_handler);
+                settings_menu.update(
+                    &mut scene_handler,
+                    &mut rl,
+                    &mut settings_handler,
+                    &mut hotkey_handler,
+                );
             }
         }
         profiling::scope!("Drawing");
@@ -479,7 +486,13 @@ fn main() {
                     );
                 }
                 Scene::Settings => {
-                    settings_menu.draw(&font, &texture_handler, &mut t, &mut settings_handler);
+                    settings_menu.draw(
+                        &font,
+                        &texture_handler,
+                        &mut t,
+                        &mut settings_handler,
+                        &mut hotkey_handler,
+                    );
                 }
                 Scene::GameEnd => {
                     gameend_handler.draw_gameover(&font, &mut t, &mut settings_handler)

@@ -3,6 +3,7 @@ use raylib::prelude::*;
 use crate::{
     SCREEN_HEIGHT, SCREEN_WIDTH,
     color::CustomColor,
+    hotkey_handler::{HotkeyCategory, HotkeyHandler},
     scene::{Scene, SceneHandler},
     settings::{MAXIMUM_PIXEL_SCALE, Settings, SettingsHandler},
     texture_handler::TextureHandler,
@@ -452,23 +453,26 @@ impl SettingsMenuHandler {
         scene_handler: &mut SceneHandler,
         rl: &mut RaylibHandle,
         settings_handler: &mut SettingsHandler,
+        hotkey_handler: &mut HotkeyHandler,
     ) {
         for (i, button) in self.ui_buttons.iter_mut().enumerate() {
-            if button.selected
-                && rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT)
-                && button.rect.check_collision_point_rec(
-                    rl.get_mouse_position()
-                        - Vector2::new(
-                            rl.get_screen_width() as f32 / 2.
-                                - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
-                                    as f32
-                                    / 2.,
-                            rl.get_screen_height() as f32 / 2.
-                                - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
-                                    as f32
-                                    / 2.,
-                        ),
-                )
+            if hotkey_handler
+                .check_released(rl, (HotkeyCategory::PickButton1 as u8 + i as u8 % 2).into())
+                || (button.selected
+                    && rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT)
+                    && button.rect.check_collision_point_rec(
+                        rl.get_mouse_position()
+                            - Vector2::new(
+                                rl.get_screen_width() as f32 / 2.
+                                    - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
+                                        as f32
+                                        / 2.,
+                                rl.get_screen_height() as f32 / 2.
+                                    - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
+                                        as f32
+                                        / 2.,
+                            ),
+                    ))
             {
                 let warning = self.draw_warning;
                 button.selected = false;
@@ -509,6 +513,7 @@ impl SettingsMenuHandler {
                     }
                     _ => break,
                 };
+                break;
             }
         }
 
@@ -632,6 +637,7 @@ impl SettingsMenuHandler {
         texture_handler: &TextureHandler,
         rl: &mut RaylibDrawHandle,
         settings_handler: &mut SettingsHandler,
+        hotkey_handler: &mut HotkeyHandler,
     ) {
         rl.clear_background(Color::from_hex(BACKGROUND_COLOR_HEX).unwrap());
 
@@ -783,7 +789,7 @@ impl SettingsMenuHandler {
 
         for i in 0..UTILITY_BUTTONS.len() {
             let (texture_offset, text_offset) =
-                if self.ui_buttons[i].rect.check_collision_point_rec(
+                if (self.ui_buttons[i].rect.check_collision_point_rec(
                     rl.get_mouse_position()
                         - Vector2::new(
                             rl.get_screen_width() as f32 / 2.
@@ -796,8 +802,10 @@ impl SettingsMenuHandler {
                                     / 2.,
                         ),
                 ) && self.picked_element.is_none()
-                    && !self.draw_warning
                     && rl.is_mouse_button_up(MouseButton::MOUSE_BUTTON_LEFT)
+                    || hotkey_handler
+                        .check_down(rl, (HotkeyCategory::PickButton1 as u8 + i as u8).into()))
+                    && !self.draw_warning
                 {
                     self.ui_buttons[i].selected = true;
                     (0., 0.)
@@ -876,7 +884,7 @@ impl SettingsMenuHandler {
         }
 
         for i in 0..WARNING_BUTTONS_TEXT.len() {
-            let (texture_offset, text_offset) = if self.ui_buttons[i + UTILITY_BUTTONS.len()]
+            let (texture_offset, text_offset) = if (self.ui_buttons[i + UTILITY_BUTTONS.len()]
                 .rect
                 .check_collision_point_rec(
                     rl.get_mouse_position()
@@ -891,8 +899,10 @@ impl SettingsMenuHandler {
                                     / 2.,
                         ),
                 )
-                && self.picked_element.is_none()
                 && rl.is_mouse_button_up(MouseButton::MOUSE_BUTTON_LEFT)
+                || hotkey_handler
+                    .check_down(rl, (HotkeyCategory::PickButton1 as u8 + i as u8).into()))
+                && self.picked_element.is_none()
             {
                 self.ui_buttons[i + UTILITY_BUTTONS.len()].selected = true;
                 (0., 0.)

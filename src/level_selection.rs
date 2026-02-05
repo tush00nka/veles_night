@@ -6,6 +6,7 @@ use crate::{
     SCREEN_HEIGHT, SCREEN_WIDTH,
     dialogue::DialogueHandler,
     enemy_spirit::EnemiesHandler,
+    hotkey_handler::{HotkeyCategory, HotkeyHandler},
     level_transition::LevelTransition,
     map::Level,
     metadata_handler::MetadataHandler,
@@ -125,6 +126,7 @@ impl LevelSelector {
         dialogue_handler: &mut DialogueHandler,
         rl: &mut RaylibHandle,
         settings_handler: &mut SettingsHandler,
+        hotkey_handler: &mut HotkeyHandler,
     ) {
         let mouse_pos = rl.get_mouse_position()
             - Vector2::new(
@@ -134,8 +136,10 @@ impl LevelSelector {
                     - SCREEN_HEIGHT as f32 / 2. * settings_handler.settings.pixel_scale as f32,
             );
 
-        if self.back_button_rect.check_collision_point_rec(mouse_pos)
-            && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+        if hotkey_handler.check_pressed(rl, HotkeyCategory::PickButton1)
+            || hotkey_handler.check_pressed(rl, HotkeyCategory::Exit)
+            || (self.back_button_rect.check_collision_point_rec(mouse_pos)
+                && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT))
         {
             scene_handler.set(Scene::MainMenu);
         }

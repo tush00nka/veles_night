@@ -71,14 +71,15 @@ impl OrderHandler {
             hotkey_handler.clear_last();
         }
 
-        if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_RIGHT) {
+        if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_RIGHT)
+            || hotkey_handler.check_pressed(rl, HotkeyCategory::Cancel)
+        {
             self.spirit = None;
             return;
         }
 
-        let keyboard_last = hotkey_handler.get_last_key();
-        if !rl.is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT)
-            && keyboard_last == KeyboardKey::KEY_NUM_LOCK
+        if rl.is_mouse_button_down(MouseButton::MOUSE_BUTTON_LEFT)
+            || hotkey_handler.check_down(rl, HotkeyCategory::PickNearest)
         {
             for y in 0..LEVEL_HEIGHT_TILES {
                 for x in 0..LEVEL_WIDTH_TILES {
@@ -155,10 +156,6 @@ impl OrderHandler {
             return;
         }
 
-        if keyboard_last != KeyboardKey::KEY_NUM_LOCK && !rl.is_key_released(keyboard_last) {
-            return;
-        }
-
         let mouse_pos = rl.get_mouse_position()
             - Vector2::new(
                 rl.get_screen_width() as f32 / 2.
@@ -208,9 +205,7 @@ impl OrderHandler {
                     }
                 }
             }
-            _ => {
-                // println!("wht?");
-            }
+            _ => {}
         }
 
         self.spirit = None;

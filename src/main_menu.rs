@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use crate::{
     FIRST_LEVEL, SCREEN_HEIGHT, SCREEN_WIDTH,
     enemy_spirit::EnemiesHandler,
+    hotkey_handler::{HotkeyCategory, HotkeyHandler},
     level_transition::LevelTransition,
     map::Level,
     metadata_handler::MetadataHandler,
@@ -86,19 +87,23 @@ impl MainMenuHandler {
         ui_handler: &mut UIHandler,
         level_transition: &mut LevelTransition,
         settings_menu: &mut SettingsMenuHandler,
+        hotkey_handler: &mut HotkeyHandler,
     ) {
         for (key, button) in self.buttons.iter_mut() {
-            if button.rect.check_collision_point_rec(
-                rl.get_mouse_position()
-                    - Vector2::new(
-                        rl.get_screen_width() as f32 / 2.
-                            - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32) as f32
-                                / 2.,
-                        rl.get_screen_height() as f32 / 2.
-                            - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32) as f32
-                                / 2.,
-                    ),
-            ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT)
+            if hotkey_handler.check_pressed(rl, (HotkeyCategory::PickButton1 as u8 + key).into())
+                || (button.rect.check_collision_point_rec(
+                    rl.get_mouse_position()
+                        - Vector2::new(
+                            rl.get_screen_width() as f32 / 2.
+                                - (SCREEN_WIDTH * settings_handler.settings.pixel_scale as i32)
+                                    as f32
+                                    / 2.,
+                            rl.get_screen_height() as f32 / 2.
+                                - (SCREEN_HEIGHT * settings_handler.settings.pixel_scale as i32)
+                                    as f32
+                                    / 2.,
+                        ),
+                ) && rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT))
             {
                 match key {
                     0 => {
@@ -131,9 +136,7 @@ impl MainMenuHandler {
                     3 => {
                         *should_close = true;
                     }
-                    _ => {
-                        panic!("Not implemented yet!");
-                    }
+                    _ => {}
                 }
             }
         }
