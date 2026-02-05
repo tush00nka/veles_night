@@ -54,8 +54,8 @@ mod ui;
 mod color;
 pub const FIRST_LEVEL: u8 = 0;
 
-const SCREEN_WIDTH: i32 = 640; //256;
-const SCREEN_HEIGHT: i32 = 360; //144
+const SCREEN_WIDTH: i32 = 320; //256;
+const SCREEN_HEIGHT: i32 = 180; //144
 
 fn main() {
     profiling::scope!("Initialization");
@@ -437,17 +437,20 @@ fn main() {
         {
             let mut t = d.begin_texture_mode(&thread, &mut target);
             if !settings_handler.settings.shader {
-                level_texture(
-                    &mut level,
-                    level_number,
-                    &texture_handler,
-                    &mut spirits_handler,
-                    &mut enemies_handler,
-                    &mut order_handler,
-                    &mut t,
-                    &mut particles,
-                    &mut settings_handler,
-                );
+                match scene_handler.get_current() {
+                    Scene::Level => level_texture(
+                        &mut level,
+                        level_number,
+                        &texture_handler,
+                        &mut spirits_handler,
+                        &mut enemies_handler,
+                        &mut order_handler,
+                        &mut t,
+                        &mut particles,
+                        &mut settings_handler,
+                    ),
+                    _ => {}
+                }
             } else {
                 t.draw_shader_mode(&mut shader, |mut s| match scene_handler.get_current() {
                     Scene::Level => level_texture(
