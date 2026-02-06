@@ -16,14 +16,16 @@ pub enum SliderStyle {
     Ruler,
 }
 
+#[repr(u8)]
 #[derive(PartialEq, Clone, Copy)]
 pub enum SettingsOptions {
-    Shader,
-    Fullscreen,
-    MusicVolume,
-    SoundVolume,
-    GeneralAudio,
-    Resolution,
+    Shader = 0,
+    Fullscreen = 1,
+    BorderSlider = 2,
+    MusicVolume = 3,
+    SoundVolume = 4,
+    GeneralAudio = 5,
+    Resolution = 6,
 }
 
 const SLIDER_WIDTH_PX: u8 = 48;
@@ -385,6 +387,18 @@ impl SettingsMenuHandler {
             _ => panic!("Not implemented yet!"),
         };
     }
+    fn align_buttons_with_inner_settings(&mut self) {
+        self.align_settings(&self.in_menu_settings.clone());
+    }
+    pub fn set_inner_setting(&mut self, value_to_set: u8, option_type: SettingsOptions) {
+        if option_type as u8 > SettingsOptions::BorderSlider as u8 {
+            Self::set_setting_slider(&mut self.in_menu_settings, option_type, value_to_set);
+            self.align_buttons_with_inner_settings();
+            return;
+        }
+        Self::set_setting_button(&mut self.in_menu_settings, option_type, value_to_set != 0);
+        self.align_buttons_with_inner_settings();
+    }
 
     fn set_setting_slider(settings: &mut Settings, settings_option: SettingsOptions, value: u8) {
         match settings_option {
@@ -404,7 +418,7 @@ impl SettingsMenuHandler {
                     button.selected = settings.shader;
                 }
                 SettingsOptions::Fullscreen => {
-                    self.in_menu_settings.shader = settings.fullscreen;
+                    self.in_menu_settings.fullscreen = settings.fullscreen;
                     button.selected = settings.fullscreen;
                 }
                 _ => panic!("Not implemented yet!"),
